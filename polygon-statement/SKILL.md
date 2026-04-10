@@ -13,7 +13,11 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
 ### Phase 1: Draft in the user's language
 
-1. **Read existing state**: Check `statement-sections/` for configured languages and any existing content. Check `draft/` for existing drafts.
+1. **Read existing state**:
+   - Check `draft/` for existing drafts (`draft/statement.*.md`)
+   - Check `statement-sections/` for configured languages and existing `.tex` content
+
+   If `.tex` files exist but no draft, this is an imported or hand-edited problem. Read the `.tex` content and reconstruct a draft in the standard format (step 3) before proceeding. Show it to the user as "I reconstructed this draft from the existing .tex files."
 
 2. **Gather information from the user.** For a complete statement, you need:
    - **Legend**: The problem description / story
