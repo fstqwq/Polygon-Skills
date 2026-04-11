@@ -7,7 +7,7 @@ description: "Write or edit the problem statement for a competitive programming 
 
 ## Inputs
 
-The user provides problem content in any form: rough notes, pseudocode, another problem's format, natural language, etc. The agent's job is to organize this into a clean statement WITHOUT adding or assuming any content.
+The user provides problem content in any form: rough notes, pseudocode, another problem's format, natural language, etc. The agent's job is to organize this into a clean, complete statement.
 
 ## Procedure
 
@@ -19,31 +19,30 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
    If `.tex` files exist but no draft, this is an imported or hand-edited problem. Read the `.tex` content and reconstruct a draft in the standard format (step 3) before proceeding. Show it to the user as "I reconstructed this draft from the existing .tex files."
 
-2. **Gather information from the user.** For a complete statement, you need:
-   - **Legend**: The problem description / story
-   - **Input format**: What the input looks like
-   - **Output format**: What to output
-   - **Notes** (optional): Explanation of sample cases
-   - **Interaction protocol** (if interactive): How the interaction works
+2. **Identify what's missing and ask only the essential questions.**
 
-   If the user gives a partial description, work with what they provide and ask about missing pieces. Do NOT fill in gaps yourself.
+   For a complete statement you need: legend, input format, output format, constraints, and at least one sample. Scan what the user provided and check the list below internally. Ask ONLY about items that are genuinely ambiguous or missing -- do NOT dump the entire checklist on the user.
 
-   **Constraint checklist** -- confirm each applicable item with the user before drafting:
+   **Constraint checklist** (check internally, ask only gaps):
 
-   | Topic | What to ask |
-   |-------|-------------|
-   | **Integer types** | Are all inputs integers? Specify explicitly (e.g., "integer", not just a variable name). |
-   | **Value ranges** | Exact bounds for every variable: $1 \le n \le 10^5$, not just "n is large". |
-   | **Multi-test sum** | If multi-test: is there a constraint on $\sum n$ across all test cases? What is it? |
-   | **Graph validity** | Simple graph? No self-loops, no multi-edges? Connected? Directed or undirected? |
-   | **Tree guarantee** | "It is guaranteed that the input forms a tree" -- explicit or implied? |
-   | **Degenerate cases** | Can $n=1$? Can the answer be 0? Can the graph be disconnected? Can coordinates coincide? |
-   | **Output uniqueness** | Is the answer unique, or can there be multiple valid outputs? If multiple, any preference? |
-   | **Edge cases branch** | If the problem has "output -1 if impossible" -- is it guaranteed that such cases exist in any valid test suite? |
-   | **Coordinate/weight range** | Integer or real? Positive only or can be negative/zero? |
-   | **String constraints** | Alphabet (lowercase Latin?), length bounds. |
+   | Topic | What the statement must specify |
+   |-------|--------------------------------|
+   | Integer types | Explicitly state "integer" for all numeric inputs |
+   | Value ranges | Exact bounds for every variable |
+   | Multi-test sum | $\sum n$ constraint if multi-test |
+   | Graph guarantees | Simple/multi-edge, self-loops, connected, directed |
+   | Tree guarantee | "It is guaranteed that the input forms a tree" |
+   | Degenerate cases | Whether $n=1$, answer=0, etc. are possible |
+   | Output uniqueness | "If multiple answers, print any" or unique |
+   | Impossible branch | "output -1 if impossible" -- when applicable |
+   | Value types | Integer/real, positive/negative/zero |
+   | String format | Alphabet, length bounds |
 
-3. **Write a concise draft.** Organize the user's content into the standard sections. Keep the user's original framing  --  if they described the problem in terms of a known algorithm, a game, or a scenario, preserve that context. Do not strip motivation or add decoration.
+   **How to ask**: bundle all missing items into ONE question. Do not ask one item at a time. If you can make a reasonable assumption, state it as a default ("I'll assume X unless you say otherwise") rather than blocking on it.
+
+   **Samples**: if the user says "make one up" or doesn't provide a sample, construct a small, illustrative example yourself. A sample is a worked example of the problem, not creative content -- generating one is expected.
+
+3. **Write the draft immediately.** Do not ask about style, tone, or theme before writing. Just write a clean, concise draft based on what the user provided. Keep the user's original framing -- if they described the problem as a scenario, preserve it. If they gave a pure algorithm description, keep it mathematical.
 
    Save to `draft/statement.<lang>.md` using this exact format:
 
@@ -100,23 +99,15 @@ The user provides problem content in any form: rough notes, pseudocode, another 
    - `## Constraints` -> folded into `## Input` during LaTeX conversion (not a separate file)
    - Use LaTeX math (`$...$`) inline in the Markdown  --  it carries over directly to `.tex`
 
-4. **Show the draft and ask about style.** Present the draft, then ask:
+4. **Show the draft.** Present it and wait for feedback. Do not ask "any style adjustments?" -- the user will tell you if they want changes. If they approve (or say nothing specific to change), proceed to step 7.
 
-   > Here is the draft. Any style adjustments?
-   > For example: add a themed setting, make it more formal/mathematical, adjust the tone, etc.
+5. **If the user requests a themed setting**, ask:
+   - What is the scenario?
+   - What do the mathematical objects represent? (e.g. vertices -> cities)
 
-   - **If satisfied** -> proceed to step 7.
-   - **If wants a themed setting** -> go to step 5.
-   - **If wants other changes** -> iterate on the draft directly.
+   Then rewrite the draft with the theme. Mathematical content stays identical.
 
-5. **Gather theme details.** Do NOT invent a story. Ask the user these specific questions:
-   - **Setting**: "What is the scenario?" (e.g. game, city planning, competition, cooking, ...)
-   - **Characters** (if any): "Who are the actors?" (e.g. Alice and Bob, a traveler, a king, ...)
-   - **Object mapping**: "What do the mathematical objects represent?" (e.g. vertices -> cities, edges -> roads, values -> costs, ...)
-
-   Then rewrite the draft with the theme applied. The mathematical content and constraints stay identical  --  only the framing changes.
-
-6. **Show the themed draft** to the user and iterate until approved.
+6. **Iterate** until the user approves.
 
 ### Phase 2: Translate to other languages
 
