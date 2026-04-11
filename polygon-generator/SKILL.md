@@ -1,6 +1,6 @@
 ---
 name: polygon-generator
-description: "Write a testlib test generator for a competitive programming problem. Use when the user wants to generate test data programmatically  --  random tests, stress tests, edge cases, or anti-hack tests."
+description: "Write a testlib test generator for a competitive programming problem. Use when the user wants to generate test data programmatically -- random tests, stress tests, edge cases, or anti-hack tests."
 ---
 
 # Write Test Generator
@@ -25,32 +25,21 @@ description: "Write a testlib test generator for a competitive programming probl
        registerGen(argc, argv, 1);
 
        int n = atoi(argv[1]);
-       int max_val = atoi(argv[2]);
+       int maxVal = atoi(argv[2]);
 
        println(n);
        for (int i = 0; i < n; i++) {
            if (i > 0) print(' ');
-           print(rnd.next(1, max_val));
+           print(rnd.next(1, maxVal));
        }
        println();
-
-       return 0;
    }
    ```
 
-   Key testlib generator patterns:
-   - `registerGen(argc, argv, 1)`  --  seeds RNG from command-line args
-   - `rnd.next(lo, hi)`  --  random integer in [lo, hi]
-   - `rnd.next(0.0, 1.0)`  --  random double
-   - `rnd.next("[a-z]{1,10}")`  --  random string matching regex
-   - `rnd.perm(n)` / `rnd.perm(n, 1)`  --  random permutation (0-indexed / 1-indexed)
-   - `println(...)` / `print(...)`  --  testlib output helpers
-   - Arguments come from `argv[]`  --  the gen command in spec.json provides them
-
-   Common generator patterns:
-   - **Tree**: use `rnd.next()` to pick parents, or Prüfer sequence
-   - **Graph**: generate random edges, check for duplicates
-   - **Permutation**: `auto p = rnd.perm(n, 1);`
+   Code style (same as `/polygon-solution`):
+   - No comments, no `return 0;`.
+   - Prefer simplicity -- short, readable, self-contained.
+   - Use `vector`, `auto`, structured bindings where natural.
 
 4. **Choose a descriptive filename**: `generators/gen_random.cpp`, `generators/gen_tree.cpp`, `generators/gen_maxn.cpp`.
 
@@ -74,8 +63,52 @@ description: "Write a testlib test generator for a competitive programming probl
    git commit -m "generator: add {name}"
    ```
 
+---
+
+## testlib generator API
+
+- `registerGen(argc, argv, 1)` -- seeds RNG from command-line args. Output is deterministic for the same args.
+- `rnd.next(lo, hi)` -- random integer in [lo, hi]
+- `rnd.next(0.0, 1.0)` -- random double
+- `rnd.next("[a-z]{1,10}")` -- random string matching regex (testlib regex, not PCRE)
+- `rnd.perm(n)` / `rnd.perm(n, 1)` -- random permutation (0-indexed / 1-indexed)
+- `rnd.partition(size, sum)` -- partition `sum` into `size` non-negative parts
+- `println(...)` / `print(...)` -- testlib output helpers (use these, not `cout`)
+- Arguments come from `argv[]` -- the gen command in spec.json provides them
+
+## Common patterns
+
+**Random array**: `rnd.next(1, maxVal)` in a loop.
+
+**Random permutation**:
+```cpp
+auto p = rnd.perm(n, 1);
+```
+
+**Random tree** (random parent for each node):
+```cpp
+vector<pair<int,int>> edges;
+for (int i = 1; i < n; i++)
+    edges.push_back({rnd.next(0, i - 1) + 1, i + 1});
+shuffle(edges.begin(), edges.end());
+```
+
+**Random connected graph** (tree + extra edges):
+```cpp
+// generate spanning tree first, then add random edges
+```
+
+**Star / chain / bamboo** (edge-case trees):
+```cpp
+// star: all connect to node 1
+// chain: i connects to i+1
+```
+
+**Large values**: use `argv[]` to parameterize n, max values, etc., so the same generator produces small and large tests.
+
 ## Rules
 
 - Generator output must match the exact format the validator expects (same whitespace, same newlines).
 - Arguments should be configurable via `argv[]` so spec.json gen commands can vary parameters.
-- The generator itself does NOT get wired into test generation automatically  --  the user must add gen entries to spec.json via `/polygon-tests`.
+- The generator itself does NOT get wired into test generation automatically -- the user must add gen entries to spec.json via `/polygon-tests`.
+- Use testlib's `print()` / `println()`, not `cout`. This ensures trailing whitespace is handled correctly.
