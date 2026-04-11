@@ -139,8 +139,8 @@ If yes, write the solution with the user's specified expected behavior and repea
    - Trust the input format. Do not write defensive I/O checks (e.g. `if (!(cin >> n))` is unnecessary -- just `cin >> n`).
 
    **C++ specific:**
-   - Prefer `vector` over global arrays. Pass and return `vector` by value.
-   - Minimize global variables. Pass data through function arguments.
+   - Prefer `vector` over C arrays. Pass and return `vector` by value.
+   - Globals are fine when many functions share context and passing arguments would add clutter (e.g. graph adjacency list, network flow). Otherwise prefer local variables and function arguments.
    - Use `auto` when the type is obvious from context (e.g. `auto it = mp.find(x)`).
    - Structured bindings are encouraged (e.g. `auto [u, v, w] = edges[i]`).
 
