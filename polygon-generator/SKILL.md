@@ -62,7 +62,13 @@ description: "Write a testlib test generator for a competitive programming probl
 
 6. **Show the code to the user** and ask if they want to generate any tests now (suggest `/polygon-tests`).
 
-7. **Commit**:
+7. **Compile** (best-effort, see `polygon-spec/compile.md`):
+   ```
+   g++ -std=c++20 -O2 -o gen generators/{name}.cpp -I <skills>/polygon-spec
+   ```
+   If no compiler is available locally (and no WSL on Windows), report to the user and skip.
+
+8. **Commit**:
    ```
    git add generators/{name}.cpp config/build.json
    git commit -m "generator: add {name}"

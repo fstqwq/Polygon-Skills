@@ -3,7 +3,7 @@
 
 Run from the problem repo root:
 
-    python <skills>/polygon-schemas/test_schema.py
+    python <skills>/polygon-spec/test_schema.py
 
 Validates:
   - config/problem.json
@@ -37,7 +37,7 @@ def _errors_problem_json(root: Path) -> list[str]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
-        return [f"config/problem.json: invalid JSON â€” {exc}"]
+        return [f"config/problem.json: invalid JSON â€?{exc}"]
     if not isinstance(data, dict):
         return ["config/problem.json: must be a JSON object"]
     errors: list[str] = []
@@ -87,7 +87,7 @@ def _errors_build_json(root: Path) -> list[str]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
-        return [f"config/build.json: invalid JSON â€” {exc}"]
+        return [f"config/build.json: invalid JSON â€?{exc}"]
     if not isinstance(data, dict):
         return ["config/build.json: must be a JSON object"]
     errors: list[str] = []
@@ -120,7 +120,7 @@ def _errors_spec_json(root: Path) -> list[str]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
-        return [f"tests/spec.json: invalid JSON â€” {exc}"]
+        return [f"tests/spec.json: invalid JSON â€?{exc}"]
     if not isinstance(data, dict):
         return ["tests/spec.json: must be a JSON object"]
     errors: list[str] = []
@@ -167,7 +167,7 @@ def _errors_spec_json(root: Path) -> list[str]:
     for j, tid in enumerate(id_list):
         expected = f"{j + 1:03d}"
         if tid != expected:
-            errors.append(f"tests/spec.json: ids not sequential â€” expected '{expected}', got '{tid}'")
+            errors.append(f"tests/spec.json: ids not sequential â€?expected '{expected}', got '{tid}'")
             break
     return errors
 
@@ -211,7 +211,7 @@ def _warnings_completeness(root: Path) -> list[str]:
     # --- build.json completeness ---
     build_path = root / "config" / "build.json"
     if not build_path.exists():
-        warnings.append("config/build.json: file missing â€” no components configured")
+        warnings.append("config/build.json: file missing â€?no components configured")
     else:
         try:
             build = json.loads(build_path.read_text(encoding="utf-8"))
@@ -219,9 +219,9 @@ def _warnings_completeness(root: Path) -> list[str]:
             build = {}
         if isinstance(build, dict):
             if not build.get("accepted_solution_source"):
-                warnings.append("config/build.json: accepted_solution_source is empty â€” no accepted solution configured")
+                warnings.append("config/build.json: accepted_solution_source is empty â€?no accepted solution configured")
             if not build.get("validator_source"):
-                warnings.append("config/build.json: validator_source is empty â€” no validator configured")
+                warnings.append("config/build.json: validator_source is empty â€?no validator configured")
 
     # --- checker existence ---
     problem_path = root / "config" / "problem.json"
@@ -241,7 +241,7 @@ def _warnings_completeness(root: Path) -> list[str]:
     # --- tests completeness ---
     spec_path = root / "tests" / "spec.json"
     if not spec_path.exists():
-        warnings.append("tests/spec.json: file missing â€” no tests defined")
+        warnings.append("tests/spec.json: file missing â€?no tests defined")
     else:
         try:
             spec = json.loads(spec_path.read_text(encoding="utf-8"))
@@ -250,7 +250,7 @@ def _warnings_completeness(root: Path) -> list[str]:
             tests = []
         if isinstance(tests, list):
             if not tests:
-                warnings.append("tests/spec.json: tests array is empty â€” no tests defined")
+                warnings.append("tests/spec.json: tests array is empty â€?no tests defined")
             else:
                 # sample tests should come before non-sample tests
                 last_sample_idx = -1
@@ -275,7 +275,7 @@ def _warnings_completeness(root: Path) -> list[str]:
     # --- statement sections ---
     sections_dir = root / "statement-sections"
     if not sections_dir.is_dir():
-        warnings.append("statement-sections/: directory missing â€” no statement languages")
+        warnings.append("statement-sections/: directory missing â€?no statement languages")
     else:
         languages = [d.name for d in sorted(sections_dir.iterdir()) if d.is_dir() and not d.is_symlink()]
         if not languages:
@@ -338,7 +338,7 @@ def main() -> int:
     for warn in warnings:
         print(f"  WARNING: {warn}", file=sys.stderr)
     if not errors:
-        print(f"OK â€” all schema checks passed ({root.name})")
+        print(f"OK â€?all schema checks passed ({root.name})")
         return 0
     for err in errors:
         print(f"  ERROR: {err}", file=sys.stderr)
