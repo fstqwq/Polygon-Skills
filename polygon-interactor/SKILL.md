@@ -75,10 +75,10 @@ int main(int argc, char* argv[]) {
 ```
 
 Key API:
-- `registerInteraction(argc, argv)` — must be first call
-- `cout << ... << endl;` — send to contestant (`endl` flushes)
-- `ouf.readToken("[a-z]{1,100}", "name")` / `ouf.readInt(lo, hi, "name")` — read from contestant's stdout. Always pass a pattern and a variable name.
-- `inf` — read the pre-generated test input
+- `registerInteraction(argc, argv)`  --  must be first call
+- `cout << ... << endl;`  --  send to contestant (`endl` flushes)
+- `ouf.readToken("[a-z]{1,100}", "name")` / `ouf.readInt(lo, hi, "name")`  --  read from contestant's stdout. Always pass a pattern and a variable name.
+- `inf`  --  read the pre-generated test input
 
 ---
 
@@ -93,7 +93,7 @@ The judge runs the next pass only if ALL of:
 2. `nextpass.in` was written to the feedback directory
 3. Pass count < `pass_limit` (from `config/problem.json`)
 
-Each pass is a fresh solution process — no memory between passes. `inf` is the original test on pass 1, `nextpass.in` on subsequent passes.
+Each pass is a fresh solution process  --  no memory between passes. `inf` is the original test on pass 1, `nextpass.in` on subsequent passes.
 
 The interactor can be **stateful** (encode a pass number in `nextpass.in`, dispatch on it) or **stateless** (same logic every pass, e.g. round-robin multi-party: Alice → Bob → Carl).
 
@@ -142,10 +142,10 @@ int main(int argc, char* argv[]) {
 ## Rules
 
 - **Always flush** after every output (`endl`, not `\n`).
-- Handle contestant protocol violations gracefully — quit with `_wa`.
+- Handle contestant protocol violations gracefully  --  quit with `_wa`.
 - Verdicts: only `_ok`, `_wa`, `_fail`. Do not use `_pe`.
 - The interactor reads test data from `inf`, contestant output from `ouf`.
 
 ## Examples
 
-- `examples/multipass_interactor.cpp` — real 2-pass interactor
+- `examples/multipass_interactor.cpp`  --  real 2-pass interactor

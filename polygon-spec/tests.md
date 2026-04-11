@@ -1,4 +1,4 @@
-# tests/spec.json — Full Schema
+# tests/spec.json  --  Full Schema
 
 ```json
 {

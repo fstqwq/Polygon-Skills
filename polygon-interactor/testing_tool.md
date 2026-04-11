@@ -57,7 +57,7 @@ All I/O goes through these two functions, so `--quiet` mode works and every mess
 
 ### 3. Data file parser
 
-Parse the test input file — the same format as `tests/manual/*.in`. Validate field ranges and give clear errors if the file is malformed.
+Parse the test input file  --  the same format as `tests/manual/*.in`. Validate field ranges and give clear errors if the file is malformed.
 
 ### 4. Interaction logic
 
@@ -82,11 +82,11 @@ Exit 0 on success, 1 on any error.
 
 ## Rules
 
-- **Python stdlib only** — no external dependencies. Contestants may not have pip.
-- **Match the interactor exactly** — the testing tool must accept the same inputs and produce the same outputs as the real interactor. Differences cause confused contestants.
-- **Log everything** — verbose mode shows `< ` (judge→solution) and `> ` (solution→judge). This is the primary debugging aid.
-- **Do not enforce resource limits** — the tool cannot measure time/memory. Say so in the disclaimer.
-- **`argparse`-based CLI** — `tool.py [--quiet] <data_file> <program> [args...]`.
+- **Python stdlib only**  --  no external dependencies. Contestants may not have pip.
+- **Match the interactor exactly**  --  the testing tool must accept the same inputs and produce the same outputs as the real interactor. Differences cause confused contestants.
+- **Log everything**  --  verbose mode shows `< ` (judge→solution) and `> ` (solution→judge). This is the primary debugging aid.
+- **Do not enforce resource limits**  --  the tool cannot measure time/memory. Say so in the disclaimer.
+- **`argparse`-based CLI**  --  `tool.py [--quiet] <data_file> <program> [args...]`.
 
 ## Testing (mandatory)
 
@@ -97,9 +97,9 @@ The judge system will never run or validate this file. You must test it manually
    - What does success/failure output look like?
    - What data file format does it expect?
 
-2. **Write two small test programs** in `temp/` (not real solutions — just enough to exercise the tool):
-   - `temp/test_ok.cpp` (or `.py`) — follows the protocol correctly and should pass
-   - `temp/test_bad.cpp` (or `.py`) — violates the protocol (e.g. wrong format, out-of-range value) and should trigger an error
+2. **Write two small test programs** in `temp/` (not real solutions  --  just enough to exercise the tool):
+   - `temp/test_ok.cpp` (or `.py`)  --  follows the protocol correctly and should pass
+   - `temp/test_bad.cpp` (or `.py`)  --  violates the protocol (e.g. wrong format, out-of-range value) and should trigger an error
 
    Also write a small test input file `temp/sample.in` matching the expected data file format.
 
@@ -114,14 +114,14 @@ The judge system will never run or validate this file. You must test it manually
    - `test_bad` triggers a clear, descriptive error
    - The interaction log (`< ` / `> ` lines) is readable and correct
 
-5. **Leakage review** — show the code to the user with this warning:
+5. **Leakage review**  --  show the code to the user with this warning:
 
    > ⚠️ This file will be **distributed to contestants**. Please check whether it leaks the intended solution approach. Common leaks and fixes:
    > - **The tool computes the correct answer internally** → change to print the judge's output and let the contestant verify by eye, instead of computing and checking the answer
    > - **Variable names or comments hint at the solution strategy** → only implement the protocol described in the problem statement; remove any logic not visible to contestants
    > - **Range checks or validation logic expose key observations** → remove checks that go beyond the statement's constraints
 
-6. **Summarize testing** — tell the user what you tested and the results (which programs, which inputs, observed output, any issues found). This is the only record that the tool was verified.
+6. **Summarize testing**  --  tell the user what you tested and the results (which programs, which inputs, observed output, any issues found). This is the only record that the tool was verified.
 
 7. **Clean up `temp/`** and commit after user approval:
    ```
@@ -132,4 +132,4 @@ The judge system will never run or validate this file. You must test it manually
 
 ## Example
 
-- `examples/testing_tool.py` — 245-line production tool for a 2-pass guessing game (read its source to understand the patterns above)
+- `examples/testing_tool.py`  --  245-line production tool for a 2-pass guessing game (read its source to understand the patterns above)

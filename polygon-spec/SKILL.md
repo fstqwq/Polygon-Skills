@@ -1,4 +1,4 @@
-﻿---
+---
 name: polygon-spec
 description: "Problem repository schema and file format contracts for competitive programming problem authoring. Defines the canonical repo layout, JSON schemas, draft conventions, and git conventions shared by all polygon-* skills. This background skill is automatically referenced when any polygon-* skill needs schema or layout context."
 user-invocable: false
@@ -42,7 +42,7 @@ temp/                   # throwaway test files (not committed, gitignored)
 ```
 
 - `attachments/` is git-tracked and included in ICPC package export. Contents are distributed to contestants.
-- `temp/` is for local testing scratch files (e.g. testing tool test programs). Not committed — add to `.gitignore`.
+- `temp/` is for local testing scratch files (e.g. testing tool test programs). Not committed  --  add to `.gitignore`.
 - `draft/` is git-tracked but excluded from the zip package.
 
 ## Language Model

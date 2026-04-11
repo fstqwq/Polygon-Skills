@@ -1,4 +1,4 @@
-# config/problem.json — Full Schema
+# config/problem.json  --  Full Schema
 
 ```json
 {
@@ -18,7 +18,7 @@
 
 ---
 
-# config/build.json — Full Schema
+# config/build.json  --  Full Schema
 
 ```json
 {

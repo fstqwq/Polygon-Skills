@@ -1,6 +1,6 @@
 ---
 name: polygon-tests
-description: "Create or manage test cases for a competitive programming problem. Use when the user wants to add, edit, or review test cases â€?both manual (hand-written) tests and generator-based test specifications."
+description: "Create or manage test cases for a competitive programming problem. Use when the user wants to add, edit, or review test cases  -- both manual (hand-written) tests and generator-based test specifications."
 ---
 
 # Manage Test Cases
@@ -34,7 +34,7 @@ description: "Create or manage test cases for a competitive programming problem.
    ```
 
    - Set `"sample": true` for tests that should appear as examples in the statement. Usually the first 1-3 tests are samples.
-   - Include `sample_input` and `sample_output` for sample tests â€?these are used by the statement renderer.
+   - Include `sample_input` and `sample_output` for sample tests  -- these are used by the statement renderer.
    - Non-sample tests omit `sample_input` and `sample_output`.
 
 6. **Commit**:

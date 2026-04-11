@@ -28,7 +28,7 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
    If the user gives a partial description, work with what they provide and ask about missing pieces. Do NOT fill in gaps yourself.
 
-3. **Write a concise draft.** Organize the user's content into the standard sections. Keep the user's original framing — if they described the problem in terms of a known algorithm, a game, or a scenario, preserve that context. Do not strip motivation or add decoration.
+3. **Write a concise draft.** Organize the user's content into the standard sections. Keep the user's original framing  --  if they described the problem in terms of a known algorithm, a game, or a scenario, preserve that context. Do not strip motivation or add decoration.
 
    Save to `draft/statement.<lang>.md` using this exact format:
 
@@ -83,7 +83,7 @@ The user provides problem content in any form: rough notes, pseudocode, another 
    - `## Interaction` → maps to `interaction.tex` (omit if not interactive)
    - `## Notes` → maps to `notes.tex` (omit if not needed)
    - `## Constraints` → folded into `## Input` during LaTeX conversion (not a separate file)
-   - Use LaTeX math (`$...$`) inline in the Markdown — it carries over directly to `.tex`
+   - Use LaTeX math (`$...$`) inline in the Markdown  --  it carries over directly to `.tex`
 
 4. **Show the draft and ask about style.** Present the draft, then ask:
 
@@ -99,7 +99,7 @@ The user provides problem content in any form: rough notes, pseudocode, another 
    - **Characters** (if any): "Who are the actors?" (e.g. Alice and Bob, a traveler, a king, ...)
    - **Object mapping**: "What do the mathematical objects represent?" (e.g. vertices → cities, edges → roads, values → costs, ...)
 
-   Then rewrite the draft with the theme applied. The mathematical content and constraints stay identical — only the framing changes.
+   Then rewrite the draft with the theme applied. The mathematical content and constraints stay identical  --  only the framing changes.
 
 6. **Show the themed draft** to the user and iterate until approved.
 
@@ -121,18 +121,18 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 ### Phase 3: Convert to LaTeX
 
 9. **Convert each draft to LaTeX section files**, following the formatting rules below. For each language, write:
-   - `statement-sections/<lang>/name.tex` — problem title (single line, no LaTeX commands)
-   - `statement-sections/<lang>/legend.tex` — the legend text
-   - `statement-sections/<lang>/input.tex` — input format
-   - `statement-sections/<lang>/output.tex` — output format
-   - `statement-sections/<lang>/notes.tex` — sample notes (if any)
-   - `statement-sections/<lang>/interaction.tex` — interaction protocol (if interactive)
+   - `statement-sections/<lang>/name.tex`  --  problem title (single line, no LaTeX commands)
+   - `statement-sections/<lang>/legend.tex`  --  the legend text
+   - `statement-sections/<lang>/input.tex`  --  input format
+   - `statement-sections/<lang>/output.tex`  --  output format
+   - `statement-sections/<lang>/notes.tex`  --  sample notes (if any)
+   - `statement-sections/<lang>/interaction.tex`  --  interaction protocol (if interactive)
 
 10. **Check formula consistency** across languages:
     ```
     python <skills>/polygon-statement/check_formulas.py
     ```
-    Fix any mismatches — every formula in one language must appear in all others.
+    Fix any mismatches  --  every formula in one language must appear in all others.
 
 11. **Commit** all languages together:
     ```
@@ -148,7 +148,7 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
 Problem statements follow a **terse, precise** style. Every sentence must carry information. The tone, however, varies. When the user requests style adjustments (step 4), present these three tones as options and imitate the chosen one.
 
-### Tone A — Concise
+### Tone A  --  Concise
 
 Direct, algebraic framing. No story. Standard Codeforces house style.
 
@@ -158,17 +158,17 @@ Direct, algebraic framing. No story. Standard Codeforces house style.
 
 Characteristics: "You are given...", "Find...", no characters, no motivation.
 
-### Tone B — Narrative
+### Tone B  --  Narrative
 
 A self-contained scenario that feels like describing a real situation. The reader should forget they are solving a math problem. Standard ICPC World Finals house style.
 
-> A group of hikers must cross a canyon using a single rope bridge that holds at most $k$ people at a time. Each hiker has a walking speed; when multiple hikers cross together, they move at the speed of the slowest person in the group. A flashlight is needed for every crossing, and there is only one — so someone must carry it back after each trip.
+> A group of hikers must cross a canyon using a single rope bridge that holds at most $k$ people at a time. Each hiker has a walking speed; when multiple hikers cross together, they move at the speed of the slowest person in the group. A flashlight is needed for every crossing, and there is only one  --  so someone must carry it back after each trip.
 >
 > Determine the minimum total time for all hikers to cross the canyon.
 
 Characteristics: physical scenario, natural language, no variable names in the opening, constraints introduced through the story rather than through math.
 
-### Tone C — Technical
+### Tone C  --  Technical
 
 Opens by defining or referencing a known concept, then poses a question about it. Common in IOI and research-flavored contests.
 
@@ -182,9 +182,9 @@ Characteristics: "Recall that...", defines structure first, poses the task secon
 
 ### Core principles (apply to all tones)
 
-1. **No spoilers.** Do not hint at the solution approach. Do not encourage a particular method — unless the user explicitly defines it as part of the problem's story (e.g. "using the Euler tour representation" in Tone C).
+1. **No spoilers.** Do not hint at the solution approach. Do not encourage a particular method  --  unless the user explicitly defines it as part of the problem's story (e.g. "using the Euler tour representation" in Tone C).
 2. **No hedging.** Never write "you might want to", "it could be the case that", "you should consider". State facts.
-3. **Precise quantifiers.** "at most", "exactly", "at least" — never "around", "roughly", "about".
+3. **Precise quantifiers.** "at most", "exactly", "at least"  --  never "around", "roughly", "about".
 4. **No condescension.** Do not write "as you probably know", "it is easy to see that", "obviously". Trust the reader.
 
 ### What to avoid (any tone)
@@ -199,7 +199,7 @@ Characteristics: "Recall that...", defines structure first, poses the task secon
 
 ### Length guideline
 
-- **Legend**: No hard limit — Tone B naturally runs longer than Tone A. But every sentence must earn its place.
+- **Legend**: No hard limit  --  Tone B naturally runs longer than Tone A. But every sentence must earn its place.
 - **Input/Output**: Mechanical descriptions only. Keep tight.
 - **Notes**: Only include if sample cases are non-obvious. Do not restate the problem.
 
@@ -212,7 +212,7 @@ Characteristics: "Recall that...", defines structure first, poses the task secon
   ```latex
   $$\sum_{i=1}^{n} a_i \le 2 \times 10^5$$
   ```
-- **Multi-line formulas** — use `align*` for aligned equations:
+- **Multi-line formulas**  --  use `align*` for aligned equations:
   ```latex
   \begin{align*}
   f(1) &= 1 \\
@@ -227,7 +227,7 @@ Characteristics: "Recall that...", defines structure first, poses the task secon
 - Output strings in `\texttt{}`: `\texttt{YES}`, `\texttt{NO}`, `\texttt{U}`, `\texttt{D}`
 - Use `\textit{}` sparingly for new concepts
 - Use `\textbf{}` at most once per statement for key conditions
-- Reduce emphasis overall — let the math and structure carry the meaning
+- Reduce emphasis overall  --  let the math and structure carry the meaning
 
 ### Figures
 Use the Polygon-compatible figure format:
@@ -240,7 +240,7 @@ Use the Polygon-compatible figure format:
 ```
 
 ### Input section
-- No `itemize` or `enumerate` — except for multi-operation problems where listing operations is natural
+- No `itemize` or `enumerate`  --  except for multi-operation problems where listing operations is natural
 - **Multiple test cases**: "The first line of the input contains an integer $T$ ($1 \le T \le \dots$) indicating the number of test cases. For each test case:" (always capital `$T$`)
 - End with: "It is guaranteed that the sum of $n$ over all test cases does not exceed $\dots$"
 - **Single test case**: start directly with "The first line contains..."
@@ -255,7 +255,7 @@ Use the Polygon-compatible figure format:
 - **Interactive**: Start legend with `\textit{This is an interactive problem.}`
 - **Multi-pass**: Start legend with `\textit{This is a multi-pass problem.}`
 - **Both**: Start legend with `\textit{This is a multi-pass, interactive problem.}`
-- **Mandatory flush block** — always include, even if not mentioned in the source:
+- **Mandatory flush block**  --  always include, even if not mentioned in the source:
   ```latex
   To flush your output, you can use:
   \begin{itemize}
@@ -303,6 +303,6 @@ When writing the Chinese version, use standard competitive programming Chinese:
 
 - **Never invent problem content.** If the user says "a tree problem," do NOT decide what the problem asks. Ask: "What should the solver compute? (e.g., diameter, centroid, LCA, ...)"
 - **Always show the draft** and wait for user confirmation before converting to LaTeX.
-- **Preserve existing content** when editing — only modify the sections the user asks to change.
-- **One commit for all languages** — do not commit one language at a time.
+- **Preserve existing content** when editing  --  only modify the sections the user asks to change.
+- **One commit for all languages**  --  do not commit one language at a time.
 - If the user provides both statement text and sample I/O at the same time, handle the statement here and suggest `/polygon-tests` for the test data.

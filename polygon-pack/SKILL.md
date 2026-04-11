@@ -50,7 +50,7 @@ Before packaging, verify the repo is in a valid state. Report any issues to the 
    cd {repo_root}
    zip -r ../{slug}.zip . -x ".git/*" -x "draft/*"
    ```
-   The zip should contain the repo contents directly at the root (no wrapper directory, no marker file). `config/problem.json` at the zip root is how the import system detects this as a native package. The `draft/` directory is excluded — it is authoring history, not part of the package.
+   The zip should contain the repo contents directly at the root (no wrapper directory, no marker file). `config/problem.json` at the zip root is how the import system detects this as a native package. The `draft/` directory is excluded  --  it is authoring history, not part of the package.
 
 6. **Report to the user**:
    - Path to the zip file
@@ -61,4 +61,4 @@ Before packaging, verify the repo is in a valid state. Report any issues to the 
 
 - Never package a repo with blocking issues unless the user explicitly overrides.
 - The `.git/` directory must NOT be included in the zip.
-- The zip root must directly contain `config/`, `tests/`, `solutions/`, etc. — no wrapper directory.
+- The zip root must directly contain `config/`, `tests/`, `solutions/`, etc.  --  no wrapper directory.

@@ -1,6 +1,6 @@
 ---
 name: polygon-solution
-description: "Write a solution for a competitive programming problem. Use when the user wants to add or modify a solution — accepted, wrong answer, TLE, or runtime error. Handles C++ competitive programming code style, .desc files, and build.json updates."
+description: "Write a solution for a competitive programming problem. Use when the user wants to add or modify a solution  --  accepted, wrong answer, TLE, or runtime error. Handles C++ competitive programming code style, .desc files, and build.json updates."
 ---
 
 # Write Solution

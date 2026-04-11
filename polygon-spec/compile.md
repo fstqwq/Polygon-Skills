@@ -8,7 +8,7 @@ All testlib programs (validator, checker, interactor, generator) are compiled th
 g++ -std=c++20 -O2 -o <output> <source.cpp> -I <path-to-testlib>
 ```
 
-Where `<path-to-testlib>` is the directory containing `testlib.h`. In the worktree, `testlib.h` is resolved at build time by the judge — for local testing, use the copy in `<skills>/polygon-spec/testlib.h`:
+Where `<path-to-testlib>` is the directory containing `testlib.h`. In the worktree, `testlib.h` is resolved at build time by the judge  --  for local testing, use the copy in `<skills>/polygon-spec/testlib.h`:
 
 ```
 g++ -std=c++20 -O2 -o validator validators/validator.cpp -I <skills>/polygon-spec

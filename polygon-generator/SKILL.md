@@ -1,6 +1,6 @@
 ---
 name: polygon-generator
-description: "Write a testlib test generator for a competitive programming problem. Use when the user wants to generate test data programmatically — random tests, stress tests, edge cases, or anti-hack tests."
+description: "Write a testlib test generator for a competitive programming problem. Use when the user wants to generate test data programmatically  --  random tests, stress tests, edge cases, or anti-hack tests."
 ---
 
 # Write Test Generator
@@ -39,13 +39,13 @@ description: "Write a testlib test generator for a competitive programming probl
    ```
 
    Key testlib generator patterns:
-   - `registerGen(argc, argv, 1)` — seeds RNG from command-line args
-   - `rnd.next(lo, hi)` — random integer in [lo, hi]
-   - `rnd.next(0.0, 1.0)` — random double
-   - `rnd.next("[a-z]{1,10}")` — random string matching regex
-   - `rnd.perm(n)` / `rnd.perm(n, 1)` — random permutation (0-indexed / 1-indexed)
-   - `println(...)` / `print(...)` — testlib output helpers
-   - Arguments come from `argv[]` — the gen command in spec.json provides them
+   - `registerGen(argc, argv, 1)`  --  seeds RNG from command-line args
+   - `rnd.next(lo, hi)`  --  random integer in [lo, hi]
+   - `rnd.next(0.0, 1.0)`  --  random double
+   - `rnd.next("[a-z]{1,10}")`  --  random string matching regex
+   - `rnd.perm(n)` / `rnd.perm(n, 1)`  --  random permutation (0-indexed / 1-indexed)
+   - `println(...)` / `print(...)`  --  testlib output helpers
+   - Arguments come from `argv[]`  --  the gen command in spec.json provides them
 
    Common generator patterns:
    - **Tree**: use `rnd.next()` to pick parents, or Prüfer sequence
@@ -78,4 +78,4 @@ description: "Write a testlib test generator for a competitive programming probl
 
 - Generator output must match the exact format the validator expects (same whitespace, same newlines).
 - Arguments should be configurable via `argv[]` so spec.json gen commands can vary parameters.
-- The generator itself does NOT get wired into test generation automatically — the user must add gen entries to spec.json via `/polygon-tests`.
+- The generator itself does NOT get wired into test generation automatically  --  the user must add gen entries to spec.json via `/polygon-tests`.
