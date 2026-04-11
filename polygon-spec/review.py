@@ -155,6 +155,10 @@ def _errors_spec_json(root: Path) -> list[str]:
             manual_path = root / "tests" / "manual" / f"{tid}.in"
             if not manual_path.exists():
                 errors.append(f"{prefix}: manual test file 'tests/manual/{tid}.in' missing")
+        if kind == "gen" and isinstance(tid, str) and TEST_ID_RE.fullmatch(tid):
+            gen_path = root / "tests" / "generator" / f"{tid}.in"
+            if not gen_path.exists():
+                errors.append(f"{prefix}: generator payload file 'tests/generator/{tid}.in' missing")
     id_list = sorted(seen_ids)
     for j, tid in enumerate(id_list):
         expected = f"{j + 1:03d}"
@@ -198,6 +202,9 @@ def _errors_solution_descs(root: Path) -> list[str]:
 def _warnings_completeness(root: Path) -> list[str]:
     """Warn about missing content that a finished problem should have."""
     warnings: list[str] = []
+    testlib_path = root / "third_party" / "testlib" / "testlib.h"
+    if not testlib_path.exists():
+        warnings.append("third_party/testlib/testlib.h: missing -- required for import")
     build_path = root / "config" / "build.json"
     if not build_path.exists():
         warnings.append("config/build.json: file missing -- no components configured")
