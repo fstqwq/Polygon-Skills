@@ -15,6 +15,8 @@ Run `python <skills>/polygon-spec/review.py` from the repo root. Include the out
 
 ### Step 2: Statement review
 
+Run `python <skills>/polygon-statement/check_formulas.py` on all `.tex` files. Include any warnings in the report.
+
 Read `draft/statement.*.md` and all `statement-sections/<lang>/*.tex`.
 
 Check:
@@ -103,7 +105,24 @@ Check relationships between components:
 | `std::shuffle` with `default_random_engine` | Platform-dependent engine | Use testlib's `shuffle()` with `rnd` |
 | Missing `registerGen(argc, argv, 1)` | No deterministic seeding | Add as first line of main |
 
-### Step 8: Produce the report
+### Step 8: Compilation check (best-effort)
+
+Attempt to compile all C++ sources (see `polygon-spec/compile.md` for flags):
+
+```
+g++ -std=c++20 -O2 -fsyntax-only <file>.cpp -I <skills>/polygon-spec
+```
+
+Check each component:
+- [ ] Validator compiles
+- [ ] Checker compiles (if custom)
+- [ ] Interactor compiles (if interactive)
+- [ ] All generators compile
+- [ ] All C++ solutions compile
+
+Use `-fsyntax-only` for speed -- no need to produce binaries. If no compiler is available, skip this step and note it in the report.
+
+### Step 9: Produce the report
 
 Write the full report to `draft/review.md`:
 
