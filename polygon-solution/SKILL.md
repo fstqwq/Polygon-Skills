@@ -67,7 +67,9 @@ If yes, write the solution with the user's specified expected behavior and repea
 
 ## For each solution
 
-3. **Write the code** in C++:
+3. **Write the code**. Use C++ by default. For Step E translations, use the target language.
+
+### C++
 
    ```cpp
    #include <bits/stdc++.h>
@@ -81,14 +83,58 @@ If yes, write the solution with the user's specified expected behavior and repea
    }
    ```
 
-   Code style:
    - Use `bits/stdc++.h`.
-   - Use plain `cin` / `cout` for I/O. Do NOT use `ios::sync_with_stdio(false)` or `cin.tie(nullptr)`.
+   - Use plain `cin` / `cout`. Do NOT use `ios::sync_with_stdio(false)` or `cin.tie(nullptr)`.
    - Do NOT write `return 0;` in `main`.
+   - For interactive problems: `cout << endl` or `cout.flush()` after each output.
+
+### Python
+
+   ```python
+   import sys
+   input = sys.stdin.readline
+
+   def main():
+       n = int(input())
+       # ...
+       print(ans)
+
+   main()
+   ```
+
+   - Use `sys.stdin.readline` as `input` for speed.
+   - Wrap logic in `main()` -- avoid top-level code beyond the `main()` call.
+   - Use `print()` for output.
+   - No imports beyond standard library. Prefer `sys`, `collections`, `heapq`, `bisect`, `math`.
+   - No type hints, no docstrings, no classes unless necessary.
+   - For interactive problems: `sys.stdout.flush()` or `print(..., flush=True)` after each output.
+
+### Java
+
+   ```java
+   import java.util.*;
+   import java.io.*;
+
+   public class Main {
+       public static void main(String[] args) {
+           Scanner sc = new Scanner(System.in);
+           int n = sc.nextInt();
+           // ...
+           System.out.println(ans);
+       }
+   }
+   ```
+
+   - Class name: `Main`.
+   - Use `Scanner` for input, `System.out.println` for output.
+   - For performance-critical code: use `BufferedReader` / `PrintWriter` instead.
+   - For interactive problems: `System.out.flush()` after each output.
+
+### Common rules (all languages)
+
    - Do NOT write comments. Code must be self-explanatory through clear variable names and structure.
-   - Self-contained: no helper files, no external includes beyond `bits/stdc++.h`.
+   - Self-contained: single file, no external dependencies.
    - Match the input/output format from the statement exactly.
-   - For interactive problems: flush after each output line (`cout << endl` or `cout.flush()`).
 
 4. **Write the .desc file** alongside:
    ```
