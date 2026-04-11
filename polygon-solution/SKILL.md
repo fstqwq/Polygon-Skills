@@ -9,7 +9,22 @@ description: "Write solutions for a competitive programming problem -- brute for
 
 1. **Understand the problem**. Read `statement-sections/english/legend.tex`, `input.tex`, `output.tex`, and `config/problem.json`.
 
-2. **Write auxiliary solutions first** (before the main correct solution). Go through each category below in order. For each one, propose the approach, write it, show to user, commit.
+2. **Plan the task list upfront.** Before writing any code, scan `solutions/` for existing files and determine which steps are already done. Then write a checklist to `draft/solutions.md`:
+
+   ```markdown
+   # Solutions Plan
+
+   - [ ] A. Brute force -- `solutions/brute_force.cpp`
+   - [ ] B. Wrong-answer trap -- `solutions/rej_greedy.cpp`
+   - [ ] C. Dummy solution -- `solutions/rej_dummy.cpp` (skip if no branching)
+   - [ ] D. Main correct -- `solutions/std.cpp`
+   - [ ] E. Language translations -- `solutions/ac_java.java`, `solutions/ac_python.py`
+   - [ ] F. Additional approaches (if requested)
+   ```
+
+   Mark already-completed items as `[x]`. Show the plan to the user. Update this file as you complete each step.
+
+3. **Write auxiliary solutions first** (before the main correct solution). Go through each category below in order. For each one, propose the approach, write it, show to user, commit.
 
 ### Step A: Brute force
 
@@ -83,7 +98,7 @@ If yes, write the solution with the user's specified expected behavior and repea
 
 ## For each solution
 
-3. **Write the code**. Use C++ by default. For Step E translations, use the target language.
+4. **Write the code**. Use C++ by default. For Step E translations, use the target language.
 
 ### C++
 
@@ -161,15 +176,15 @@ If yes, write the solution with the user's specified expected behavior and repea
    - Use `auto` when the type is obvious from context (e.g. `auto it = mp.find(x)`).
    - Structured bindings are encouraged (e.g. `auto [u, v, w] = edges[i]`).
 
-4. **Write the .desc file** alongside:
+5. **Write the .desc file** alongside:
    ```
    expected: accepted
    ```
    Valid values: `accepted`, `wrong_answer`, `time_limit_exceeded`, `run_time_error`, `rejected`.
 
-5. **Show the code to the user** and wait for feedback before committing.
+6. **Show the code to the user** and wait for feedback before committing.
 
-6. **Commit**:
+7. **Update `draft/solutions.md`** (mark the step as `[x]`) and **commit**:
    ```
    git add solutions/{name}.cpp solutions/{name}.cpp.desc config/build.json
    git commit -m "solution: add {name} ({expected behavior})"
