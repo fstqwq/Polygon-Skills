@@ -91,9 +91,6 @@ If yes, write the solution with the user's specified expected behavior and repea
 ### Python
 
    ```python
-   import sys
-   input = sys.stdin.readline
-
    def main():
        n = int(input())
        # ...
@@ -102,12 +99,11 @@ If yes, write the solution with the user's specified expected behavior and repea
    main()
    ```
 
-   - Use `sys.stdin.readline` as `input` for speed.
+   - Use `input()` and `print()`.
    - Wrap logic in `main()` -- avoid top-level code beyond the `main()` call.
-   - Use `print()` for output.
    - No imports beyond standard library. Prefer `sys`, `collections`, `heapq`, `bisect`, `math`.
    - No type hints, no docstrings, no classes unless necessary.
-   - For interactive problems: `sys.stdout.flush()` or `print(..., flush=True)` after each output.
+   - For interactive problems: `print(..., flush=True)` after each output.
 
 ### Java
 
