@@ -60,12 +60,12 @@ description: "Initialize a new competitive programming problem repository from s
    }
    ```
 
-7. **Write statement template files** (these are fixed boilerplate  -- do not customize):
-   - `statement/statements.ftl`  -- use the system default FTL template.
-   - `statement/problem.tex`  -- use the system default problem template.
-   - `statement/olymp.sty`  -- use the system default style.
+7. **Write statement template files** (these are fixed boilerplate -- do not customize):
+   - `statement/statements.ftl` -- copy from `<skills>/polygon-init/templates/statements.ftl`
+   - `statement/problem.tex` -- copy from `<skills>/polygon-init/templates/problem.tex`
+   - `statement/olymp.sty` -- copy from `<skills>/polygon-init/templates/olymp.sty`
 
-   To obtain the correct default content, read the defaults from `app/service/statement/constant.py` in the Polygon-Replica codebase. These must match exactly.
+   These files must match exactly. Do not modify them.
 
 8. **Write statement section stubs** (for each chosen language, create `statement-sections/<language>/`):
    - `name.tex`  -- the problem title
