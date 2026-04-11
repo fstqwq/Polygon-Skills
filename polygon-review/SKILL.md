@@ -92,6 +92,17 @@ Check relationships between components:
 - [ ] If multi-pass: `pass_limit` is set correctly
 - [ ] `build.json` references only files that exist
 
+**Generator determinism**: read every generator source file and flag non-deterministic patterns:
+
+| Pattern | Risk | Fix |
+|---------|------|-----|
+| `rand()`, `srand()`, `random()` | Platform-dependent RNG | Use `rnd.next()` from testlib |
+| `time()`, `clock()`, `chrono::` | Time-seeded randomness | Remove; testlib seeds from argv |
+| `&var`, pointer arithmetic | Address-dependent output | Remove address-based logic |
+| `unordered_map`, `unordered_set` iteration | Iteration order varies across platforms/runs | Use `map`/`set`, or sort before output |
+| `std::shuffle` with `default_random_engine` | Platform-dependent engine | Use testlib's `shuffle()` with `rnd` |
+| Missing `registerGen(argc, argv, 1)` | No deterministic seeding | Add as first line of main |
+
 ### Step 8: Produce the report
 
 Write the full report to `draft/review.md`:
