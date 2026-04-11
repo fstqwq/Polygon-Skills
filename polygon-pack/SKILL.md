@@ -23,11 +23,11 @@ description: "Package a problem repository into a native zip for backup or impor
 3. **Create the zip**:
    ```
    cd {repo_root}
-   zip -r ../{slug}.zip . -x ".git/*" -x "temp/*"
+   zip -r ../{slug}.zip . -x ".git/*" -x "temp/*" -x "draft/*"
    ```
    - The zip root must directly contain `config/`, `tests/`, `solutions/`, etc. -- no wrapper directory.
    - `config/problem.json` at the zip root is how the import system detects this as a native package.
-   - `.git/` and `temp/` are excluded.
+   - `.git/`, `temp/`, and `draft/` are excluded.
 
 4. **Report to the user**:
    - Path to the zip file
