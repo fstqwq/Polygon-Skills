@@ -132,7 +132,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
        // ...
    }
    ```
-   Code style (same as `/polygon-solution`): no comments, no `return 0;`, use `print()`/`println()`.
+   Code style (same as `/polygon-solution`): no comments, no `return 0;`.
 
 2. **Register in config/build.json**:
    ```json
@@ -181,7 +181,6 @@ If the user asks to see current tests:
 - `rnd.next("[a-z]{1,10}")` -- random string matching regex (testlib regex)
 - `rnd.perm(n)` / `rnd.perm(n, 1)` -- random permutation (0-indexed / 1-indexed)
 - `rnd.partition(size, sum)` -- partition `sum` into `size` non-negative parts
-- `println(...)` / `print(...)` -- testlib output helpers (use these, not `cout`)
 
 ## Common generator patterns
 
@@ -221,4 +220,4 @@ shuffle(edges.begin(), edges.end());
 - Input files must end with exactly one trailing newline, no trailing spaces on lines.
 - Generator output must match the exact format the validator expects.
 - Always write the test plan to `draft/tests.md` and get user approval before implementing.
-- Use testlib's `print()` / `println()`, not `cout`.
+
