@@ -46,12 +46,21 @@ If the problem has multiple outcome branches (e.g. "output the answer or -1 if i
 
 ### Step D: Main correct solution
 
-After auxiliary solutions are committed, ask the user:
+After auxiliary solutions are committed, ask the user which mode they prefer:
 
-> "Do you want to write the main correct solution now?"
+> "Ready for the main correct solution. Two options:
+> 1. **You describe the algorithm** -- I implement it faithfully.
+> 2. **I solve it myself** -- I'll analyze the problem, propose an approach with complexity and difficulty assessment, and ask for your approval before implementing."
 
-If yes:
-- Ask the user for the intended algorithm / approach. Do NOT just implement your own idea silently.
+**Mode 1 (user-driven):** The user explains the approach. Implement it exactly as described. Do not second-guess or "improve" the algorithm.
+
+**Mode 2 (agent-driven):** Analyze the problem independently. Present:
+- Proposed algorithm and complexity
+- Difficulty estimate (e.g. "div2 C", "ICPC medium", "WF hard")
+- Any alternative approaches worth considering
+
+Wait for the user to approve or redirect before writing code.
+
 - Filename: `solutions/std.cpp`
 - Expected: `accepted`
 - Update `config/build.json`: `"accepted_solution_source": "solutions/std.cpp"`
