@@ -49,6 +49,14 @@ If yes:
 - Expected: `accepted`
 - Update `config/build.json`: `"accepted_solution_source": "solutions/std.cpp"`
 
+### Step E: Language translations
+
+After the main correct solution is committed, translate it to Java and/or Python. These must be direct, faithful translations -- same algorithm, same logic.
+
+- Filename: `solutions/ac_java.java`, `solutions/ac_python.py`
+- Expected: `accepted`
+- Purpose: verifies that time/memory limits are achievable in other languages
+
 ---
 
 ## For each solution
