@@ -29,19 +29,21 @@ description: "Write a solution for a competitive programming problem. Use when t
    using namespace std;
 
    int main() {
-       ios::sync_with_stdio(false);
-       cin.tie(nullptr);
+       int n;
+       cin >> n;
        // ...
-       return 0;
+       cout << ans << "\n";
    }
    ```
 
    Code style:
-   - Use `bits/stdc++.h` for competitive programming convenience.
-   - Use `ios::sync_with_stdio(false); cin.tie(nullptr);` for fast I/O.
-   - Clean, readable code with comments for non-obvious logic.
+   - Use `bits/stdc++.h`.
+   - Use plain `cin` / `cout` for I/O. Do NOT use `ios::sync_with_stdio(false)` or `cin.tie(nullptr)`.
+   - Do NOT write `return 0;` in `main`.
+   - Do NOT write comments. Code must be self-explanatory through clear variable names and structure.
+   - Self-contained: no helper files, no external includes beyond `bits/stdc++.h`.
    - Match the input/output format from the statement exactly.
-   - For interactive problems: flush after each output line.
+   - For interactive problems: flush after each output line (`cout << endl` or `cout.flush()`).
 
 5. **Choose the filename**:
    - Main accepted solution: `solutions/std.cpp`
