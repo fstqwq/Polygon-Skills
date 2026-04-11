@@ -57,6 +57,12 @@ After the main correct solution is committed, translate it to Java and/or Python
 - Expected: `accepted`
 - Purpose: verifies that time/memory limits are achievable in other languages
 
+### Step F: Additional approaches
+
+Ask the user: "Do you want to test any other approaches (e.g. a different algorithm that should also pass, or a specific wrong approach you want to make sure fails)?"
+
+If yes, write the solution with the user's specified expected behavior and repeat the per-solution steps below.
+
 ---
 
 ## For each solution
