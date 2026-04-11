@@ -25,7 +25,7 @@ description: "Export the problem as a native zip package."
 3. **Report to the user**:
    - Path to the zip file
    - Summary from the review (number of tests, solutions, components present)
-   - "You can import this package into Polygon-Replica via the Import page, or use `/polygon-import` to import it locally."
+   - "You can import this package into Polygon-Replica via the Import page."
 
 ## Rules
 
