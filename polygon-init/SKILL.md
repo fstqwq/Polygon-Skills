@@ -46,7 +46,14 @@ description: "Initialize a new problem repository from scratch."
    statement/
    statement-sections/<language>/   # one per chosen language
    tests/manual/
+   tests/generator/
    tests/answers/
+   third_party/testlib/
+   ```
+
+   Copy `testlib.h` into the repo:
+   ```
+   cp <skills>/polygon-spec/testlib.h third_party/testlib/testlib.h
    ```
 
 5. **Write config/problem.json** with the confirmed parameters. Refer to polygon-spec for the schema.
