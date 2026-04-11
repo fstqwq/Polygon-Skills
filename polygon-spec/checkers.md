@@ -1,6 +1,6 @@
 # Standard Testlib Checkers
 
-Standard checkers are used by copying the upstream source file into `checkers/` and setting `checker_source` in `build.json`. The system detects standard checkers by content hash. The checker name is the filename without `.cpp` (e.g. `wcmp`).
+Standard checkers are used by copying from `<skills>/polygon-checker/standard/` into `checkers/` and setting `checker_source` in `build.json`. The system detects standard checkers by content hash. The checker name is the filename without `.cpp` (e.g. `wcmp`).
 
 | Situation | Checker | Notes |
 |-----------|---------|-------|

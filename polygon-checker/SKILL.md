@@ -18,7 +18,7 @@ description: "Write or configure a checker for a competitive programming problem
 
 2. **Copy the standard checker into the repo** and update `config/build.json`:
    ```bash
-   cp third_party/upstream/testlib/checkers/wcmp.cpp checkers/wcmp.cpp
+   cp <skills>/polygon-checker/standard/wcmp.cpp checkers/wcmp.cpp
    ```
    ```json
    "checker_source": "checkers/wcmp.cpp"
