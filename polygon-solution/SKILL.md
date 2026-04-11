@@ -103,6 +103,7 @@ If yes, write the solution with the user's specified expected behavior and repea
    - Wrap logic in `main()` -- avoid top-level code beyond the `main()` call.
    - No imports beyond standard library. Prefer `sys`, `collections`, `heapq`, `bisect`, `math`.
    - No type hints, no docstrings, no classes unless necessary.
+   - For recursive solutions: add `sys.setrecursionlimit(...)` at the top. The judge runs with unlimited stack, but Python's default limit is ~1000.
    - For interactive problems: `print(..., flush=True)` after each output.
 
 ### Java
