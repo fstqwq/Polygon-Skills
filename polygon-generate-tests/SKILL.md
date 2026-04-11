@@ -166,15 +166,21 @@ After the user approves the plan, implement each part sequentially. IDs are cont
    "generator_sources": ["generators/gen_random.cpp"]
    ```
 
-3. **Wire into spec.json**:
+3. **Wire into spec.json** and **create the generator payload file**:
+
+   Add the entry to `tests/spec.json`:
    ```json
    {
      "id": "008",
-     "kind": "gen",
-     "gen_command": "gen_random 5 100 1"
+     "kind": "gen"
    }
    ```
-   Last argument is the seed -- vary it per test.
+
+   Write the generator command to `tests/generator/008.in`:
+   ```
+   gen_random 5 100 1
+   ```
+   Last argument is the seed -- vary it per test. The payload file contains the full command line (generator name + arguments).
 
 4. **Compile (best-effort**, see `polygon-spec/compile.md`):
    ```
