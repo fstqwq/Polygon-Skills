@@ -82,9 +82,9 @@ Wait for the user to approve or redirect before writing code.
 
 ### Step E: Language translations
 
-After the main correct solution is committed, translate it to Java and/or Python. These must be direct, faithful translations -- same algorithm, same logic.
+After the main correct solution is committed, translate it to Python first, then optionally Java. These must be direct, faithful translations -- same algorithm, same logic.
 
-- Filename: `solutions/ac_java.java`, `solutions/ac_python.py`
+- Filename: `solutions/ac_python.py` (priority), `solutions/ac_java.java` (if requested)
 - Expected: `accepted`
 - Purpose: verifies that time/memory limits are achievable in other languages
 
