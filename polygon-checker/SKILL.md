@@ -1,6 +1,6 @@
 ---
 name: polygon-checker
-description: "Write or configure a checker for a competitive programming problem. Use when the problem has special output requirements (multiple valid answers, floating point tolerance, property-based checking) or when the user wants to set a standard checker like std::wcmp."
+description: "Write or select a checker (wcmp, ncmp, rcmp, or custom)."
 ---
 
 # Write or Configure Checker

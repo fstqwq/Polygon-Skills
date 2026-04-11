@@ -1,6 +1,6 @@
 ---
 name: polygon-validator
-description: "Write a testlib input validator for a competitive programming problem. Use when the user wants to add or modify the input validator, or mentions input validation, constraint checking, or test data verification."
+description: "Write a testlib input validator."
 ---
 
 # Write Input Validator

@@ -1,6 +1,6 @@
 ---
 name: polygon-interactor
-description: "Write a testlib interactor for an interactive competitive programming problem. Use when the problem mode is interactive and needs a judge-side interactor program that communicates with the contestant's solution via stdin/stdout."
+description: "Write the interactor and local testing tool for an interactive problem."
 ---
 
 # Write Interactor

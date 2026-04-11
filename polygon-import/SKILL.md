@@ -1,6 +1,6 @@
 ---
 name: polygon-import
-description: "Import a native zip package into a local problem repository. Use when the user has a .zip exported from Polygon-Replica or /polygon-export and wants to set up or update a local working copy."
+description: "Import a native zip package into a local problem repository."
 ---
 
 # Import Problem Package

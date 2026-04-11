@@ -1,6 +1,6 @@
 ---
 name: polygon-review
-description: "Perform a comprehensive review of a competitive programming problem. Use when the user wants to audit the problem for completeness, consistency, and quality before export or contest use."
+description: "Audit the problem for completeness, consistency, and quality before export."
 ---
 
 # Review Problem

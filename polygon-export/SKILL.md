@@ -1,6 +1,6 @@
 ---
 name: polygon-export
-description: "Export the current problem repository as a native zip package. Use when the user wants to back up, share, or upload the problem to Polygon-Replica."
+description: "Export the problem as a native zip package."
 ---
 
 # Export Problem Package

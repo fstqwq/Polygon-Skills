@@ -1,6 +1,6 @@
 ---
 name: polygon-solution
-description: "Write solutions for a competitive programming problem -- brute force, wrong-answer traps, and main correct solution. Handles C++ competitive programming code style, .desc files, and build.json updates."
+description: "Write solutions -- brute force, wrong-answer traps, main correct, and translations."
 ---
 
 # Write Solution

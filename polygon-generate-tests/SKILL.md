@@ -1,6 +1,6 @@
 ---
 name: polygon-generate-tests
-description: "Design and create test cases for a competitive programming problem -- samples, edge cases, stress tests, anti-hack tests, and max-stress tests. Guides test suite design methodology."
+description: "Design and create test cases -- samples, edge cases, stress tests, anti-hack tests."
 ---
 
 # Generate Tests

@@ -1,6 +1,6 @@
 ---
 name: polygon-init
-description: "Initialize a new competitive programming problem repository from scratch. Use when the user wants to start creating a new problem and no repository exists yet. Creates the full directory skeleton, config files, statement templates, and initial git commit."
+description: "Initialize a new problem repository from scratch."
 ---
 
 # Initialize Problem Repository

@@ -1,6 +1,6 @@
 ---
 name: polygon-statement
-description: "Write or edit the problem statement for a competitive programming problem. Use when the user wants to write, revise, or format the problem statement sections (legend, input, output, notes, interaction). Works through a Markdown draft first, then converts to LaTeX for all configured languages."
+description: "Write or edit the problem statement (Markdown draft, then LaTeX)."
 ---
 
 # Write Problem Statement

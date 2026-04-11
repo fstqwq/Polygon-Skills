@@ -1,6 +1,6 @@
 ---
 name: polygon-spec
-description: "Problem repository schema and file format contracts for competitive programming problem authoring. Defines the canonical repo layout, JSON schemas, draft conventions, and git conventions shared by all polygon-* skills. This background skill is automatically referenced when any polygon-* skill needs schema or layout context."
+description: "Problem repository schema and file format reference."
 user-invocable: false
 ---
 
