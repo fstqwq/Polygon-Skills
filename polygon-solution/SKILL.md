@@ -130,9 +130,19 @@ If yes, write the solution with the user's specified expected behavior and repea
 
 ### Common rules (all languages)
 
-   - Do NOT write comments. Code must be self-explanatory through clear variable names and structure.
+   **Prefer simplicity and readability.** Code should be short, clear, and direct.
+
+   - Do NOT write comments. Structure and naming carry all meaning.
    - Self-contained: single file, no external dependencies.
    - Match the input/output format from the statement exactly.
+   - Short variable names are fine when conventional (`n`, `m`, `u`, `v`, `ans`, `dp`, `adj`).
+   - Trust the input format. Do not write defensive I/O checks (e.g. `if (!(cin >> n))` is unnecessary -- just `cin >> n`).
+
+   **C++ specific:**
+   - Prefer `vector` over global arrays. Pass and return `vector` by value.
+   - Minimize global variables. Pass data through function arguments.
+   - Use `auto` when the type is obvious from context (e.g. `auto it = mp.find(x)`).
+   - Structured bindings are encouraged (e.g. `auto [u, v, w] = edges[i]`).
 
 4. **Write the .desc file** alongside:
    ```
