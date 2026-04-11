@@ -28,6 +28,21 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
    If the user gives a partial description, work with what they provide and ask about missing pieces. Do NOT fill in gaps yourself.
 
+   **Constraint checklist** -- confirm each applicable item with the user before drafting:
+
+   | Topic | What to ask |
+   |-------|-------------|
+   | **Integer types** | Are all inputs integers? Specify explicitly (e.g., "integer", not just a variable name). |
+   | **Value ranges** | Exact bounds for every variable: $1 \le n \le 10^5$, not just "n is large". |
+   | **Multi-test sum** | If multi-test: is there a constraint on $\sum n$ across all test cases? What is it? |
+   | **Graph validity** | Simple graph? No self-loops, no multi-edges? Connected? Directed or undirected? |
+   | **Tree guarantee** | "It is guaranteed that the input forms a tree" -- explicit or implied? |
+   | **Degenerate cases** | Can $n=1$? Can the answer be 0? Can the graph be disconnected? Can coordinates coincide? |
+   | **Output uniqueness** | Is the answer unique, or can there be multiple valid outputs? If multiple, any preference? |
+   | **Edge cases branch** | If the problem has "output -1 if impossible" -- is it guaranteed that such cases exist in any valid test suite? |
+   | **Coordinate/weight range** | Integer or real? Positive only or can be negative/zero? |
+   | **String constraints** | Alphabet (lowercase Latin?), length bounds. |
+
 3. **Write a concise draft.** Organize the user's content into the standard sections. Keep the user's original framing  --  if they described the problem in terms of a known algorithm, a game, or a scenario, preserve that context. Do not strip motivation or add decoration.
 
    Save to `draft/statement.<lang>.md` using this exact format:
