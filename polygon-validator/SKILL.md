@@ -12,8 +12,8 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 ## Procedure
 
 1. **Read the problem's input spec.** Look for sources in this order:
-   1. `draft/statement.*.md` â€?preferred (has `## Input` and `## Constraints` sections)
-   2. `statement-sections/<lang>/input.tex` + `statement-sections/<lang>/legend.tex` â€?fallback if no draft exists (e.g. imported problems)
+   1. `draft/statement.*.md`  -- preferred (has `## Input` and `## Constraints` sections)
+   2. `statement-sections/<lang>/input.tex` + `statement-sections/<lang>/legend.tex`  -- fallback if no draft exists (e.g. imported problems)
 
    Also read `config/problem.json` for `mode` (interactive or pass-fail).
 
@@ -86,9 +86,9 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 
    | Behavior | Detail |
    |----------|--------|
-   | **Greedy, no backtracking** | `[0-9]?1` does NOT match `"1"` â€?the `?` greedily consumes `1`, then fails on the literal `1`. |
+   | **Greedy, no backtracking** | `[0-9]?1` does NOT match `"1"`  -- the `?` greedily consumes `1`, then fails on the literal `1`. |
    | **Spaces are ignored** | `readWord("NO SOLUTION")` matches `"NOSOLUTION"`. Escape spaces with `\\ `: `readWord("NO\\\\ SOLUTION")`. |
-   | **`|` is brute-force** | Alternations are tried one by one. Do not use many alternatives in one expression â€?performance degrades. |
+   | **`|` is brute-force** | Alternations are tried one by one. Do not use many alternatives in one expression  -- performance degrades. |
    | **`[^...]` can't generate** | `[^0-9]*` works for matching but cannot be used with `rnd.next()` for generation. |
    | **No lookahead/lookbehind** | `(?=...)`, `(?!...)`, etc. do not exist. |
    | **No `+`** | Use `{1,}` instead of `+`. Only `*`, `?`, and `{n,m}` are supported as quantifiers. |
@@ -156,7 +156,7 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
    "validator_source": "validators/validator.cpp"
    ```
 
-6. **Validate** â€?run the schema checker:
+6. **Validate**  -- run the schema checker:
    ```
    python <skills>/polygon-spec/review.py
    ```
@@ -177,18 +177,18 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 
 ## Rules
 
-- Validate **every** constraint from the statement â€?ranges, sums, structure (tree/graph/permutation), string lengths, character sets.
+- Validate **every** constraint from the statement  -- ranges, sums, structure (tree/graph/permutation), string lengths, character sets.
 - Use descriptive variable names in `readInt`/`readLong` calls for clear error messages.
 - The validator must enforce **exact whitespace**: spaces between numbers on a line, newlines between lines, EOF at the end.
-- If a constraint is ambiguous or missing, **stop and ask** â€?do not guess.
-- `testlib.h` is available at build time â€?just `#include "testlib.h"`.
+- If a constraint is ambiguous or missing, **stop and ask**  -- do not guess.
+- `testlib.h` is available at build time  -- just `#include "testlib.h"`.
 - For graphs: validate vertex range, check for self-loops, check for multi-edges if the statement forbids them.
 - For trees: validate n-1 edges AND check connectivity.
-- **Multi-test**: call `setTestCase(t + 1)` at the top of each test case loop â€?mandatory for per-testcase error messages and boundary checking.
+- **Multi-test**: call `setTestCase(t + 1)` at the top of each test case loop  -- mandatory for per-testcase error messages and boundary checking.
 
 ## Examples
 
 Real validators from production problems:
 
-- `examples/taxi_val.cpp` â€?multi-field input with `format()` and `~` boundary naming
-- `examples/multipass_val.cpp` â€?multi-pass problem validator (validates only pass 1 input; `"op~"`, `"~seed~"`)
+- `examples/taxi_val.cpp`  -- multi-field input with `format()` and `~` boundary naming
+- `examples/multipass_val.cpp`  -- multi-pass problem validator (validates only pass 1 input; `"op~"`, `"~seed~"`)

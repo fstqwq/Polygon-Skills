@@ -10,11 +10,11 @@ description: "Write or configure a checker for a competitive programming problem
 ### Option A: Standard Checker (preferred when applicable)
 
 1. **Determine which standard checker fits**. Refer to `polygon-spec/checkers.md` for the full catalog. Common choices:
-   - `wcmp` â€?token-by-token comparison (default, most problems)
-   - `ncmp` â€?ordered sequence of integers
-   - `yesno` / `nyesno` â€?YES/NO (single or multi-test)
-   - `rcmp4` / `rcmp6` / `rcmp9` â€?floating point with tolerance
-   - `uncmp` â€?unordered sequence of integers
+   - `wcmp`  -- token-by-token comparison (default, most problems)
+   - `ncmp`  -- ordered sequence of integers
+   - `yesno` / `nyesno`  -- YES/NO (single or multi-test)
+   - `rcmp4` / `rcmp6` / `rcmp9`  -- floating point with tolerance
+   - `uncmp`  -- unordered sequence of integers
 
 2. **Copy the standard checker into the repo** and update `config/build.json`:
    ```bash
@@ -54,7 +54,7 @@ description: "Write or configure a checker for a competitive programming problem
        // Read input
        int n = inf.readInt();
 
-       // Validate jury answer first â€?catch judge bugs
+       // Validate jury answer first  -- catch judge bugs
        bool jury_ok = readAndCheckAnswer(n, ans);
 
        // Then validate contestant answer
@@ -69,14 +69,14 @@ description: "Write or configure a checker for a competitive programming problem
    }
    ```
 
-   **Why this pattern matters:** If the main correct solution has a bug, a naive checker that only compares `ouf` against `ans` will accept wrong answers. The `readAndCheckAnswer` pattern catches this by validating `ans` independently â€?an invalid jury answer triggers `_fail`, which is immediately visible in testing.
+   **Why this pattern matters:** If the main correct solution has a bug, a naive checker that only compares `ouf` against `ans` will accept wrong answers. The `readAndCheckAnswer` pattern catches this by validating `ans` independently  -- an invalid jury answer triggers `_fail`, which is immediately visible in testing.
 
    Key points:
    - `readAndCheckAnswer(input_data, in)` reads from `in` (either `ouf` or `ans`)
-   - `in.quitf(_wa, ...)` on invalid answers â€?testlib maps this to `_fail` automatically when called on `ans`
+   - `in.quitf(_wa, ...)` on invalid answers  -- testlib maps this to `_fail` automatically when called on `ans`
    - Three streams: `inf` (input), `ouf` (contestant output), `ans` (jury answer)
    - Verdicts: `_ok`, `_wa`, `_fail` only. Do not use `_pe`
-   - **Multi-test**: call `setTestCase(t)` (1-indexed) at the top of each test case loop iteration â€?mandatory for proper per-testcase error messages
+   - **Multi-test**: call `setTestCase(t)` (1-indexed) at the top of each test case loop iteration  -- mandatory for proper per-testcase error messages
 
 3. **Save as** `checkers/checker.cpp`.
 
@@ -101,11 +101,11 @@ description: "Write or configure a checker for a competitive programming problem
 
 ### Option C: Multi-pass Checker (non-interactive)
 
-For non-interactive multi-pass problems (`pass_limit â‰?2`, mode `pass-fail`). The checker produces `nextpass.in` for subsequent passes.
+For non-interactive multi-pass problems (`pass_limit  -- 2`, mode `pass-fail`). The checker produces `nextpass.in` for subsequent passes.
 
 The evaluation model is the same as multi-pass interactive (see `/polygon-interactor` Section B), except:
 - The judge uses `checker <test.in> <contestant_output> <feedback_dir>` instead of an interactor
-- There is no stdin/stdout interaction â€?the checker reads `ouf` (contestant output) after the solution finishes
+- There is no stdin/stdout interaction  -- the checker reads `ouf` (contestant output) after the solution finishes
 - The checker writes `nextpass.in` via `tout` for the next pass
 
 1. **Write the checker** with `start_next_pass()` lambda (see `/polygon-interactor` Section B):
@@ -149,7 +149,7 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
    }
    ```
 
-2. **Save, update build.json, commit** â€?same as Option B.
+2. **Save, update build.json, commit**  -- same as Option B.
 
 **When to use which:**
 
@@ -168,4 +168,4 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 
 ## Examples
 
-- `examples/constructive_checker.cpp` â€?constructive problem checker: validates contestant's matrix construction against constraints, uses `readAndCheckAnswer(n, in)` pattern to share logic between `ouf` and `ans`
+- `examples/constructive_checker.cpp`  -- constructive problem checker: validates contestant's matrix construction against constraints, uses `readAndCheckAnswer(n, in)` pattern to share logic between `ouf` and `ans`

@@ -53,8 +53,8 @@ Each language is a subdirectory under `statement-sections/`. The directory name 
 
 ```
 statement-sections/
-  english/              # priority 0 â€?always sorted first
-  chinese/              # priority 1 â€?sorted second
+  english/              # priority 0  -- always sorted first
+  chinese/              # priority 1  -- sorted second
   japanese/             # alphabetical among remaining languages
   russian/              # alphabetical among remaining languages
 ```
@@ -66,9 +66,9 @@ Languages are sorted with a fixed priority: **english** first, **chinese** secon
 ### Shared resources
 
 All languages share one set of template files in `statement/`:
-- `statements.ftl` â€?document preamble and structure
-- `problem.tex` â€?per-problem rendering template
-- `olymp.sty` â€?LaTeX style macros
+- `statements.ftl`  -- document preamble and structure
+- `problem.tex`  -- per-problem rendering template
+- `olymp.sty`  -- LaTeX style macros
 
 These files are NOT language-specific. The same template compiles all languages.
 
@@ -90,8 +90,8 @@ All files start empty (or with the problem title for `name.tex`).
 ### LaTeX engine selection
 
 The system auto-detects the LaTeX engine from the rendered `main.tex` content:
-- If `\usepackage{fontspec}` or `\usepackage{xeCJK}` is present â†?**XeLaTeX**
-- Otherwise â†?**pdfLaTeX**
+- If `\usepackage{fontspec}` or `\usepackage{xeCJK}` is present  -- **XeLaTeX**
+- Otherwise  -- **pdfLaTeX**
 
 The default template includes `fontspec` + `xeCJK`, so new problems use XeLaTeX. Imported Polygon packages that use `fontenc`/`inputenc` continue to compile with pdfLaTeX.
 
@@ -110,13 +110,13 @@ The default template includes `fontspec` + `xeCJK`, so new problems use XeLaTeX.
 - Each meaningful change gets its own commit.
 - Commit messages should be descriptive: `"add accepted solution"`, `"add manual tests 001-003"`, `"update statement legend"`.
 - Do not commit derived/generated files.
-- The `draft/` directory is committed â€?it is part of the authoring history.
+- The `draft/` directory is committed  -- it is part of the authoring history.
 
 ## Reference Files
 
 For detailed schemas and reference data, read the following files in this skill directory:
 
-- `config.md` â€?default values and full field tables for `problem.json` and `build.json`
-- `tests.md` â€?full `spec.json` schema, `solutions/*.desc` format, and `draft/` conventions
-- `checkers.md` â€?standard testlib checker catalog
-- `review.py` â€?standalone validator; run from repo root to check all config files
+- `config.md`  -- default values and full field tables for `problem.json` and `build.json`
+- `tests.md`  -- full `spec.json` schema, `solutions/*.desc` format, and `draft/` conventions
+- `checkers.md`  -- standard testlib checker catalog
+- `review.py`  -- standalone validator; run from repo root to check all config files
