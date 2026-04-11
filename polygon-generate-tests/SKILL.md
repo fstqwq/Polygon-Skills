@@ -94,6 +94,33 @@ Pick the ones relevant to the problem.
 
 **Part 6 -- Extra**: ask the user: "Do you have any specific test scenarios you want to add?" Add whatever they suggest.
 
+### Domain-specific checklists
+
+Check which of these apply to the problem and incorporate into the plan:
+
+**Multi-test (T test cases)**:
+- **Increasing n**: T tests where n grows each case (1, 2, 4, 8, ..., max). Catches solutions that clear arrays to `n+1` but leave stale data from earlier larger cases.
+- **Maximum T, minimum n**: T at maximum, each case has n=1 or minimum. Catches solutions that memset `MAXN` every test case (TLE on large T).
+- Both patterns are mandatory when multi-test is present.
+
+**Trees**:
+- Random parent tree (`rnd.next(0, i-1)`) has expected height O(log n) -- this is too shallow if tree depth matters.
+- For problems where depth matters (e.g., heavy-light decomposition, centroid decomposition, Euler tour): use Prufer sequence or rejection sampling to generate trees with expected depth O(sqrt(n)).
+- Include both deep (chain-like) and shallow (star-like) trees in the plan.
+
+**Graphs / shortest paths**:
+- If SPFA or Bellman-Ford might be used as wrong solutions, add anti-SPFA tests:
+  - Grid graphs (n x m grid, edges to adjacent cells)
+  - Constructed graphs that force exponential relaxations under SLF optimization
+  - Large cycles with perturbation
+  - Binary tree shaped graphs
+- Add random noise/edge shuffling to all constructed graphs to prevent special-case detection.
+
+**Geometry**:
+- Convex hull point count matters -- ensure generated point sets have large convex hulls (many points on the hull), not just random points in a square (which gives O(log n) hull points).
+- For simple polygon problems: ask the user to reference ICPC 2017 "Airport Construction" test data for high-quality polygon generation patterns.
+- Include degenerate cases: collinear points, coincident points, very small/large coordinates.
+
 Show the draft plan to the user and iterate before implementing.
 
 ---
