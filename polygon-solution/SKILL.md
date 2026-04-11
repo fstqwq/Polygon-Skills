@@ -1,28 +1,59 @@
 ---
 name: polygon-solution
-description: "Write a solution for a competitive programming problem. Use when the user wants to add or modify a solution  --  accepted, wrong answer, TLE, or runtime error. Handles C++ competitive programming code style, .desc files, and build.json updates."
+description: "Write solutions for a competitive programming problem -- brute force, wrong-answer traps, and main correct solution. Handles C++ competitive programming code style, .desc files, and build.json updates."
 ---
 
 # Write Solution
 
 ## Procedure
 
-1. **Understand the problem**. Read `statement-sections/english/legend.tex`, `input.tex`, `output.tex`, and `config/problem.json` to understand what the solution must do.
+1. **Understand the problem**. Read `statement-sections/english/legend.tex`, `input.tex`, `output.tex`, and `config/problem.json`.
 
-2. **Ask the user** what kind of solution to write:
-   - **Accepted (std)**: The main correct solution. If none exists yet, default to this.
-   - **Accepted (alternative)**: Another correct approach (e.g., different algorithm).
-   - **Wrong answer**: A plausible but incorrect solution.
-   - **Time limit exceeded**: A brute-force or slow correct solution.
-   - **Runtime error**: A solution that crashes on some inputs.
+2. **Write auxiliary solutions first** (before the main correct solution). Go through each category below in order. For each one, propose the approach, write it, show to user, commit.
 
-   If the user doesn't specify, write an accepted solution.
+### Step A: Brute force
 
-3. **Ask about approach** (for accepted solutions):
-   - If the user has a specific algorithm in mind, implement that.
-   - If not, propose an approach and ask for confirmation. Do NOT just implement your own idea silently.
+Suggest the most naive, direct approach -- exhaustive enumeration, full search, O(n!) permutation, etc. This solution should be **correct but slow**.
 
-4. **Write the solution** in C++:
+- Filename: `solutions/brute_force.cpp`
+- Expected: `time_limit_exceeded` (or `accepted` if the problem is small enough)
+- Purpose: serves as a reference oracle for stress-testing the main solution
+
+### Step B: Greedy / simple heuristic
+
+Suggest a plausible but likely wrong greedy or randomized approach. Expect it to fail.
+
+- Filename: `solutions/wa_greedy.cpp` (or `wa_random.cpp`)
+- Expected: `wrong_answer`
+- Purpose: ensures the test data catches naive greedy strategies
+
+### Step C: Dummy solution (if applicable)
+
+If the problem has multiple outcome branches (e.g. "output the answer or -1 if impossible", "YES/NO", "possible/impossible"), write a solution that always outputs the trivial branch.
+
+- Example: always print `-1`, always print `NO`, always print `0`
+- Filename: `solutions/wa_dummy.cpp`
+- Expected: `wrong_answer`
+- Purpose: ensures the test data contains cases for all branches, not just the trivial one
+- Skip this step if the problem has no such branching.
+
+### Step D: Main correct solution
+
+After auxiliary solutions are committed, ask the user:
+
+> "Do you want to write the main correct solution now?"
+
+If yes:
+- Ask the user for the intended algorithm / approach. Do NOT just implement your own idea silently.
+- Filename: `solutions/std.cpp`
+- Expected: `accepted`
+- Update `config/build.json`: `"accepted_solution_source": "solutions/std.cpp"`
+
+---
+
+## For each solution
+
+3. **Write the code** in C++:
 
    ```cpp
    #include <bits/stdc++.h>
@@ -45,23 +76,15 @@ description: "Write a solution for a competitive programming problem. Use when t
    - Match the input/output format from the statement exactly.
    - For interactive problems: flush after each output line (`cout << endl` or `cout.flush()`).
 
-5. **Choose the filename**:
-   - Main accepted solution: `solutions/std.cpp`
-   - Alternative accepted: `solutions/ac_alt.cpp` or descriptive name
-   - Wrong answer: `solutions/wa.cpp` or `solutions/wa_greedy.cpp`
-   - TLE: `solutions/tle_brute.cpp`
-
-6. **Write the .desc file** alongside:
+4. **Write the .desc file** alongside:
    ```
    expected: accepted
    ```
    Valid values: `accepted`, `wrong_answer`, `time_limit_exceeded`, `run_time_error`, `rejected`.
 
-7. **Update config/build.json**: If this is the first accepted solution, set `"accepted_solution_source": "solutions/std.cpp"`.
+5. **Show the code to the user** and wait for feedback before committing.
 
-8. **Show the code to the user** and wait for feedback before committing.
-
-9. **Commit**:
+6. **Commit**:
    ```
    git add solutions/{name}.cpp solutions/{name}.cpp.desc config/build.json
    git commit -m "solution: add {name} ({expected behavior})"
@@ -70,6 +93,6 @@ description: "Write a solution for a competitive programming problem. Use when t
 ## Rules
 
 - Always show code to the user before committing.
-- For accepted solutions, ensure correctness matches the problem statement.
+- Write auxiliary solutions (brute, wa, dummy) BEFORE asking about the main correct solution.
 - If the statement is incomplete or ambiguous, ask for clarification rather than guessing.
 - The agent CAN write the solution code (unlike statement content, where the agent must not invent).
