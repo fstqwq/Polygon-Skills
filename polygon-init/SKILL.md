@@ -20,7 +20,7 @@ description: "Initialize a new competitive programming problem repository from s
    > I'll initialize **{title}** (`{slug}`) with these settings:
    > - Languages: english
    > - Mode: pass-fail, single pass
-   > - Limits: 2s, 512 MB
+   > - Limits: 2s, 1024 MB
    >
    > Does this look right?
 

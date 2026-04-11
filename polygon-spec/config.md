@@ -5,7 +5,7 @@
   "mode": "pass-fail",
   "pass_limit": 1,
   "time_limit_ms": 2000,
-  "memory_limit_mb": 512
+  "memory_limit_mb": 1024
 }
 ```
 
