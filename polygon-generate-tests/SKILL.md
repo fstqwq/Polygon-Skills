@@ -218,13 +218,15 @@ If the user asks to see current tests:
 auto p = rnd.perm(n, 1);
 ```
 
-**Random tree** (random parent):
+**Random tree** (random parent + shuffle labels):
 ```cpp
+auto label = rnd.perm(n, 1);
 vector<pair<int,int>> edges;
 for (int i = 1; i < n; i++)
-    edges.push_back({rnd.next(0, i - 1) + 1, i + 1});
+    edges.push_back({label[rnd.next(0, i - 1)], label[i]});
 shuffle(edges.begin(), edges.end());
 ```
+Always shuffle node labels -- otherwise node 1 is always the root and low-numbered nodes are always near the top.
 
 **Random connected graph** (spanning tree + extra edges):
 ```cpp
