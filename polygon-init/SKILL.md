@@ -99,7 +99,7 @@ description: "Initialize a new competitive programming problem repository from s
 12. **Suggest next steps** based on what the user provided:
     - If they gave problem content  -- "I'll write the statement now with `/polygon-statement`" and proceed directly.
     - If they gave only a title  -- "You can write the statement with `/polygon-statement`, or describe your idea and I'll help you structure it."
-    - If they gave test cases or constraints  -- mention `/polygon-tests` as a follow-up.
+    - If they gave test cases or constraints  -- mention `/polygon-generate-tests` as a follow-up.
 
 ## Important
 

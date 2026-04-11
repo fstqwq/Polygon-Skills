@@ -1,4 +1,4 @@
-﻿---
+---
 name: polygon-validator
 description: "Write a testlib input validator for a competitive programming problem. Use when the user wants to add or modify the input validator, or mentions input validation, constraint checking, or test data verification."
 ---
@@ -173,7 +173,7 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
    git commit -m "validator: add input validator"
    ```
 
-8. **Suggest next step**: "You can now write tests with `/polygon-tests`, or add a solution with `/polygon-solution`."
+8. **Suggest next step**: "You can now write tests with `/polygon-generate-tests`, or add a solution with `/polygon-solution`."
 
 ## Rules
 

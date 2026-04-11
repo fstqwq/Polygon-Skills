@@ -79,7 +79,7 @@ The user provides problem content in any form: rough notes, pseudocode, another 
    - `## Legend` → maps to `legend.tex`
    - `## Input` → maps to `input.tex`
    - `## Output` → maps to `output.tex`
-   - `## Sample N` → for review only; not converted to `.tex` (samples are managed by `/polygon-tests`)
+   - `## Sample N` → for review only; not converted to `.tex` (samples are managed by `/polygon-generate-tests`)
    - `## Interaction` → maps to `interaction.tex` (omit if not interactive)
    - `## Notes` → maps to `notes.tex` (omit if not needed)
    - `## Constraints` → folded into `## Input` during LaTeX conversion (not a separate file)
@@ -305,4 +305,4 @@ When writing the Chinese version, use standard competitive programming Chinese:
 - **Always show the draft** and wait for user confirmation before converting to LaTeX.
 - **Preserve existing content** when editing  --  only modify the sections the user asks to change.
 - **One commit for all languages**  --  do not commit one language at a time.
-- If the user provides both statement text and sample I/O at the same time, handle the statement here and suggest `/polygon-tests` for the test data.
+- If the user provides both statement text and sample I/O at the same time, handle the statement here and suggest `/polygon-generate-tests` for the test data.

@@ -44,7 +44,7 @@ The problem must have `"mode": "interactive"` in `config/problem.json`. If multi
 
 7. **Ask the user**: "Do you need a local testing tool for contestants? (see `testing_tool.md`)" If yes, follow `testing_tool.md`.
 
-8. **Suggest next step**: "You can now write tests with `/polygon-tests`, or add a solution with `/polygon-solution`."
+8. **Suggest next step**: "You can now write tests with `/polygon-generate-tests`, or add a solution with `/polygon-solution`."
 
 ---
 
