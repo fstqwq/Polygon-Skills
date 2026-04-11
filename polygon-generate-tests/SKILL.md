@@ -28,35 +28,34 @@ Example plan:
 ```markdown
 # Test Plan
 
-## Part 1: Samples
-- 001: sample 1 from statement (sample=true)
-- 002: sample 2 from statement (sample=true)
+## Part 1: Samples (typically 1-3)
+- sample 1 from statement
+- sample 2 from statement
 
-## Part 2: Edge cases
-- 003: n=1, minimum input
-- 004: all elements equal
-- 005: maximum values at minimum size
-- 006: already sorted
-- 007: reverse sorted
+## Part 2: Edge cases (typically 3-8)
+- n=1, minimum input
+- all elements equal
+- maximum values at minimum size
+- already sorted
+- reverse sorted
 
-## Part 3: Stress (random)
-- 008: gen_random 5 100 1 (small)
-- 009: gen_random 50 1000 2 (medium)
-- 010: gen_random 200000 1000000000 3 (max)
-- 011: gen_random 200000 1000000000 4 (max)
-- 012: gen_random 200000 1000000000 5 (max)
+## Part 3: Stress / random (typically 5-15)
+- gen_random, small (n~10), x3
+- gen_random, medium (n~1000), x3
+- gen_random, max (n=200000), x5
 
-## Part 4: Anti-hack
-- 013: gen_worstcase 200000 1 (breaks greedy)
-- 014: manual -- always-YES case (breaks dummy)
+## Part 4: Anti-hack (typically 2-5)
+- gen_worstcase -- breaks greedy
+- manual -- always-YES case, breaks dummy
 
-## Part 5: Max-stress
-- 015: gen_maxstress 200000 1 (adversarial structure)
-- 016: gen_maxstress 200000 2
+## Part 5: Max-stress (typically 2-5)
+- gen_maxstress -- adversarial structure, x2
 
 ## Part 6: Extra
 (ask user for additional ideas)
 ```
+
+IDs are assigned sequentially when implementing (001, 002, ...), no gaps.
 
 ### Category guidance
 
