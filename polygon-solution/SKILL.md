@@ -86,6 +86,7 @@ If yes, write the solution with the user's specified expected behavior and repea
    - Use `bits/stdc++.h`.
    - Use plain `cin` / `cout`. Do NOT use `ios::sync_with_stdio(false)` or `cin.tie(nullptr)`.
    - Do NOT write `return 0;` in `main`.
+   - The judge runs with unlimited stack. Deep recursion (DFS, divide-and-conquer) is safe -- do not avoid it or rewrite as iterative out of stack concerns.
    - For interactive problems: `cout << endl` or `cout.flush()` after each output.
 
 ### Python
