@@ -21,19 +21,26 @@ Suggest the most naive, direct approach -- exhaustive enumeration, full search, 
 
 ### Step B: Greedy / simple heuristic
 
-Suggest a plausible but likely wrong greedy or randomized approach. Expect it to fail.
+Suggest a plausible but wrong approach. Common patterns:
 
-- Filename: `solutions/wa_greedy.cpp` (or `wa_random.cpp`)
-- Expected: `wrong_answer`
-- Purpose: ensures the test data catches naive greedy strategies
+- **Greedy**: sort by some criterion, always pick the locally optimal choice
+- **Multi-greedy**: try several greedy strategies, take the best (`min` / `max` of multiple wrong answers)
+- **Random / shuffle**: randomly permute, check if it works, repeat -- give up and output "NO" or `-1` if no solution found after N tries
+- **Local search**: start from any solution, repeatedly improve by swapping adjacent elements
+
+Pick whichever is most natural for the problem. The solution should look plausible to a contestant but fail on well-designed tests.
+
+- Filename: `solutions/rej_greedy.cpp` (or `rej_random.cpp`, `rej_heuristic.cpp`)
+- Expected: `rejected`
+- Purpose: ensures the test data rejects naive heuristics
 
 ### Step C: Dummy solution (if applicable)
 
 If the problem has multiple outcome branches (e.g. "output the answer or -1 if impossible", "YES/NO", "possible/impossible"), write a solution that always outputs the trivial branch.
 
 - Example: always print `-1`, always print `NO`, always print `0`
-- Filename: `solutions/wa_dummy.cpp`
-- Expected: `wrong_answer`
+- Filename: `solutions/rej_dummy.cpp`
+- Expected: `rejected`
 - Purpose: ensures the test data contains cases for all branches, not just the trivial one
 - Skip this step if the problem has no such branching.
 
