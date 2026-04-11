@@ -1,4 +1,4 @@
----
+ï»¿---
 name: polygon-init
 description: "Initialize a new competitive programming problem repository from scratch. Use when the user wants to start creating a new problem and no repository exists yet. Creates the full directory skeleton, config files, statement templates, and initial git commit."
 ---
@@ -10,7 +10,7 @@ description: "Initialize a new competitive programming problem repository from s
 1. **Extract what the user already told you.** The user may provide just a title, or a full problem idea, partial statement, constraints, etc. From whatever they give you, infer as much as possible:
    - Problem name / title
    - Slug (derive from title)
-   - Language(s) (if they write in Chinese â†?`english chinese`; otherwise `english`)
+   - Language(s) (if they write in Chinese ï¿½?`english chinese`; otherwise `english`)
    - Interactive or not
    - Multipass or not
    - Time / memory limits (look for explicit mentions)
@@ -26,7 +26,7 @@ description: "Initialize a new competitive programming problem repository from s
 
    If the user says no, ask which part to change. If yes, proceed.
 
-   **Only ask individual follow-ups** for things you genuinely could not infer (e.g., "You mentioned queries â€?is this an interactive problem?").
+   **Only ask individual follow-ups** for things you genuinely could not infer (e.g., "You mentioned queries ï¿½?is this an interactive problem?").
 
 3. **Create the working directory** and initialize git:
    ```
@@ -60,20 +60,20 @@ description: "Initialize a new competitive programming problem repository from s
    }
    ```
 
-7. **Write statement template files** (these are fixed boilerplate â€?do not customize):
-   - `statement/statements.ftl` â€?use the system default FTL template.
-   - `statement/problem.tex` â€?use the system default problem template.
-   - `statement/olymp.sty` â€?use the system default style.
+7. **Write statement template files** (these are fixed boilerplate ï¿½?do not customize):
+   - `statement/statements.ftl` ï¿½?use the system default FTL template.
+   - `statement/problem.tex` ï¿½?use the system default problem template.
+   - `statement/olymp.sty` ï¿½?use the system default style.
 
    To obtain the correct default content, read the defaults from `app/service/statement/constant.py` in the Polygon-Replica codebase. These must match exactly.
 
 8. **Write statement section stubs** (for each chosen language, create `statement-sections/<language>/`):
-   - `name.tex` â€?the problem title
-   - `legend.tex` â€?empty
-   - `input.tex` â€?empty
-   - `output.tex` â€?empty
-   - `notes.tex` â€?empty
-   - `interaction.tex` â€?empty (if interactive)
+   - `name.tex` ï¿½?the problem title
+   - `legend.tex` ï¿½?empty
+   - `input.tex` ï¿½?empty
+   - `output.tex` ï¿½?empty
+   - `notes.tex` ï¿½?empty
+   - `interaction.tex` ï¿½?empty (if interactive)
 
    Additional languages can be added later via the UI or by creating new `statement-sections/<language>/` directories.
 
@@ -84,9 +84,9 @@ description: "Initialize a new competitive programming problem repository from s
    }
    ```
 
-10. **Validate** â€?run the schema checker before committing:
+10. **Validate** ï¿½?run the schema checker before committing:
     ```
-    python <skills>/polygon-spec/test_schema.py
+    python <skills>/polygon-spec/review.py
     ```
     Fix any errors. Warnings are expected for a fresh repo (no tests, no solution, etc.) and can be ignored.
 
@@ -97,9 +97,9 @@ description: "Initialize a new competitive programming problem repository from s
     ```
 
 12. **Suggest next steps** based on what the user provided:
-    - If they gave problem content â†?"I'll write the statement now with `/polygon-statement`" and proceed directly.
-    - If they gave only a title â†?"You can write the statement with `/polygon-statement`, or describe your idea and I'll help you structure it."
-    - If they gave test cases or constraints â†?mention `/polygon-tests` as a follow-up.
+    - If they gave problem content ï¿½?"I'll write the statement now with `/polygon-statement`" and proceed directly.
+    - If they gave only a title ï¿½?"You can write the statement with `/polygon-statement`, or describe your idea and I'll help you structure it."
+    - If they gave test cases or constraints ï¿½?mention `/polygon-tests` as a follow-up.
 
 ## Important
 

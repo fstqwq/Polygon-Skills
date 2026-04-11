@@ -1,4 +1,4 @@
----
+﻿---
 name: polygon-spec
 description: "Problem repository schema and file format contracts for competitive programming problem authoring. Defines the canonical repo layout, JSON schemas, draft conventions, and git conventions shared by all polygon-* skills. This background skill is automatically referenced when any polygon-* skill needs schema or layout context."
 user-invocable: false
@@ -119,4 +119,4 @@ For detailed schemas and reference data, read the following files in this skill 
 - `config.md` â€?default values and full field tables for `problem.json` and `build.json`
 - `tests.md` â€?full `spec.json` schema, `solutions/*.desc` format, and `draft/` conventions
 - `checkers.md` â€?standard testlib checker catalog
-- `test_schema.py` â€?standalone validator; run from repo root to check all config files
+- `review.py` â€?standalone validator; run from repo root to check all config files

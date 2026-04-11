@@ -1,4 +1,4 @@
----
+﻿---
 name: polygon-validator
 description: "Write a testlib input validator for a competitive programming problem. Use when the user wants to add or modify the input validator, or mentions input validation, constraint checking, or test data verification."
 ---
@@ -158,7 +158,7 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 
 6. **Validate** â€?run the schema checker:
    ```
-   python <skills>/polygon-spec/test_schema.py
+   python <skills>/polygon-spec/review.py
    ```
 
 7. **Compile** (best-effort, see `polygon-spec/compile.md`):
