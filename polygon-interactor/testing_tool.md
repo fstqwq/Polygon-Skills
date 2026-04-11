@@ -84,7 +84,7 @@ Exit 0 on success, 1 on any error.
 
 - **Python stdlib only**  --  no external dependencies. Contestants may not have pip.
 - **Match the interactor exactly**  --  the testing tool must accept the same inputs and produce the same outputs as the real interactor. Differences cause confused contestants.
-- **Log everything**  --  verbose mode shows `< ` (judge→solution) and `> ` (solution→judge). This is the primary debugging aid.
+- **Log everything**  --  verbose mode shows `< ` (judge->solution) and `> ` (solution->judge). This is the primary debugging aid.
 - **Do not enforce resource limits**  --  the tool cannot measure time/memory. Say so in the disclaimer.
 - **`argparse`-based CLI**  --  `tool.py [--quiet] <data_file> <program> [args...]`.
 
@@ -117,9 +117,9 @@ The judge system will never run or validate this file. You must test it manually
 5. **Leakage review**  --  show the code to the user with this warning:
 
    > ⚠️ This file will be **distributed to contestants**. Please check whether it leaks the intended solution approach. Common leaks and fixes:
-   > - **The tool computes the correct answer internally** → change to print the judge's output and let the contestant verify by eye, instead of computing and checking the answer
-   > - **Variable names or comments hint at the solution strategy** → only implement the protocol described in the problem statement; remove any logic not visible to contestants
-   > - **Range checks or validation logic expose key observations** → remove checks that go beyond the statement's constraints
+   > - **The tool computes the correct answer internally** -> change to print the judge's output and let the contestant verify by eye, instead of computing and checking the answer
+   > - **Variable names or comments hint at the solution strategy** -> only implement the protocol described in the problem statement; remove any logic not visible to contestants
+   > - **Range checks or validation logic expose key observations** -> remove checks that go beyond the statement's constraints
 
 6. **Summarize testing**  --  tell the user what you tested and the results (which programs, which inputs, observed output, any issues found). This is the only record that the tool was verified.
 

@@ -50,8 +50,8 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-validator` | "write the validator" | Testlib validator |
 | `polygon-checker` | "write/pick the checker" | Select built-in or write custom checker |
 | `polygon-interactor` | "write the interactor" | Interactive problem interactor + testing tool |
-| `polygon-solution` | "write solutions" | Brute force → WA traps → std → translations |
-| `polygon-generate-tests` | "create tests" | Design test plan → implement test suite |
+| `polygon-solution` | "write solutions" | Brute force -> WA traps -> std -> translations |
+| `polygon-generate-tests` | "create tests" | Design test plan -> implement test suite |
 | `polygon-review` | "review the problem" | End-to-end audit before export |
 | `polygon-export` | "export / package" | Zip the working tree as a native package |
 | `polygon-import` | "import a package" | Unzip into a local repo (new or overwrite) |

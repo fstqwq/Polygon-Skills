@@ -90,14 +90,14 @@ The user provides problem content in any form: rough notes, pseudocode, another 
    ```
 
    **Rules for the draft format:**
-   - `# Problem Title` → maps to `name.tex`
-   - `## Legend` → maps to `legend.tex`
-   - `## Input` → maps to `input.tex`
-   - `## Output` → maps to `output.tex`
-   - `## Sample N` → for review only; not converted to `.tex` (samples are managed by `/polygon-generate-tests`)
-   - `## Interaction` → maps to `interaction.tex` (omit if not interactive)
-   - `## Notes` → maps to `notes.tex` (omit if not needed)
-   - `## Constraints` → folded into `## Input` during LaTeX conversion (not a separate file)
+   - `# Problem Title` -> maps to `name.tex`
+   - `## Legend` -> maps to `legend.tex`
+   - `## Input` -> maps to `input.tex`
+   - `## Output` -> maps to `output.tex`
+   - `## Sample N` -> for review only; not converted to `.tex` (samples are managed by `/polygon-generate-tests`)
+   - `## Interaction` -> maps to `interaction.tex` (omit if not interactive)
+   - `## Notes` -> maps to `notes.tex` (omit if not needed)
+   - `## Constraints` -> folded into `## Input` during LaTeX conversion (not a separate file)
    - Use LaTeX math (`$...$`) inline in the Markdown  --  it carries over directly to `.tex`
 
 4. **Show the draft and ask about style.** Present the draft, then ask:
@@ -105,14 +105,14 @@ The user provides problem content in any form: rough notes, pseudocode, another 
    > Here is the draft. Any style adjustments?
    > For example: add a themed setting, make it more formal/mathematical, adjust the tone, etc.
 
-   - **If satisfied** → proceed to step 7.
-   - **If wants a themed setting** → go to step 5.
-   - **If wants other changes** → iterate on the draft directly.
+   - **If satisfied** -> proceed to step 7.
+   - **If wants a themed setting** -> go to step 5.
+   - **If wants other changes** -> iterate on the draft directly.
 
 5. **Gather theme details.** Do NOT invent a story. Ask the user these specific questions:
    - **Setting**: "What is the scenario?" (e.g. game, city planning, competition, cooking, ...)
    - **Characters** (if any): "Who are the actors?" (e.g. Alice and Bob, a traveler, a king, ...)
-   - **Object mapping**: "What do the mathematical objects represent?" (e.g. vertices → cities, edges → roads, values → costs, ...)
+   - **Object mapping**: "What do the mathematical objects represent?" (e.g. vertices -> cities, edges -> roads, values -> costs, ...)
 
    Then rewrite the draft with the theme applied. The mathematical content and constraints stay identical  --  only the framing changes.
 

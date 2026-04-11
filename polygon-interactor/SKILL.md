@@ -16,8 +16,8 @@ The problem must have `"mode": "interactive"` in `config/problem.json`. If multi
 1. **Read the interaction protocol** from the draft (`## Interaction`) or `interaction.tex`.
 
 2. **Determine the interactor type**:
-   - **Single-pass interactive** → section A
-   - **Multi-pass** → section B
+   - **Single-pass interactive** -> section A
+   - **Multi-pass** -> section B
 
    Ask the user if unclear.
 
@@ -95,7 +95,7 @@ The judge runs the next pass only if ALL of:
 
 Each pass is a fresh solution process  --  no memory between passes. `inf` is the original test on pass 1, `nextpass.in` on subsequent passes.
 
-The interactor can be **stateful** (encode a pass number in `nextpass.in`, dispatch on it) or **stateless** (same logic every pass, e.g. round-robin multi-party: Alice → Bob → Carl).
+The interactor can be **stateful** (encode a pass number in `nextpass.in`, dispatch on it) or **stateless** (same logic every pass, e.g. round-robin multi-party: Alice -> Bob -> Carl).
 
 ### Template (stateful example)
 
