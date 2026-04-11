@@ -95,7 +95,7 @@ The user provides problem content in any form: rough notes, pseudocode, another 
    - `## Output` -> maps to `output.tex`
    - `## Sample N` -> for review only; not converted to `.tex` (samples are managed by `/polygon-generate-tests`)
    - `## Interaction` -> maps to `interaction.tex` (omit if not interactive)
-   - `## Notes` -> maps to `notes.tex` (omit if not needed)
+   - `## Notes` -> maps to `notes.tex`. Optional -- use for sample explanations or hints when the problem needs them. If the problem is self-explanatory, omit
    - `## Constraints` -> folded into `## Input` during LaTeX conversion (not a separate file)
    - Use LaTeX math (`$...$`) inline in the Markdown  --  it carries over directly to `.tex`
 
