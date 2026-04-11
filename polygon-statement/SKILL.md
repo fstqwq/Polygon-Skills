@@ -42,7 +42,16 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
    **Samples**: if the user says "make one up" or doesn't provide a sample, construct a small, illustrative example yourself. A sample is a worked example of the problem, not creative content -- generating one is expected.
 
-3. **Write the draft immediately.** Do not ask about style, tone, or theme before writing. Just write a clean, concise draft based on what the user provided. Keep the user's original framing -- if they described the problem as a scenario, preserve it. If they gave a pure algorithm description, keep it mathematical.
+3. **Write the draft immediately.** Do not ask about style, tone, or theme before writing. Follow the writing style below.
+
+   **Writing style** (reference: `<skills>/polygon-statement/examples/icpc2024_excerpts.md`):
+
+   - **Scene IS the problem.** Do not write a scene paragraph and then a separate math paragraph. The scenario should directly state the problem. "You just set up a judge server and realized it only has one machine" is both the scene and the setup.
+   - **Second person "you".** The reader is the solver. "You are given", "Find an ordering", "Help the demon sort". Not "the contestant" or "one must".
+   - **Humor is natural, not forced.** If a funny aside fits the flow, include it. Do not bolt on jokes or add filler words.
+   - **Math definitions are embedded in prose.** "Each kid is jealous of one other kid, and they might misbehave if..." -- not a wall of text followed by a wall of formulas.
+   - **Input/Output sections are terse.** Pure format description. No narrative, no motivation, no repetition of what was already said in the Legend.
+   - **Chinese follows the same principles.** Use spoken Chinese, not textbook-formal. Keep it natural and direct.
 
    Save to `draft/statement.<lang>.md` using this exact format:
 
