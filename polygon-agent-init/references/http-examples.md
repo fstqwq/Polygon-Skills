@@ -8,11 +8,14 @@ All examples assume `BASE=http://localhost:8080`.
 curl -X POST "$BASE/agent/v1/register/reg-a8f3c2e1b9d04567" \
   -H "Content-Type: application/json" \
   -d '{
-    "agent_name": "<your-agent-name>",
-    "desktop_id": "<unique-machine-or-session-id>",
+    "agent_name": "Codex",
+    "desktop_id": "DESKTOP-7F3A9C2E",
     "init_ts": "2026-04-13T10:00:00Z"
   }'
 ```
+
+Use the product name for `agent_name`, for example `Codex`, `Claude Code`, or `OpenCode`.
+For `desktop_id`, prefer a stable machine identifier; hostname / computer name is an acceptable fallback.
 
 ```json
 {
@@ -43,7 +46,33 @@ curl -X POST "$BASE/agent/v1/auth/request-access" \
 }
 ```
 
-## 3. Poll
+## 3. Session Heartbeat
+
+```bash
+curl "$BASE/agent/v1/auth/status?agent_session_id=as-0123456789abcdef&identity_hash=abcdef0123456789..."
+```
+
+```json
+{
+  "status": "ok",
+  "agent_session_id": "as-0123456789abcdef",
+  "identity_hash": "abcdef0123456789...",
+  "user": "alice",
+  "server_name": "Polygon Replica",
+  "last_seen_at": "2026-04-13T10:05:00+00:00",
+  "authorized_problems": [
+    {
+      "problem": "alice/aplusb",
+      "scope": "workspace",
+      "expires_at": "2026-04-14T10:00:00Z"
+    }
+  ]
+}
+```
+
+Use this when you already have a saved state file and want to confirm the session is still live.
+
+## 4. Poll
 
 ```bash
 curl "$BASE/agent/v1/auth/poll/ar-fedcba9876543210?agent_session_id=as-0123456789abcdef&identity_hash=abcdef0123456789..."
@@ -64,7 +93,7 @@ After approval (first poll only):
 }
 ```
 
-## 4. Workspace Status
+## 5. Workspace Status
 
 ```bash
 curl "$BASE/agent/v1/workspace/status" \
@@ -82,7 +111,7 @@ curl "$BASE/agent/v1/workspace/status" \
 }
 ```
 
-## 5. List Files
+## 6. List Files
 
 ```bash
 curl "$BASE/agent/v1/workspace/files?path=solutions" \
@@ -100,7 +129,7 @@ curl "$BASE/agent/v1/workspace/files?path=solutions" \
 }
 ```
 
-## 6. Read File
+## 7. Read File
 
 ```bash
 curl "$BASE/agent/v1/workspace/file?path=solutions/main.cpp" \
@@ -118,7 +147,7 @@ curl "$BASE/agent/v1/workspace/file?path=solutions/main.cpp" \
 }
 ```
 
-## 7. Upload File
+## 8. Upload File
 
 ```bash
 curl -X POST "$BASE/agent/v1/workspace/upload" \
@@ -131,7 +160,7 @@ curl -X POST "$BASE/agent/v1/workspace/upload" \
 {"ok": true, "path": "solutions/brute.py", "bytes": 256}
 ```
 
-## 8. Delete File
+## 9. Delete File
 
 ```bash
 curl -X DELETE "$BASE/agent/v1/workspace/files/solutions/brute.py" \
@@ -142,7 +171,7 @@ curl -X DELETE "$BASE/agent/v1/workspace/files/solutions/brute.py" \
 {"ok": true, "path": "solutions/brute.py"}
 ```
 
-## 9. Start Verification
+## 10. Start Verification
 
 ```bash
 curl -X POST "$BASE/agent/v1/verification/start" \
@@ -155,7 +184,7 @@ curl -X POST "$BASE/agent/v1/verification/start" \
 {"verification_id": "ver-0123456789ab", "status": "queued"}
 ```
 
-## 10. Verification Status
+## 11. Verification Status
 
 ```bash
 curl "$BASE/agent/v1/verification/ver-0123456789ab/status" \
@@ -170,7 +199,7 @@ curl "$BASE/agent/v1/verification/ver-0123456789ab/status" \
 }
 ```
 
-## 11. Export
+## 12. Export
 
 ```bash
 curl -X POST "$BASE/agent/v1/export/start" \
@@ -183,7 +212,7 @@ curl -X POST "$BASE/agent/v1/export/start" \
 {"export_id": "exp-api-abc123", "status": "queued"}
 ```
 
-## 12. Download Export
+## 13. Download Export
 
 ```bash
 curl -o package.zip "$BASE/agent/v1/export/exp-api-abc123/download" \
@@ -192,7 +221,7 @@ curl -o package.zip "$BASE/agent/v1/export/exp-api-abc123/download" \
 
 Returns binary `application/zip`. Save to a file, do not parse as JSON.
 
-## 13. Commit
+## 14. Commit
 
 ```bash
 curl -X POST "$BASE/agent/v1/commit" \
@@ -205,7 +234,7 @@ curl -X POST "$BASE/agent/v1/commit" \
 {"status": "ok", "head": "abc123def456..."}
 ```
 
-## 14. Commit Status
+## 15. Commit Status
 
 ```bash
 curl "$BASE/agent/v1/commit/abc123def456.../status" \

@@ -11,8 +11,8 @@ Storage mechanism (memory, file, env) is agent-specific -- this only defines the
   "agent_session_id": "as-0123456789abcdef",
   "identity_hash": "sha256...",
   "identity": {
-    "agent_name": "<your-agent-name>",
-    "desktop_id": "<unique-machine-or-session-id>",
+    "agent_name": "Codex",
+    "desktop_id": "DESKTOP-7F3A9C2E",
     "init_ts": "2026-04-13T10:00:00Z"
   },
   "user": "alice",
@@ -39,6 +39,25 @@ Storage mechanism (memory, file, env) is agent-specific -- this only defines the
 | `tokens[problem]` | Response from first `poll` after approval | Per-problem, time-limited |
 
 ## Rules
+
+- `identity.agent_name` should be the agent product or implementation name.
+  Good examples: `Codex`, `Claude Code`, `OpenCode`.
+  Do not use a repo name, task description, or problem slug here.
+
+- `identity.desktop_id` should be stable across runs on the same host or installation.
+  Preferred order:
+  1. a stable machine identifier exposed by the runtime or OS
+  2. the machine hostname / computer name
+  3. a generated UUID that the agent stores locally and reuses
+  If only a hostname is available, using the machine name is acceptable.
+
+- Recommended hostname lookup by platform:
+  - Windows:
+    - PowerShell: `$env:COMPUTERNAME`
+    - fallback: `hostname`
+  - Linux:
+    - `hostname`
+    - fallback: `cat /etc/hostname`
 
 - `base_url` must include scheme and host, no trailing slash.
   Derive it from the registration URL the user gives you.

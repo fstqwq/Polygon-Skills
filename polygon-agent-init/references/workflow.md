@@ -31,11 +31,17 @@ The agent POSTs its identity to the registration URL:
 ```json
 POST /agent/v1/register/reg-a8f3c2e1b9d04567
 {
-  "agent_name": "<your-agent-name>",
-  "desktop_id": "<unique-machine-or-session-id>",
+  "agent_name": "Codex",
+  "desktop_id": "DESKTOP-7F3A9C2E",
   "init_ts": "2026-04-13T10:00:00Z"
 }
 ```
+
+Identity guidance:
+- `agent_name` should be the agent product name, for example `Codex`, `Claude Code`, or `OpenCode`
+- `desktop_id` should be stable for the same host or installation
+- A machine name / hostname is acceptable if that is the most stable identifier the agent can obtain
+- If the runtime exposes no stable host identifier, generate a UUID once and persist it locally
 
 Response:
 ```json
@@ -48,6 +54,14 @@ Response:
 ```
 
 The agent must cache `agent_session_id` and `identity_hash` for subsequent requests.
+
+If the agent already has a saved local state file, it should prefer:
+
+```
+GET /agent/v1/auth/status?agent_session_id=as-...&identity_hash=sha256...
+```
+
+before re-registering or requesting access again. This confirms the session is still live and returns the current authorized problem list.
 
 The registration code is **one-time use** and expires after 5 minutes.
 If the same identity re-registers, the existing session is reused.

@@ -23,6 +23,7 @@ These are for the human user in a browser. Agents do not call these directly.
 | Method | Path | Body | Response |
 |--------|------|------|----------|
 | POST | `/agent/v1/register/{code}` | `{"agent_name", "desktop_id", "init_ts"}` | `{"agent_session_id", "identity_hash", "user", "server_name"}` |
+| GET | `/agent/v1/auth/status` | query: `agent_session_id`, `identity_hash` | `{"status":"ok", "agent_session_id", "identity_hash", "user", "server_name", "last_seen_at", "authorized_problems"}` |
 | POST | `/agent/v1/auth/request-access` | `{"agent_session_id", "identity_hash", "problem"}` | `{"request_id", "approve_path", "expires_in"}` |
 | GET | `/agent/v1/auth/poll/{request_id}` | query: `agent_session_id`, `identity_hash` | `{"status": "pending\|approved\|denied\|expired", "token"?, "problem"?, "expires_at"?}` |
 
