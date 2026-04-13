@@ -55,6 +55,7 @@ Check:
 - [ ] If custom checker: reads jury answer first, then contestant answer (testlib convention)
 - [ ] If multiple valid outputs: checker handles all valid forms
 - [ ] If floating point: tolerance matches what the statement promises
+- [ ] If custom checker: it does not enforce validator-style exact whitespace unless the output format explicitly requires whitespace-sensitive output
 
 ### Step 5: Test suite review
 
