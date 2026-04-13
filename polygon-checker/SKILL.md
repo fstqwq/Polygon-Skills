@@ -65,7 +65,7 @@ description: "Write or select a checker (wcmp, ncmp, rcmp, or custom)."
        if (!contestant_ok)
            quitf(_wa, "invalid answer");
 
-       quitf(_ok, "correct");
+       quitf(_ok, "ok, correct");
    }
    ```
 
@@ -135,14 +135,14 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
            tout << 2 << "\n";
            // ... write whatever pass 2 needs ...
 
-           quitf(_ok, "First pass OK");
+           quitf(_ok, "ok, first pass done");
 
        } else if (op == 2) {
            // Check pass 2 output
            int expected = inf.readInt();
            int got = ouf.readInt();
            if (got == expected)
-               quitf(_ok, "correct");
+               quitf(_ok, "ok, correct");
            else
                quitf(_wa, "expected %d, got %d", expected, got);
        }
@@ -164,6 +164,7 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 - Ask the user: "Does this problem have a unique answer, or can there be multiple valid answers?" This determines whether a standard checker suffices.
 - Custom checkers must handle malformed contestant output gracefully (use `ouf.readInt()` etc., which auto-quit with WA on parse failure).
 - Verdicts: use only `_ok` (accepted), `_wa` (wrong answer), `_fail` (judge error). Do not use `_pe`.
+- **`quitf(_ok, ...)` message must start with `"ok"`** (e.g. `quitf(_ok, "ok, correct")`, `quitf(_ok, "ok, n=%d", n)`). This makes logs immediately scannable.
 - **Multi-pass checkers**: always use the `start_next_pass()` lambda. Set `pass_limit` in `config/problem.json`.
 
 ## Examples

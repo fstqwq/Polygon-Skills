@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
 
     string answer = ouf.readToken("[0-9]{1,10}", "answer");
     if (/* correct */)
-        quitf(_ok, "correct");
+        quitf(_ok, "ok, correct");
     else
         quitf(_wa, "wrong answer");
 }
@@ -129,12 +129,12 @@ int main(int argc, char* argv[]) {
 
         start_next_pass();
         tout << 2 << " " << T << "\n";
-        quitf(_ok, "First pass OK");
+        quitf(_ok, "ok, first pass done");
 
     } else if (op == 2) {
         int T = inf.readInt();
         // Interact with contestant...
-        quitf(_ok, "Second pass OK");  // or _wa
+        quitf(_ok, "ok, second pass done");  // or _wa
     } else {
         quitf(_fail, "Invalid op %d", op);
     }
@@ -150,6 +150,7 @@ int main(int argc, char* argv[]) {
 - **Always flush** after every output (`endl`, not `\n`).
 - Handle contestant protocol violations gracefully  --  quit with `_wa`.
 - Verdicts: only `_ok`, `_wa`, `_fail`. Do not use `_pe`.
+- **`quitf(_ok, ...)` message must start with `"ok"`** (e.g. `quitf(_ok, "ok, correct")`, `quitf(_ok, "ok, pass %d done", pass)`). This makes logs immediately scannable.
 - The interactor reads test data from `inf`, contestant output from `ouf`.
 
 ## Examples
