@@ -1,4 +1,4 @@
-﻿# Polygon Agent API -- HTTP Examples
+# Polygon Agent API -- HTTP Examples
 
 All examples assume `BASE=http://localhost:8080`.
 

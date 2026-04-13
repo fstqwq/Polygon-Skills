@@ -1,4 +1,4 @@
-﻿---
+---
 name: polygon-agent-init
 description: "Initialize a Polygon agent identity and register it with the server. Use when the task is specifically about starting the /agent/v1/* token workflow and obtaining an agent session."
 ---

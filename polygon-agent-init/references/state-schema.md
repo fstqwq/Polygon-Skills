@@ -1,4 +1,4 @@
-﻿# Polygon Agent State Schema
+# Polygon Agent State Schema
 
 ## Recommended Structure
 

@@ -1,4 +1,4 @@
-﻿---
+---
 name: polygon-agent-connect
 description: "Request access to a specific Polygon problem and obtain a bearer token. Use when the task is specifically about connecting an already-initialized agent to a problem through /agent/v1/*."
 ---

@@ -1,4 +1,4 @@
-﻿# Polygon Agent Workflow
+# Polygon Agent Workflow
 
 ## Overview
 
