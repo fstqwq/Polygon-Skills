@@ -199,7 +199,37 @@ curl "$BASE/agent/v1/verification/ver-0123456789ab/status" \
 }
 ```
 
-## 12. Export
+## 12. Verification Detail
+
+```bash
+curl "$BASE/agent/v1/verification/ver-0123456789ab/detail" \
+  -H "Authorization: Bearer poly_aBcDeFgHiJkLmN..."
+```
+
+```yaml
+verification: ver-0123456789ab
+status: failed
+reason: ac_python.py required AC got TL
+
+columns:
+  ac_python.py:
+    source: solutions/ac_python.py
+    role: solution
+    expected: AC
+    result: TL 2000ms 64MB
+    tests:
+      001.in: AC 300ms 20MB
+      002.in: TL 2000ms 64MB
+```
+
+Zoom in:
+
+```bash
+curl "$BASE/agent/v1/verification/ver-0123456789ab/detail?test_name=002.in&source=solutions/ac_python.py" \
+  -H "Authorization: Bearer poly_aBcDeFgHiJkLmN..."
+```
+
+## 13. Export
 
 ```bash
 curl -X POST "$BASE/agent/v1/export/start" \
@@ -212,7 +242,7 @@ curl -X POST "$BASE/agent/v1/export/start" \
 {"export_id": "exp-api-abc123", "status": "queued"}
 ```
 
-## 13. Download Export
+## 14. Download Export
 
 ```bash
 curl -o package.zip "$BASE/agent/v1/export/exp-api-abc123/download" \

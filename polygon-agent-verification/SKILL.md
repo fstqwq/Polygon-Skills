@@ -66,32 +66,62 @@ Response:
 
 Status values: `queued`, `running`, `ok`, `failed`
 
-### Get full detail (JSON)
+### Get verification detail
 
 ```
 GET {base_url}/agent/v1/verification/{verification_id}/detail
 ```
 
-Returns the complete verification result including per-test, per-solution results.
+Returns a readable YAML report as `text/plain`.
 
-### Get full detail (text)
+The default report contains the full source-first verification table:
 
 ```
-GET {base_url}/agent/v1/verification/{verification_id}/detail/text
+verification: ver-0123456789ab
+status: failed
+reason: ac_python.py required AC got TL
+
+tasks:
+  pending: 0
+  queued: 0
+  running: 0
+  done: 120
+  failed: 1
+  cancelled: 0
+
+columns:
+  ac_python.py:
+    source: solutions/ac_python.py
+    role: solution
+    expected: AC
+    result: TL 2000ms 64MB
+    tests:
+      001.in: AC 300ms 20MB
+      002.in: TL 2000ms 64MB
 ```
 
-Returns the same data as `/detail` but as `text/plain` (pretty-printed JSON).
-Useful when you want human-readable output.
+Zoom in to one test:
+
+```
+GET {base_url}/agent/v1/verification/{verification_id}/detail?test_name=002.in
+```
+
+Zoom in to one source/test cell:
+
+```
+GET {base_url}/agent/v1/verification/{verification_id}/detail?test_name=002.in&source=solutions/ac_python.py
+```
 
 ## Typical Workflow
 
 1. Start verification: `POST /agent/v1/verification/start`
 2. Poll status every 3-5 seconds: `GET /agent/v1/verification/{id}/status`
-3. When `status` is `ok` or `failed`, get the full detail: `GET /agent/v1/verification/{id}/detail`
+3. When `status` is `ok` or `failed`, get the YAML detail report: `GET /agent/v1/verification/{id}/detail`
 4. Analyze results:
    - Check if all expected-AC solutions passed
    - Check if expected-WA/TLE solutions got the expected verdict
    - Review any compilation errors or runtime failures
+5. If a specific test needs inspection, use `?test_name=...`; if a single solution cell needs inspection, also pass `source=...`
 
 ## Important Notes
 

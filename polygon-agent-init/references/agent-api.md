@@ -33,8 +33,7 @@ These are for the human user in a browser. Agents do not call these directly.
 |--------|------|-------------|----------|
 | POST | `/agent/v1/verification/start` | `{}` | `{"verification_id", "status": "queued"}` |
 | GET | `/agent/v1/verification/{id}/status` | — | `{"verification_id", "status", "runtime_summary"}` |
-| GET | `/agent/v1/verification/{id}/detail` | — | `{"verification", "detail", "runtime_summary"}` |
-| GET | `/agent/v1/verification/{id}/detail/text` | — | plain text JSON |
+| GET | `/agent/v1/verification/{id}/detail` | `test_name?`, `source?` | text/plain YAML verification table or zoom-in report |
 
 ### Export (min_scope: `readonly`)
 
