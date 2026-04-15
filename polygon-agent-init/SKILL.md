@@ -175,7 +175,7 @@ init/register -> connect/request-access -> [user approves in browser] -> poll ->
 | `polygon-agent-fetch` | Read workspace files | `readonly` |
 | `polygon-agent-push` | Upload/delete workspace files | `workspace` |
 | `polygon-agent-verification` | Run and check verification | `readonly` |
-| `polygon-agent-export` | Export problem packages | `readonly` |
+| `polygon-agent-export` | Export/download problem zip files | `readonly` |
 | `polygon-agent-commit` | Commit and publish | `commit` |
 
 ### Reference Documents

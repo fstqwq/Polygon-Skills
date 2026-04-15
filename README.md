@@ -52,9 +52,9 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-interactor` | "write the interactor" | Interactive problem interactor + testing tool |
 | `polygon-solution` | "write solutions" | Brute force -> WA traps -> std -> translations |
 | `polygon-generate-tests` | "create tests" | Design test plan -> implement test suite |
-| `polygon-review` | "review the problem" | End-to-end audit before export |
-| `polygon-export` | "export / package" | Zip the working tree as a native package |
-| `polygon-import` | "import a package" | Unzip into a local repo (new or overwrite) |
+| `polygon-review` | "review the problem" | End-to-end audit before local zip creation |
+| `polygon-local-export` | "create a local zip file" | Zip the working tree as a native zip file |
+| `polygon-local-import` | "import a local zip file" | Unzip a native zip file into a local repo |
 
 ## Typical workflow
 
@@ -66,7 +66,7 @@ polygon-checker        -> pick or write the checker
 polygon-solution       -> write solutions (brute, WA, std)
 polygon-generate-tests -> design and create tests
 polygon-review         -> audit everything
-polygon-export         -> package for upload
+polygon-local-export   -> create a local zip file for upload
 ```
 
 ## Shared resources

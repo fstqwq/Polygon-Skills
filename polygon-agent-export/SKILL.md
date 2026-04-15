@@ -1,6 +1,6 @@
 ---
 name: polygon-agent-export
-description: "Export problem packages through the Polygon Agent token workflow. Use when exporting via /agent/v1/export/* with a bearer token."
+description: "Export and download a problem zip file through the Polygon Agent token workflow. Use when exporting via /agent/v1/export/* with a bearer token."
 ---
 
 # Polygon Agent -- Export
@@ -8,7 +8,7 @@ description: "Export problem packages through the Polygon Agent token workflow. 
 ## When to Use This Skill
 
 Use this skill when:
-- You need to export a problem package (ICPC or native format) via the agent API
+- You need to export and download a problem zip file (ICPC or native format) via the agent API
 - You need to check export status or download the result
 
 Do NOT use this skill for:

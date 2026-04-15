@@ -1,6 +1,6 @@
 ---
 name: polygon-review
-description: "Audit the problem for completeness, consistency, and quality before export."
+description: "Audit the problem for completeness, consistency, and quality before local zip creation or agent export."
 ---
 
 # Review Problem
