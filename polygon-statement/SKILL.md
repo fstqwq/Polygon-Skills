@@ -9,9 +9,13 @@ description: "Write or edit the problem statement (Markdown draft, then LaTeX)."
 
 The user provides problem content in any form: rough notes, pseudocode, another problem's format, natural language, etc. The agent's job is to organize this into a clean, complete statement.
 
+## Solver Model
+
+Write for contestants. Assume they know how to program, understand standard input/output, and know high-school mathematics. Do not assume they know any extra concept, term, model, or operation. If the statement uses anything beyond basic programming conventions and high-school coursework, define it before using it.
+
 ## Procedure
 
-### Phase 1: Draft in the user's language
+### Phase 1: Choose the primary language and draft
 
 1. **Read existing state**:
    - Check `draft/` for existing drafts (`draft/statement.*.md`)
@@ -42,16 +46,17 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
    **Samples**: if the user says "make one up" or doesn't provide a sample, construct a small, illustrative example yourself. A sample is a worked example of the problem, not creative content -- generating one is expected.
 
-3. **Write the draft immediately.** Do not ask about style, tone, or theme before writing. Follow the writing style below.
+3. **Write the draft immediately.** Do not ask about style, tone, or theme before writing.
 
-   **Writing style** (reference: `<skills>/polygon-statement/examples/icpc2024_excerpts.md`):
+   **Choose the primary draft language before writing**:
+   - If only Chinese is configured, write only the Chinese draft.
+   - If English is configured, default to an English draft even if the user wrote the prompt in Chinese.
+   - If the user explicitly says to write Chinese first, use Chinese as the primary draft language.
+   - If the repository does not make the configured languages clear, default to English unless the user explicitly asks for Chinese first.
 
-   - **Use a story or scenario.** Good problem statements have a setting -- a contest judge, a group of kids, a billboard. The scenario and the problem should be woven together, not separated into "story paragraph" then "math paragraph".
-   - **Second person "you".** The reader is the solver. "You are given", "Find an ordering", "Help the demon sort". Not "the contestant" or "one must".
-   - **Humor is natural, not forced.** If a funny aside fits the flow, include it. Do not bolt on jokes or add filler words.
-   - **Math definitions are embedded in prose.** Introduce variables and constraints as part of the narrative, not as a separate block after the story.
-   - **Input/Output sections are format-only.** Describe the format, don't re-explain the problem.
-   - **Chinese follows the same principles.** Use spoken Chinese, not textbook-formal. Keep it natural and direct.
+   **Choose the style before writing**:
+   - Default to World Finals style. Read `<skills>/polygon-statement/styles/world_finals.md`.
+   - If the user explicitly asks for a more direct statement, no story, or Codeforces style, read `<skills>/polygon-statement/styles/codeforces.md` instead.
 
    Save to `draft/statement.<lang>.md` using this exact format:
 
@@ -120,7 +125,7 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
 ### Phase 2: Translate to other languages
 
-7. **Check which other languages are configured** in `statement-sections/`. If there are other languages, translate the approved draft:
+7. **Check which other languages are configured** in `statement-sections/`. Treat the approved primary draft as the canonical source. If there are other languages, translate that draft:
    - Save each translation as `draft/statement.<lang>.md`
    - Show translations to the user for review
 
@@ -128,8 +133,8 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
 8. **Double-check all drafts.** Before converting to LaTeX, confirm with the user:
    > All drafts are ready:
-   > - draft/statement.english.md ✓
-   > - draft/statement.chinese.md ✓
+   > - draft/statement.<primary>.md ✓
+   > - draft/statement.<other>.md ✓
    >
    > Shall I convert these to LaTeX?
 
@@ -159,50 +164,24 @@ The user provides problem content in any form: rough notes, pseudocode, another 
 
 ---
 
-## Writing Style
+## Style Selection
 
-Problem statements follow a **terse, precise** style. Every sentence must carry information. The tone, however, varies. When the user requests style adjustments (step 4), present these three tones as options and imitate the chosen one.
+Problem statements follow a **terse, precise** style. Every sentence must carry information.
 
-### Tone A  --  Concise
+- Default to World Finals style. See `<skills>/polygon-statement/styles/world_finals.md`.
+- If the user explicitly asks for a more direct statement, no story, or Codeforces style, switch to `<skills>/polygon-statement/styles/codeforces.md`.
+- Do not proactively present a menu of tones. Draft first; if the user wants a style change, rewrite in the requested style.
 
-Direct, algebraic framing. No story. Standard Codeforces house style.
+## Shared Writing Rules
 
-> You are given an array $a$ of $n$ integers. In one operation, you choose an index $i$ ($1 \le i \le n$) and set $a_i := a_i + 1$ or $a_i := a_i - 1$.
->
-> Find the minimum number of operations to make all elements equal.
-
-Characteristics: "You are given...", "Find...", no characters, no motivation.
-
-### Tone B  --  Narrative
-
-A self-contained scenario that feels like describing a real situation. The reader should forget they are solving a math problem. Standard ICPC World Finals house style.
-
-> A group of hikers must cross a canyon using a single rope bridge that holds at most $k$ people at a time. Each hiker has a walking speed; when multiple hikers cross together, they move at the speed of the slowest person in the group. A flashlight is needed for every crossing, and there is only one  --  so someone must carry it back after each trip.
->
-> Determine the minimum total time for all hikers to cross the canyon.
-
-Characteristics: physical scenario, natural language, no variable names in the opening, constraints introduced through the story rather than through math.
-
-### Tone C  --  Technical
-
-Opens by defining or referencing a known concept, then poses a question about it. Common in IOI and research-flavored contests.
-
-> Recall that the *Euler tour* of a rooted tree visits each vertex exactly twice: once on entry and once on exit. Given a rooted tree with $n$ vertices, process $q$ queries of the form: "Is vertex $u$ an ancestor of vertex $v$?"
->
-> Answer each query using the Euler tour representation.
-
-Characteristics: "Recall that...", defines structure first, poses the task second.
-
-**At step 4**, if the user wants a style change, show these three examples and ask which tone they prefer. Then rewrite the draft to match.
-
-### Core principles (apply to all tones)
-
-1. **No spoilers.** Do not hint at the solution approach. Do not encourage a particular method  --  unless the user explicitly defines it as part of the problem's story (e.g. "using the Euler tour representation" in Tone C).
+1. **No spoilers.** Do not hint at the solution approach. Do not encourage a particular method  --  unless the user explicitly defines it as part of the problem's story or statement setup.
 2. **No hedging.** Never write "you might want to", "it could be the case that", "you should consider". State facts.
 3. **Precise quantifiers.** "at most", "exactly", "at least"  --  never "around", "roughly", "about".
 4. **No condescension.** Do not write "as you probably know", "it is easy to see that", "obviously". Trust the reader.
+5. **Input/Output sections are format-only.** Describe the format, don't re-explain the problem.
+6. **Chinese follows the same principles.** Use spoken Chinese, not textbook-formal. Keep it natural and direct.
 
-### What to avoid (any tone)
+### What to avoid
 
 | ✗ Bad | Why | ✓ Fix |
 |---|---|---|
@@ -214,7 +193,7 @@ Characteristics: "Recall that...", defines structure first, poses the task secon
 
 ### Length guideline
 
-- **Legend**: No hard limit  --  Tone B naturally runs longer than Tone A. But every sentence must earn its place.
+- **Legend**: No hard limit. But every sentence must earn its place.
 - **Input/Output**: Mechanical descriptions only. Keep tight.
 - **Notes**: Only include if sample cases are non-obvious. Do not restate the problem.
 

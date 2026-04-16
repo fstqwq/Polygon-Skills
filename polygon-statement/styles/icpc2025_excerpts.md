@@ -1,6 +1,15 @@
-# ICPC WF 2024 -- Writing Style Reference Excerpts
+# ICPC WF Writing Style Reference Excerpts
 
-These excerpts from the 48th ICPC World Championship illustrate the target writing style.
+These excerpts and notes illustrate the target World Finals style.
+
+## Writing-style cues
+
+- Use a story or scenario.
+- The scene is the problem; do not write a separate story paragraph and then restart in abstract terms.
+- Second person "you" often works well because the reader is the solver.
+- Humor is natural, not bolted on.
+- Math definitions are embedded in prose.
+- Input/Output sections are terse format descriptions.
 
 ---
 
