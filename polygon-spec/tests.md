@@ -6,9 +6,7 @@
     {
       "id": "001",
       "kind": "manual",
-      "sample": true,
-      "sample_input": "3\n1 2 3\n",
-      "sample_output": "6\n"
+      "sample": true
     }
   ]
 }
@@ -19,15 +17,16 @@
 | `id` | string | exactly 3 digits, `[0-9]{3}`, starting from `"001"` |
 | `kind` | string | `"manual"` or `"gen"` |
 | `sample` | bool | optional; default `false`. Only write `"sample": true` for tests that appear as samples in the statement |
-| `sample_input` | string | optional; override sample input displayed in the statement. Use when: (1) the accepted solution produces ugly floating-point output and you want a cleaner fixed format, (2) showing the real output would spoil the problem idea, or (3) the judging system cannot produce correct sample I/O automatically (e.g., interactive problems). |
-| `sample_output` | string | optional; override sample output displayed in the statement. Same rationale as `sample_input`. |
-| `sample_output_validate` | bool | optional; default `true`. If `false`, the sample output is displayed in the statement but **not checked** during verification. Only written when `false`. |
+| `sample_input` | string | optional statement-only override for displayed sample input. Leave absent for ordinary samples. Use when: (1) the accepted solution produces ugly floating-point output and you want a cleaner fixed format, (2) showing the real output would spoil the problem idea, or (3) the judging system cannot produce correct sample I/O automatically (e.g., interactive problems). |
+| `sample_output` | string | optional statement-only override for displayed sample output. Leave absent for ordinary samples. Same rationale as `sample_input`. |
+| `sample_output_validate` | bool | optional; default `true`. Relevant only when `sample_output` is present. If `false`, the sample output is displayed in the statement but **not checked** during verification. Only written when `false`. |
 
 File conventions:
 - Each `kind: "manual"` test must have `tests/manual/{id}.in` containing the test input.
 - Each `kind: "gen"` test must have `tests/generator/{id}.in` containing the generator command (e.g., `gen_random 5 100 1`).
 - Each test with a known expected answer must have `tests/answers/{id}.ans`.
 - Input files must end with exactly one newline and have no trailing spaces per line.
+- Ordinary sample tests should rely on `tests/manual/{id}.in` and `tests/answers/{id}.ans`. Do not duplicate them into `sample_input`/`sample_output` unless you intentionally need a statement override.
 
 ---
 

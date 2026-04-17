@@ -159,11 +159,11 @@ After the user approves the plan, implement each part sequentially. IDs are cont
    {
      "id": "001",
      "kind": "manual",
-     "sample": true,
-     "sample_input": "3\n1 2 3\n",
-     "sample_output": "6\n"
+     "sample": true
    }
    ```
+   Ordinary non-interactive sample tests: `"sample": true`, omit `sample_input`/`sample_output`. The statement uses the real `tests/manual/{id}.in` and `tests/answers/{id}.ans` files.
+   Only add `sample_input`/`sample_output` when the statement must override the displayed sample text, such as interactive problems, spoiler-sensitive samples, or cleaner fixed-format presentation.
    Non-sample manual tests: `"sample": false`, omit `sample_input`/`sample_output`.
 
 ### Generated tests
