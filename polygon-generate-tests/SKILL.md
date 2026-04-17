@@ -16,12 +16,13 @@ Identify:
 - **Constraint boundaries**: min/max values of n, m, coordinates, weights, etc.
 - **Output branches**: does the problem have YES/NO, "output -1 if impossible", multiple valid answers?
 - **Special structure**: trees, graphs, permutations, strings, geometry?
+- **Small exhaustive coverage opportunity**: can all valid instances up to some small bound be enumerated exactly, and if so, how many test files would that require under the repository constraints?
 
 ---
 
 ## Phase 2: Design the test plan
 
-Write the test plan to `draft/tests.md` before implementing anything. The plan lists all tests grouped into 6 parts. IDs are assigned sequentially -- no gaps, no fixed ranges.
+Write the test plan to `draft/tests.md` before implementing anything. The plan lists all tests grouped into 7 parts. IDs are assigned sequentially -- no gaps, no fixed ranges.
 
 Example plan:
 
@@ -39,19 +40,24 @@ Example plan:
 - already sorted
 - reverse sorted
 
-## Part 3: Stress / random (typically 5-15)
+## Part 3: Small exhaustive coverage (typically 1-10)
+- enumerate all valid instances up to the largest feasible small bound
+- slice the boundary layer if one file would exceed the repository constraints
+- keep the exhaustive block compact
+
+## Part 4: Stress / random (typically 5-15)
 - gen_random, small (n~10), x3
 - gen_random, medium (n~1000), x3
 - gen_random, max (n=200000), x5
 
-## Part 4: Anti-hack (typically 2-5)
+## Part 5: Anti-hack (typically 2-5)
 - gen_worstcase -- breaks greedy
 - manual -- always-YES case, breaks dummy
 
-## Part 5: Max-stress (typically 2-5)
+## Part 6: Max-stress (typically 2-5)
 - gen_maxstress -- adversarial structure, x2
 
-## Part 6: Extra
+## Part 7: Extra
 (ask user for additional ideas)
 ```
 
@@ -76,12 +82,20 @@ IDs are assigned sequentially when implementing (001, 002, ...), no gaps.
 
 Pick the ones relevant to the problem.
 
-**Part 3 -- Stress (random)**: random tests at varying sizes.
+**Part 3 -- Small exhaustive coverage**:
+- Use this part when the full small state space is enumerable.
+- Before generating it, estimate how many test files are needed after applying repository constraints such as `\sum n`.
+- Keep the exhaustive block compact; by default, keep it within 20 test files.
+- Choose the largest fully covered range that fits this budget.
+- If needed, enumerate all cases up to `n = k`, then slice only the boundary layer `n = k + 1`.
+- When a canonical encoding exists, enumerate each structure exactly once. For rooted forests given by parents, prefer canonical forms such as `p_i < i`.
+
+**Part 4 -- Stress (random)**: random tests at varying sizes.
 - Small (n ~ 5-10): fast, debuggable, good for stress vs brute force
 - Medium (n ~ 100-1000): find off-by-one, overflow
 - Large (n = max): TLE / MLE detection
 
-**Part 4 -- Anti-hack**: tests designed to break specific wrong solutions. For each `rej_*` solution, analyze what input would expose it.
+**Part 5 -- Anti-hack**: tests designed to break specific wrong solutions. For each `rej_*` solution, analyze what input would expose it.
 
 | Wrong approach | Anti-hack strategy |
 |---------------|-------------------|
@@ -90,9 +104,9 @@ Pick the ones relevant to the problem.
 | O(n^2) solution | Maximum n to trigger TLE |
 | Overflow-prone | Values near 2^31 or 2^63 boundaries |
 
-**Part 5 -- Max-stress**: maximum constraints with adversarial structure -- worst-case for the intended algorithm, maximum output size, degenerate structures.
+**Part 6 -- Max-stress**: maximum constraints with adversarial structure -- worst-case for the intended algorithm, maximum output size, degenerate structures.
 
-**Part 6 -- Extra**: ask the user: "Do you have any specific test scenarios you want to add?" Add whatever they suggest.
+**Part 7 -- Extra**: ask the user: "Do you have any specific test scenarios you want to add?" Add whatever they suggest.
 
 ### Domain-specific checklists
 
@@ -102,6 +116,13 @@ Check which of these apply to the problem and incorporate into the plan:
 - **Increasing n**: T tests where n grows each case (1, 2, 4, 8, ..., max). Catches solutions that clear arrays to `n+1` but leave stale data from earlier larger cases.
 - **Maximum T, minimum n**: T at maximum, each case has n=1 or minimum. Catches solutions that memset `MAXN` every test case (TLE on large T).
 - Both patterns are mandatory when multi-test is present.
+
+**Branching-output problems**:
+- If the output has multiple branches such as `YES/NO`, `Alice/Bob`, `possible/impossible`, or `answer / -1`, do not assume random tests cover all branches well.
+- If a trusted solution is available, run it on a small random sample before finalizing the plan and record the observed branch distribution.
+- If random generation is strongly biased toward one branch, add explicit tests for the underrepresented branch.
+- Include both small proof-style cases and at least one nontrivial larger case for the underrepresented branch.
+- When reviewing the final tests, check that every intended output branch is represented.
 
 **Trees**:
 - Random parent tree (`rnd.next(0, i-1)`) has expected height O(log n) -- this is too shallow if tree depth matters.
@@ -121,7 +142,7 @@ Check which of these apply to the problem and incorporate into the plan:
 - For simple polygon problems: ask the user to reference ICPC 2017 "Airport Construction" test data for high-quality polygon generation patterns.
 - Include degenerate cases: collinear points, coincident points, very small/large coordinates.
 
-Show the draft plan to the user and iterate before implementing.
+Show the draft plan to the user and iterate before implementing. If small exhaustive coverage is planned, include the estimated file count and chosen cutoff.
 
 ---
 
@@ -255,4 +276,5 @@ Always shuffle node labels -- otherwise node 1 is always the root and low-number
 - Input files must end with exactly one trailing newline, no trailing spaces on lines.
 - Generator output must match the exact format the validator expects.
 - Always write the test plan to `draft/tests.md` and get user approval before implementing.
-
+- If you plan small exhaustive coverage, estimate the required number of files first and keep that block within 20 files by default.
+- If `tests/spec.json` is reduced or reorganized, remove unreferenced files from the test directories.
