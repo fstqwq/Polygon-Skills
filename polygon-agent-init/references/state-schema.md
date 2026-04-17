@@ -40,6 +40,11 @@ Storage mechanism (memory, file, env) is agent-specific -- this only defines the
 
 ## Rules
 
+- Recommended default state file location:
+  - Windows: `%USERPROFILE%\.polygon-agent\state.json`
+  - Linux: `~/.polygon-agent/state.json`
+  The state file should live outside the repo root and outside the skill install tree.
+
 - `identity.agent_name` should be the agent product or implementation name.
   Good examples: `Codex`, `Claude Code`, `OpenCode`.
   Do not use a repo name, task description, or problem slug here.

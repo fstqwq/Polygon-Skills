@@ -8,97 +8,62 @@ description: "Export and download a problem zip file through the Polygon Agent t
 ## When to Use This Skill
 
 Use this skill when:
-- You need to export and download a problem zip file (ICPC or native format) via the agent API
-- You need to check export status or download the result
-
-Do NOT use this skill for:
-- Exporting through the web UI
-- Importing packages (use `polygon-agent-push` + `polygon-agent-fetch`)
+- you need to start an export job
+- you need to wait for export completion
+- you need to download the ZIP artifact
 
 ## Required Token Scope
 
-**`readonly`** (or higher)
+**`readonly`** or higher.
 
-Export does NOT require `workspace` or `commit` scope.
-
-## Endpoints
-
-All requests require `Authorization: Bearer <token>`.
+## Primary Path
 
 ### Start export
 
-```
-POST {base_url}/agent/v1/export/start
-Content-Type: application/json
+Native:
 
-{"export_type": "native"}
-```
-
-Or:
-
-```json
-{"export_type": "icpc", "verification_id": "ver-0123456789ab"}
-```
-
-Response:
-```json
-{"export_id": "exp-api-abc123", "status": "queued"}
-```
-
-### Export types
-
-| Type | Source | Requires committed revision? |
-|------|--------|------------------------------|
-| `native` | Current working tree | No |
-| `icpc` | Last committed revision | Yes -- the workspace must have commits |
-
-### Check status
-
-```
-GET {base_url}/agent/v1/export/{export_id}/status
-```
-
-Response when complete:
-```json
-{
-  "export_id": "exp-api-abc123",
-  "status": "ok",
-  "download_path": "/agent/v1/export/exp-api-abc123/download",
-  "filename": "aplusb-v3.zip"
-}
-```
-
-Status values: `queued`, `running`, `ok`, `failed`
-
-### Download
-
-```
-GET {base_url}/agent/v1/export/{export_id}/download
-```
-
-Returns binary `application/zip`.
-
-**Important**: This returns a raw ZIP file, not JSON. Save the response body to a file:
 ```bash
-curl -o package.zip "{base_url}/agent/v1/export/{export_id}/download" \
-  -H "Authorization: Bearer <token>"
+python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
+  --problem "alice/aplusb" \
+  --export-type "native"
 ```
 
-## Typical Workflow
+ICPC:
 
-1. Optionally run verification first (`polygon-agent-verification`)
-2. Start export: `POST /agent/v1/export/start`
-3. Poll status every 3-5 seconds: `GET /agent/v1/export/{id}/status`
-4. When `status` is `ok`, download: `GET /agent/v1/export/{id}/download`
-5. Save the ZIP to a local file
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
+  --problem "alice/aplusb" \
+  --export-type "icpc"
+```
 
-## Important Notes
+Read `export_id` from the JSON result.
 
-- `icpc` export requires a committed revision. If the workspace has uncommitted changes, commit first with `polygon-agent-commit`.
-- `native` export works from the current working tree, including uncommitted changes.
-- Only one export of the same type/source can run at a time. Starting a duplicate returns 409.
+### Wait for completion
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
+  --problem "alice/aplusb" \
+  --export-id "exp-api-abc123"
+```
+
+### Download the ZIP
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py export-download \
+  --problem "alice/aplusb" \
+  --export-id "exp-api-abc123" \
+  --output "./aplusb.zip"
+```
+
+`--output` is required. The CLI does not guess a default download filename.
+
+## Notes
+
+- `native` export works from the current working tree
+- `icpc` export requires a committed revision
+- the CLI writes the ZIP directly to `--output` and returns only a small JSON summary
 
 ## Reference
 
-For full endpoint details, read `skills/polygon-agent-init/references/agent-api.md`.
-For curl examples, read `skills/polygon-agent-init/references/http-examples.md`.
+- Shared CLI commands: `skills/polygon-agent-cli/references/cli.md`
+- Endpoint reference: `skills/polygon-agent-init/references/agent-api.md`

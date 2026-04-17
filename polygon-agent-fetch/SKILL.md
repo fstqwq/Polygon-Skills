@@ -8,92 +8,57 @@ description: "Read workspace files from a Polygon problem through the agent toke
 ## When to Use This Skill
 
 Use this skill when:
-- You need to read files from a Polygon problem workspace via the agent API
-- You need to check workspace status (head commit, dirty state)
-- You need to list or enumerate workspace contents
-
-Do NOT use this skill for:
-- Reading local files on disk (use normal file tools)
-- Uploading or deleting files (use `polygon-agent-push`)
-- Operations through the web UI
+- you need workspace status
+- you need to enumerate files
+- you need to read one file from a problem workspace
 
 ## Required Token Scope
 
-**`readonly`** (or higher)
+**`readonly`** or higher.
 
-All fetch operations only need a `readonly` token.
+## Primary Path
 
-## Endpoints
+### Workspace status
 
-All requests require `Authorization: Bearer <token>`.
-
-### Check workspace status
-
-```
-GET {base_url}/agent/v1/workspace/status
-```
-
-Response:
-```json
-{
-  "problem": "alice/aplusb",
-  "user": "alice",
-  "workspace_id": 42,
-  "head_commit": "abc123...",
-  "dirty": false,
-  "git": {"branch": "main", "status": "clean"}
-}
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py workspace-status \
+  --problem "alice/aplusb"
 ```
 
 ### List files
 
-```
-GET {base_url}/agent/v1/workspace/files
-GET {base_url}/agent/v1/workspace/files?path=solutions
-```
-
-Response:
-```json
-{
-  "base_path": "solutions",
-  "entries": [
-    {"path": "solutions/main.cpp", "is_dir": false, "is_file": true}
-  ],
-  "truncated": false
-}
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py list-files \
+  --problem "alice/aplusb" \
+  --path "solutions"
 ```
 
-If `truncated` is true, list subdirectories individually to get complete results.
+### Read a file inline
 
-### Read a file
-
-```
-GET {base_url}/agent/v1/workspace/file?path=solutions/main.cpp
-```
-
-Response:
-```json
-{
-  "path": "solutions/main.cpp",
-  "is_dir": false,
-  "size_bytes": 142,
-  "media_type": "text/plain; charset=utf-8",
-  "encoding": "utf-8",
-  "content": "#include <bits/stdc++.h>\nint main(){...}\n"
-}
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py read-file \
+  --problem "alice/aplusb" \
+  --path "solutions/main.cpp"
 ```
 
-For binary files, `encoding` will be `"base64"` and `content` will be base64-encoded.
+### Save a file locally
 
-If `is_dir` is true, the path is a directory -- use `files?path=...` to list its contents.
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py read-file \
+  --problem "alice/aplusb" \
+  --path "attachments/logo.png" \
+  --save-to "./logo.png"
+```
 
-## Typical Workflow
+Use `--save-to` for binary files or large content when you do not want inline JSON content.
 
-1. Check `workspace/status` to see the current state
-2. List `workspace/files` to discover what exists
-3. Read specific files you need with `workspace/file?path=...`
+## Notes
+
+- the CLI chooses the cached token from the state file by `--problem`
+- file content is returned as UTF-8 text or base64, matching the server response
+- if the remote path is a directory, the CLI returns an error instead of pretending it is a file
 
 ## Reference
 
-For full endpoint details, read `skills/polygon-agent-init/references/agent-api.md`.
-For curl examples, read `skills/polygon-agent-init/references/http-examples.md`.
+- Shared CLI commands: `skills/polygon-agent-cli/references/cli.md`
+- Endpoint reference: `skills/polygon-agent-init/references/agent-api.md`

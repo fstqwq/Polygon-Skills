@@ -56,6 +56,19 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-local-export` | "create a local zip file" | Zip the working tree as a native zip file |
 | `polygon-local-import` | "import a local zip file" | Unzip a native zip file into a local repo |
 
+## Agent Skills
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `polygon-agent-cli` | internal shared CLI | Cross-platform script entrypoint for all Polygon agent API workflows |
+| `polygon-agent-init` | "initialize Polygon agent" | Register an agent session and persist state |
+| `polygon-agent-connect` | "connect agent to problem" | Request access and cache a problem token |
+| `polygon-agent-fetch` | "read workspace via agent" | Workspace status, list files, read file |
+| `polygon-agent-push` | "push workspace via agent" | Upload or delete workspace files |
+| `polygon-agent-verification` | "run verification via agent" | Start, wait for, and inspect verification |
+| `polygon-agent-export` | "export via agent" | Start, wait for, and download exports |
+| `polygon-agent-commit` | "commit via agent" | Commit and publish through the agent API |
+
 ## Typical workflow
 
 ```
@@ -73,6 +86,7 @@ polygon-local-export   -> create a local zip file for upload
 
 | Path | Purpose |
 |------|---------|
+| `polygon-agent-cli/references/cli.md` | Shared CLI command catalog for `polygon-agent-*` skills |
 | `polygon-spec/testlib.h` | Testlib header (`-I <skills>/polygon-spec`) |
 | `polygon-spec/review.py` | Structural health check script |
 | `polygon-spec/compile.md` | Compilation flags reference |

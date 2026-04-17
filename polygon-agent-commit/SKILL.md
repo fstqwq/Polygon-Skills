@@ -8,96 +8,62 @@ description: "Commit and publish workspace changes through the Polygon Agent tok
 ## When to Use This Skill
 
 Use this skill when:
-- You need to commit and publish workspace changes via the agent API
-- The user has explicitly asked you to commit
-
-Do NOT use this skill for:
-- Committing through the web UI or git CLI
-- Uploading files (use `polygon-agent-push`)
-- Any operation that doesn't involve the `/agent/v1/commit` endpoint
+- the user explicitly asked you to commit and publish
+- verification is already in a good state
+- you already hold a `commit` scope token
 
 ## Required Token Scope
 
 **`commit`**
 
-This is the highest scope level. If you only have `readonly` or `workspace`, commit will return 403.
-Request a new token with `commit` scope using `polygon-agent-connect`.
+If you only have `readonly` or `workspace`, request a new token through `polygon-agent-connect`.
 
-## MANDATORY: Human Approval Before Commit
+## Mandatory Human Approval
 
-**Before executing a commit, you MUST:**
+Before running the commit command, you MUST:
 
-1. Show the user a summary of what will be committed (list changed files, describe the changes)
-2. Show the proposed commit message
-3. Ask for explicit text confirmation (e.g., "yes", "go ahead", "commit it")
-4. Only proceed after receiving clear affirmative text from the user
+1. show the user what will be committed
+2. show the proposed commit message
+3. get explicit affirmative text approval
+4. only then run the command
 
-**You MUST NOT:**
-- Commit without showing the user what will be committed
-- Commit without explicit user approval
-- Auto-commit as part of another workflow without asking
+You must not auto-commit as a side effect of another workflow.
 
-## Endpoints
+## Primary Path
 
-All requests require `Authorization: Bearer <token>`.
+### Commit with inline message
 
-### Commit
-
-```
-POST {base_url}/agent/v1/commit
-Content-Type: application/json
-
-{"message": "add brute force solution"}
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py commit \
+  --problem "alice/aplusb" \
+  --message "add brute force solution"
 ```
 
-Response:
-```json
-{"status": "ok", "head": "abc123def456..."}
+### Commit with message file
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py commit \
+  --problem "alice/aplusb" \
+  --message-file "./commit-message.txt"
 ```
 
-The commit message is required. Empty messages return 400.
+The CLI requires exactly one of `--message` or `--message-file`.
 
-### Behavior
+### Check publish status
 
-The commit endpoint does three things atomically:
-1. `git add -A && git commit -m "<message>"`
-2. `git push origin main`
-3. If push fails, the commit is rolled back
-
-If there are no changes to commit, the response is still 200 (the command succeeds with no new commit).
-
-### Check commit status
-
-```
-GET {base_url}/agent/v1/commit/{ref}/status
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
+  --problem "alice/aplusb" \
+  --ref "abc123def456"
 ```
 
-Response:
-```json
-{
-  "ref": "abc123def456...",
-  "status": "published",
-  "head": "abc123def456...",
-  "remote_head": "abc123def456..."
-}
-```
+## Notes
 
-Status values:
-- `published` -- the ref is both the local HEAD and remote HEAD
-- `local` -- the ref is the local HEAD but not pushed
-- `missing` -- the ref is not the current HEAD
-
-## Typical Workflow
-
-1. **Push** changes with `polygon-agent-push`
-2. **Verify** with `polygon-agent-verification`
-3. Review results and confirm everything is correct
-4. **Show the user** what will be committed
-5. **Get user approval**
-6. **Commit**: `POST /agent/v1/commit`
-7. Confirm publish: `GET /agent/v1/commit/{head}/status`
+- the server-side commit endpoint handles add, commit, push, and rollback on push failure
+- if there are no changes, the endpoint may still succeed without creating a new commit
+- the CLI only invokes the endpoint; approval discipline stays in this skill
 
 ## Reference
 
-For full endpoint details, read `skills/polygon-agent-init/references/agent-api.md`.
-For curl examples, read `skills/polygon-agent-init/references/http-examples.md`.
+- Shared CLI commands: `skills/polygon-agent-cli/references/cli.md`
+- Endpoint reference: `skills/polygon-agent-init/references/agent-api.md`

@@ -8,75 +8,49 @@ description: "Upload or delete workspace files in a Polygon problem through the 
 ## When to Use This Skill
 
 Use this skill when:
-- You need to upload files to a Polygon problem workspace via the agent API
-- You need to delete files from a workspace via the agent API
-- You have made local edits and want to push them to the cloud workspace
-
-Do NOT use this skill for:
-- Reading files (use `polygon-agent-fetch`)
-- Committing / publishing changes (use `polygon-agent-commit`)
-- Uploading through the web UI
+- you need to upload a local file into the remote workspace
+- you need to delete a remote workspace file
+- you already know what should change and want to update the cloud workspace state
 
 ## Required Token Scope
 
-**`workspace`** (or higher)
+**`workspace`** or higher.
 
-If you only have a `readonly` token, upload and delete will return 403.
-Request a new token with `workspace` scope using `polygon-agent-connect`.
+If you only have `readonly`, request a higher-scope token through `polygon-agent-connect`.
 
-## Endpoints
+## Primary Path
 
-All requests require `Authorization: Bearer <token>`.
+### Upload
 
-### Upload a file
-
-```
-POST {base_url}/agent/v1/workspace/upload
-Content-Type: multipart/form-data
-
-Fields:
-  path: solutions/brute.py       (workspace-relative path)
-  file: <file content>           (the file binary)
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py upload \
+  --problem "alice/aplusb" \
+  --workspace-path "solutions/brute.py" \
+  --local-file "./brute.py"
 ```
 
-Response:
-```json
-{"ok": true, "path": "solutions/brute.py", "bytes": 256}
-```
+### Delete
 
-- The path is workspace-relative. Absolute paths and `..` traversal are rejected.
-- If the file already exists, it is overwritten.
-- Parent directories are created automatically.
-- The target must be a file path, not a directory.
-
-### Delete a file
-
-```
-DELETE {base_url}/agent/v1/workspace/files/solutions/brute.py
-```
-
-Response:
-```json
-{"ok": true, "path": "solutions/brute.py"}
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py delete \
+  --problem "alice/aplusb" \
+  --workspace-path "solutions/brute.py"
 ```
 
 ## Typical Workflow
 
-1. **Fetch** current files with `polygon-agent-fetch` to understand the workspace
-2. Make your changes locally
-3. **Push** changed files with `workspace/upload`
-4. Optionally delete obsolete files with `workspace/files/{path}`
-5. **Verify** with `polygon-agent-verification` to confirm correctness
-6. **Commit** with `polygon-agent-commit` when ready to publish
+1. fetch or inspect current workspace state
+2. update remote files with `upload` and `delete`
+3. run verification with `polygon-agent-verification`
+4. commit only after the user explicitly asks for it
 
-## Important Notes
+## Notes
 
-- Push only modifies the workspace working tree. Changes are NOT committed.
-  Use `polygon-agent-commit` to commit and publish.
-- After pushing, the workspace will show `"dirty": true` in status.
-- Push does not trigger verification. Use `polygon-agent-verification` separately.
+- upload always reads content from `--local-file`; do not construct file content inline in shell
+- push modifies only the workspace working tree
+- push does not trigger verification automatically
 
 ## Reference
 
-For full endpoint details, read `skills/polygon-agent-init/references/agent-api.md`.
-For curl examples, read `skills/polygon-agent-init/references/http-examples.md`.
+- Shared CLI commands: `skills/polygon-agent-cli/references/cli.md`
+- Endpoint reference: `skills/polygon-agent-init/references/agent-api.md`

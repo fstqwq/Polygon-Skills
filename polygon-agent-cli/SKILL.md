@@ -1,0 +1,70 @@
+---
+name: polygon-agent-cli
+description: "Shared CLI for Polygon agent workflows. Use when any polygon-agent-* skill needs to execute a real /agent/v1/* operation through a stable cross-platform script."
+---
+
+# Polygon Agent -- Shared CLI
+
+## Purpose
+
+This skill provides the shared command-line entrypoint used by:
+- `polygon-agent-init`
+- `polygon-agent-connect`
+- `polygon-agent-fetch`
+- `polygon-agent-push`
+- `polygon-agent-verification`
+- `polygon-agent-export`
+- `polygon-agent-commit`
+
+Use the CLI instead of writing ad hoc Python, curl, or shell code for `/agent/v1/*`.
+
+## Entry Point
+
+Run:
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py <command> ...
+```
+
+The CLI is:
+- cross-platform for Windows and Linux
+- JSON-only on `stdout`
+- flag-based for input
+- state-file based for session and token persistence
+
+## Input Rules
+
+- Do not pass JSON bodies on the command line.
+- Use plain flags such as `--problem`, `--request-id`, `--workspace-path`, `--local-file`, and `--message`.
+- Use `--message-file` for quote-sensitive commit messages.
+- Use `--save-to` or `--output` for large or binary payloads.
+
+## Output Rules
+
+Every command prints exactly one JSON object to `stdout`.
+
+Success:
+
+```json
+{"ok":true,"result":{...}}
+```
+
+Failure:
+
+```json
+{"ok":false,"error":{"code":"token_invalid","message":"token invalid","http_status":401}}
+```
+
+## State File
+
+Every stateful command accepts `--state-file`.
+
+If omitted, the CLI uses a per-user default:
+- Windows: `%USERPROFILE%\.polygon-agent\state.json`
+- Linux: `~/.polygon-agent/state.json`
+
+The state file is outside the repo and outside the skill install tree.
+
+## Reference
+
+Read `skills/polygon-agent-cli/references/cli.md` for the command catalog.
