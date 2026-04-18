@@ -52,7 +52,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-download \
   --problem "alice/aplusb" \
   --export-id "exp-api-abc123" \
-  --output "./aplusb.zip"
+  --output "./alice/aplusb/temp/aplusb.zip"
 ```
 
 `--output` is required. The CLI does not guess a default download filename.
@@ -62,6 +62,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-download \
 - `native` export works from the current working tree
 - `icpc` export requires a committed revision
 - the CLI writes the ZIP directly to `--output` and returns only a small JSON summary
+- if you store a remote problem locally, use `./<owner>/<problem>/` as the repo root
 
 ## Reference
 

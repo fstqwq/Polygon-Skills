@@ -10,7 +10,7 @@ All commands print JSON to `stdout`.
 
 TLS behavior:
 - HTTPS certificate verification is disabled by default
-- the CLI prints a warning to `stderr` when it uses insecure HTTPS
+- the CLI prints a warning to `stderr` only during `init` when it uses insecure HTTPS
 - pass `--secure` to enforce normal certificate verification
 - `--insecure` is accepted for explicitness, but it is already the default
 
@@ -84,7 +84,7 @@ Save to disk:
 python skills/polygon-agent-cli/scripts/polygon_agent.py read-file \
   --problem "alice/aplusb" \
   --path "attachments/logo.png" \
-  --save-to "./logo.png"
+  --save-to "./alice/aplusb/attachments/logo.png"
 ```
 
 ### Upload
@@ -93,7 +93,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py read-file \
 python skills/polygon-agent-cli/scripts/polygon_agent.py upload \
   --problem "alice/aplusb" \
   --workspace-path "solutions/brute.py" \
-  --local-file "./brute.py"
+  --local-file "./alice/aplusb/solutions/brute.py"
 ```
 
 ### Delete
@@ -125,7 +125,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py verify-wait \
 python skills/polygon-agent-cli/scripts/polygon_agent.py verify-detail \
   --problem "alice/aplusb" \
   --verification-id "ver-0123456789ab" \
-  --save-to "./verification.yaml"
+  --save-to "./alice/aplusb/temp/verification.yaml"
 ```
 
 ### Export Start
@@ -150,7 +150,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-download \
   --problem "alice/aplusb" \
   --export-id "exp-api-abc123" \
-  --output "./aplusb.zip"
+  --output "./alice/aplusb/temp/aplusb.zip"
 ```
 
 ### Commit
@@ -188,5 +188,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
 - The CLI never approves browser requests on its own.
 - The CLI never requires inline JSON bodies.
 - `export-download` always requires `--output`.
-- Stateful commands use `--state-file` if provided; otherwise they use the default per-user state path.
+- Stateful commands use `--state-file` if provided; otherwise they use `./.polygon-agent/state.json` under the current working directory.
+- When saving a remote problem locally, use `./<owner>/<problem>/` as the default repo path.
+- Keep downloaded or mirrored files under that repo root instead of flattening them into `./<problem>/`.
 - For internal HTTPS servers with self-signed certificates, no extra flag is needed; pass `--secure` only when you want certificate verification enabled.
+- The insecure HTTPS warning is intentionally limited to `init`, not normal follow-up commands like `status`, `connect`, or `poll`.

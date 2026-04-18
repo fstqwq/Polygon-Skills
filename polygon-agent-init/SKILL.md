@@ -29,6 +29,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py init \
 
 The command prints JSON to `stdout` and persists the session state.
 
+If you omit `--state-file`, the CLI writes to `./.polygon-agent/state.json` under the current working directory.
+
 If you want to store the state somewhere explicit, add:
 
 ```bash
@@ -75,7 +77,7 @@ Use `polygon-agent-connect` after this to request access to a specific problem t
 - the registration URL is one-time use
 - if the code is expired or already consumed, ask the user to generate a fresh registration URL in the Web UI
 - the CLI is the primary path; raw HTTP docs remain only as reference
-- for local or internal HTTPS servers with self-signed certificates, the CLI already skips certificate verification by default and prints a warning to `stderr`
+- for local or internal HTTPS servers with self-signed certificates, the CLI already skips certificate verification by default and prints a warning to `stderr` during `init`
 - pass `--secure` only when you want normal TLS verification enabled
 
 ## Reference

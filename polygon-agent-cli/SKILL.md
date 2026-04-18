@@ -31,7 +31,7 @@ The CLI is:
 - JSON-only on `stdout`
 - flag-based for input
 - state-file based for session and token persistence
-- insecure by default for HTTPS, with warnings on `stderr`
+- insecure by default for HTTPS, with warnings on `stderr` during `init`
 
 ## Input Rules
 
@@ -60,16 +60,25 @@ Failure:
 
 Every stateful command accepts `--state-file`.
 
-If omitted, the CLI uses a per-user default:
-- Windows: `%USERPROFILE%\.polygon-agent\state.json`
-- Linux: `~/.polygon-agent/state.json`
+If omitted, the CLI uses this default path:
+`./.polygon-agent/state.json` under the current working directory.
 
-The state file is outside the repo and outside the skill install tree.
+## Local Repo Naming
+
+When you need to mirror a remote problem into a local repository, use:
+
+`./<owner>/<problem>/`
+
+Example:
+
+`./fstqwq/a-plus-b/`
+
+Do not collapse the owner name away into `./a-plus-b/`. The owner-qualified path matches the remote problem slug and avoids collisions.
 
 ## TLS Rules
 
 - For HTTPS endpoints, certificate verification is disabled by default.
-- The CLI prints a warning to `stderr` when insecure HTTPS is used.
+- The CLI prints a warning to `stderr` only during `init` when insecure HTTPS is used.
 - Pass `--secure` to enforce normal certificate verification.
 - `--insecure` is accepted as an explicit form of the default.
 

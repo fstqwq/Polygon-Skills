@@ -101,5 +101,7 @@ polygon-local-export   -> create a local zip file for upload
 - UTF-8 everywhere. Em-dashes written as ASCII ` -- `, never as a Unicode em-dash.
 - Each skill is self-contained. `SKILL.md` is the entry point.
 - Skills reference each other by name (e.g., "see `/polygon-solution`").
+- When materializing a remote Polygon problem locally, use `./<owner>/<problem>/` as the default repo path.
+  Example: `./fstqwq/a-plus-b/`, not `./a-plus-b/`.
 - `draft/` is for working files (plans, reviews). Not exported.
 - `temp/` is local scratch. Not exported.

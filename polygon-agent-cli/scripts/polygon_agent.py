@@ -63,7 +63,7 @@ def _write_error(error: CliError) -> None:
 
 
 def _default_state_file() -> Path:
-    return Path.home() / ".polygon-agent" / "state.json"
+    return Path.cwd() / ".polygon-agent" / "state.json"
 
 
 def _resolve_state_file(raw: str | None) -> Path:
@@ -230,19 +230,20 @@ def _api_error_from_response(status: int, body: bytes) -> CliError:
     return CliError(code=_http_code_name(status), message=message, http_status=status)
 
 
-def _tls_context(*, url: str, verify_tls: bool) -> ssl.SSLContext | None:
+def _tls_context(*, url: str, verify_tls: bool, warn_insecure: bool = False) -> ssl.SSLContext | None:
     parsed = urlparse(url)
     if parsed.scheme != "https":
         return None
     if verify_tls:
         return ssl.create_default_context()
-    host = parsed.netloc or parsed.path or url
-    if host not in _INSECURE_WARNING_EMITTED:
-        print(
-            f"warning: TLS certificate verification is disabled by default for https://{host}; pass --secure to enforce verification",
-            file=sys.stderr,
-        )
-        _INSECURE_WARNING_EMITTED.add(host)
+    if warn_insecure:
+        host = parsed.netloc or parsed.path or url
+        if host not in _INSECURE_WARNING_EMITTED:
+            print(
+                f"warning: TLS certificate verification is disabled by default for https://{host}; pass --secure to enforce verification",
+                file=sys.stderr,
+            )
+            _INSECURE_WARNING_EMITTED.add(host)
     return ssl._create_unverified_context()
 
 
@@ -254,10 +255,11 @@ def _http_request(
     body: bytes | None = None,
     timeout_sec: float = DEFAULT_HTTP_TIMEOUT_SEC,
     verify_tls: bool = False,
+    warn_insecure: bool = False,
 ) -> tuple[int, bytes, dict[str, str]]:
     request = urllib.request.Request(url=url, method=method, headers=headers or {}, data=body)
     try:
-        context = _tls_context(url=url, verify_tls=verify_tls)
+        context = _tls_context(url=url, verify_tls=verify_tls, warn_insecure=warn_insecure)
         with urllib.request.urlopen(request, timeout=timeout_sec, context=context) as response:
             return (int(response.getcode()), response.read(), dict(response.headers.items()))
     except urllib.error.HTTPError as exc:
@@ -273,8 +275,16 @@ def _http_json(
     headers: dict[str, str] | None = None,
     body: bytes | None = None,
     verify_tls: bool = False,
+    warn_insecure: bool = False,
 ) -> JsonObject:
-    _status, payload, _headers = _http_request(url=url, method=method, headers=headers, body=body, verify_tls=verify_tls)
+    _status, payload, _headers = _http_request(
+        url=url,
+        method=method,
+        headers=headers,
+        body=body,
+        verify_tls=verify_tls,
+        warn_insecure=warn_insecure,
+    )
     try:
         data = json.loads(payload.decode("utf-8")) if payload else {}
     except json.JSONDecodeError as exc:
@@ -284,16 +294,42 @@ def _http_json(
     return data
 
 
-def _http_text(*, url: str, method: str, headers: dict[str, str] | None = None, verify_tls: bool = False) -> str:
-    _status, payload, _headers = _http_request(url=url, method=method, headers=headers, verify_tls=verify_tls)
+def _http_text(
+    *,
+    url: str,
+    method: str,
+    headers: dict[str, str] | None = None,
+    verify_tls: bool = False,
+    warn_insecure: bool = False,
+) -> str:
+    _status, payload, _headers = _http_request(
+        url=url,
+        method=method,
+        headers=headers,
+        verify_tls=verify_tls,
+        warn_insecure=warn_insecure,
+    )
     try:
         return payload.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise CliError(code="bad_response", message="server returned non-utf8 text") from exc
 
 
-def _http_binary(*, url: str, method: str, headers: dict[str, str] | None = None, verify_tls: bool = False) -> bytes:
-    _status, payload, _headers = _http_request(url=url, method=method, headers=headers, verify_tls=verify_tls)
+def _http_binary(
+    *,
+    url: str,
+    method: str,
+    headers: dict[str, str] | None = None,
+    verify_tls: bool = False,
+    warn_insecure: bool = False,
+) -> bytes:
+    _status, payload, _headers = _http_request(
+        url=url,
+        method=method,
+        headers=headers,
+        verify_tls=verify_tls,
+        warn_insecure=warn_insecure,
+    )
     return payload
 
 
@@ -364,6 +400,7 @@ def _command_init(args: argparse.Namespace) -> JsonObject:
             }
         ),
         verify_tls=bool(args.secure),
+        warn_insecure=(not bool(args.secure)),
     )
     agent_session_id = str(response.get("agent_session_id") or "")
     identity_hash = str(response.get("identity_hash") or "")
