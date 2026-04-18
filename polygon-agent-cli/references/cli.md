@@ -8,6 +8,12 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py <command> ...
 
 All commands print JSON to `stdout`.
 
+TLS behavior:
+- HTTPS certificate verification is disabled by default
+- the CLI prints a warning to `stderr` when it uses insecure HTTPS
+- pass `--secure` to enforce normal certificate verification
+- `--insecure` is accepted for explicitness, but it is already the default
+
 ## Commands
 
 ### Init
@@ -183,3 +189,4 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
 - The CLI never requires inline JSON bodies.
 - `export-download` always requires `--output`.
 - Stateful commands use `--state-file` if provided; otherwise they use the default per-user state path.
+- For internal HTTPS servers with self-signed certificates, no extra flag is needed; pass `--secure` only when you want certificate verification enabled.

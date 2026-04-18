@@ -75,6 +75,8 @@ Use `polygon-agent-connect` after this to request access to a specific problem t
 - the registration URL is one-time use
 - if the code is expired or already consumed, ask the user to generate a fresh registration URL in the Web UI
 - the CLI is the primary path; raw HTTP docs remain only as reference
+- for local or internal HTTPS servers with self-signed certificates, the CLI already skips certificate verification by default and prints a warning to `stderr`
+- pass `--secure` only when you want normal TLS verification enabled
 
 ## Reference
 

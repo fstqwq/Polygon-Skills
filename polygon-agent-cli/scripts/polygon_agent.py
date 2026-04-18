@@ -6,6 +6,7 @@ import base64
 import json
 import os
 import socket
+import ssl
 import sys
 import tempfile
 import time
@@ -20,6 +21,7 @@ from uuid import uuid4
 JsonObject = dict[str, Any]
 DEFAULT_HTTP_TIMEOUT_SEC = 30.0
 DEFAULT_WAIT_INTERVAL_SEC = 3.0
+_INSECURE_WARNING_EMITTED: set[str] = set()
 
 
 class CliError(Exception):
@@ -228,6 +230,22 @@ def _api_error_from_response(status: int, body: bytes) -> CliError:
     return CliError(code=_http_code_name(status), message=message, http_status=status)
 
 
+def _tls_context(*, url: str, verify_tls: bool) -> ssl.SSLContext | None:
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        return None
+    if verify_tls:
+        return ssl.create_default_context()
+    host = parsed.netloc or parsed.path or url
+    if host not in _INSECURE_WARNING_EMITTED:
+        print(
+            f"warning: TLS certificate verification is disabled by default for https://{host}; pass --secure to enforce verification",
+            file=sys.stderr,
+        )
+        _INSECURE_WARNING_EMITTED.add(host)
+    return ssl._create_unverified_context()
+
+
 def _http_request(
     *,
     url: str,
@@ -235,10 +253,12 @@ def _http_request(
     headers: dict[str, str] | None = None,
     body: bytes | None = None,
     timeout_sec: float = DEFAULT_HTTP_TIMEOUT_SEC,
+    verify_tls: bool = False,
 ) -> tuple[int, bytes, dict[str, str]]:
     request = urllib.request.Request(url=url, method=method, headers=headers or {}, data=body)
     try:
-        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
+        context = _tls_context(url=url, verify_tls=verify_tls)
+        with urllib.request.urlopen(request, timeout=timeout_sec, context=context) as response:
             return (int(response.getcode()), response.read(), dict(response.headers.items()))
     except urllib.error.HTTPError as exc:
         raise _api_error_from_response(exc.code, exc.read()) from exc
@@ -252,8 +272,9 @@ def _http_json(
     method: str,
     headers: dict[str, str] | None = None,
     body: bytes | None = None,
+    verify_tls: bool = False,
 ) -> JsonObject:
-    _status, payload, _headers = _http_request(url=url, method=method, headers=headers, body=body)
+    _status, payload, _headers = _http_request(url=url, method=method, headers=headers, body=body, verify_tls=verify_tls)
     try:
         data = json.loads(payload.decode("utf-8")) if payload else {}
     except json.JSONDecodeError as exc:
@@ -263,16 +284,16 @@ def _http_json(
     return data
 
 
-def _http_text(*, url: str, method: str, headers: dict[str, str] | None = None) -> str:
-    _status, payload, _headers = _http_request(url=url, method=method, headers=headers)
+def _http_text(*, url: str, method: str, headers: dict[str, str] | None = None, verify_tls: bool = False) -> str:
+    _status, payload, _headers = _http_request(url=url, method=method, headers=headers, verify_tls=verify_tls)
     try:
         return payload.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise CliError(code="bad_response", message="server returned non-utf8 text") from exc
 
 
-def _http_binary(*, url: str, method: str, headers: dict[str, str] | None = None) -> bytes:
-    _status, payload, _headers = _http_request(url=url, method=method, headers=headers)
+def _http_binary(*, url: str, method: str, headers: dict[str, str] | None = None, verify_tls: bool = False) -> bytes:
+    _status, payload, _headers = _http_request(url=url, method=method, headers=headers, verify_tls=verify_tls)
     return payload
 
 
@@ -342,6 +363,7 @@ def _command_init(args: argparse.Namespace) -> JsonObject:
                 "init_ts": init_ts,
             }
         ),
+        verify_tls=bool(args.secure),
     )
     agent_session_id = str(response.get("agent_session_id") or "")
     identity_hash = str(response.get("identity_hash") or "")
@@ -381,7 +403,7 @@ def _command_status(args: argparse.Namespace) -> JsonObject:
     session_id = _state_string(state, "agent_session_id")
     identity_hash = _state_string(state, "identity_hash")
     query = urlencode({"agent_session_id": session_id, "identity_hash": identity_hash})
-    response = _http_json(url=f"{base_url}/agent/v1/auth/status?{query}", method="GET")
+    response = _http_json(url=f"{base_url}/agent/v1/auth/status?{query}", method="GET", verify_tls=bool(args.secure))
     return {
         "user": response.get("user"),
         "server_name": response.get("server_name"),
@@ -408,6 +430,7 @@ def _command_connect(args: argparse.Namespace) -> JsonObject:
                 "problem": problem,
             }
         ),
+        verify_tls=bool(args.secure),
     )
     approve_path = str(response.get("approve_path") or "")
     request_id = str(response.get("request_id") or "")
@@ -422,11 +445,6 @@ def _command_connect(args: argparse.Namespace) -> JsonObject:
     }
 
 
-def _poll_once(base_url: str, session_id: str, identity_hash: str, request_id: str) -> JsonObject:
-    query = urlencode({"agent_session_id": session_id, "identity_hash": identity_hash})
-    return _http_json(url=f"{base_url}/agent/v1/auth/poll/{request_id}?{query}", method="GET")
-
-
 def _command_poll(args: argparse.Namespace) -> JsonObject:
     state_path = _resolve_state_file(args.state_file)
     state = _load_json_file(state_path)
@@ -437,7 +455,12 @@ def _command_poll(args: argparse.Namespace) -> JsonObject:
     deadline = None if args.timeout_sec is None else time.monotonic() + float(args.timeout_sec)
     interval_sec = float(args.interval_sec)
     while True:
-        response = _poll_once(base_url, session_id, identity_hash, request_id)
+        query = urlencode({"agent_session_id": session_id, "identity_hash": identity_hash})
+        response = _http_json(
+            url=f"{base_url}/agent/v1/auth/poll/{request_id}?{query}",
+            method="GET",
+            verify_tls=bool(args.secure),
+        )
         status = str(response.get("status") or "")
         if status == "approved":
             problem = str(response.get("problem") or "")
@@ -502,7 +525,12 @@ def _run_token_command(args: argparse.Namespace, callback: Any) -> JsonObject:
 
 def _command_workspace_status(args: argparse.Namespace) -> JsonObject:
     def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
-        response = _http_json(url=f"{base_url}/agent/v1/workspace/status", method="GET", headers=_auth_headers(token))
+        response = _http_json(
+            url=f"{base_url}/agent/v1/workspace/status",
+            method="GET",
+            headers=_auth_headers(token),
+            verify_tls=bool(args.secure),
+        )
         return {
             "problem": response.get("problem"),
             "workspace_id": response.get("workspace_id"),
@@ -519,7 +547,12 @@ def _command_list_files(args: argparse.Namespace) -> JsonObject:
         query = ""
         if args.path:
             query = "?" + urlencode({"path": str(args.path)})
-        response = _http_json(url=f"{base_url}/agent/v1/workspace/files{query}", method="GET", headers=_auth_headers(token))
+        response = _http_json(
+            url=f"{base_url}/agent/v1/workspace/files{query}",
+            method="GET",
+            headers=_auth_headers(token),
+            verify_tls=bool(args.secure),
+        )
         return {
             "base_path": response.get("base_path"),
             "entries": response.get("entries", []),
@@ -537,6 +570,7 @@ def _command_read_file(args: argparse.Namespace) -> JsonObject:
             url=f"{base_url}/agent/v1/workspace/file?{urlencode({'path': str(args.path)})}",
             method="GET",
             headers=_auth_headers(token),
+            verify_tls=bool(args.secure),
         )
         if bool(response.get("is_dir")):
             raise CliError(code="path_is_directory", message=f"path is a directory: {args.path}")
@@ -590,6 +624,7 @@ def _command_upload(args: argparse.Namespace) -> JsonObject:
             method="POST",
             headers=_auth_headers(token, {"Content-Type": content_type}),
             body=body,
+            verify_tls=bool(args.secure),
         )
         return {
             "path": response.get("path"),
@@ -606,6 +641,7 @@ def _command_delete(args: argparse.Namespace) -> JsonObject:
             url=f"{base_url}/agent/v1/workspace/files/{quoted}",
             method="DELETE",
             headers=_auth_headers(token),
+            verify_tls=bool(args.secure),
         )
         return {"path": response.get("path")}
 
@@ -619,6 +655,7 @@ def _command_verify_start(args: argparse.Namespace) -> JsonObject:
             method="POST",
             headers=_auth_headers(token, {"Content-Type": "application/json"}),
             body=_json_body({}),
+            verify_tls=bool(args.secure),
         )
         return {
             "verification_id": response.get("verification_id"),
@@ -655,6 +692,7 @@ def _command_verify_wait(args: argparse.Namespace) -> JsonObject:
                 url=f"{base_url}/agent/v1/verification/{verification_id}/status",
                 method="GET",
                 headers=_auth_headers(token),
+                verify_tls=bool(args.secure),
             )
 
         response = _wait_for_status(
@@ -686,6 +724,7 @@ def _command_verify_detail(args: argparse.Namespace) -> JsonObject:
             url=f"{base_url}/agent/v1/verification/{verification_id}/detail{query}",
             method="GET",
             headers=_auth_headers(token),
+            verify_tls=bool(args.secure),
         )
         result: JsonObject = {"verification_id": verification_id}
         if save_to is None:
@@ -708,6 +747,7 @@ def _command_export_start(args: argparse.Namespace) -> JsonObject:
             method="POST",
             headers=_auth_headers(token, {"Content-Type": "application/json"}),
             body=_json_body(payload),
+            verify_tls=bool(args.secure),
         )
         return {
             "export_id": response.get("export_id"),
@@ -726,6 +766,7 @@ def _command_export_wait(args: argparse.Namespace) -> JsonObject:
                 url=f"{base_url}/agent/v1/export/{export_id}/status",
                 method="GET",
                 headers=_auth_headers(token),
+                verify_tls=bool(args.secure),
             )
 
         response = _wait_for_status(
@@ -755,6 +796,7 @@ def _command_export_download(args: argparse.Namespace) -> JsonObject:
             url=f"{base_url}/agent/v1/export/{export_id}/download",
             method="GET",
             headers=_auth_headers(token),
+            verify_tls=bool(args.secure),
         )
         _atomic_write_bytes(output, payload)
         return {
@@ -790,6 +832,7 @@ def _command_commit(args: argparse.Namespace) -> JsonObject:
             method="POST",
             headers=_auth_headers(token, {"Content-Type": "application/json"}),
             body=_json_body({"message": message}),
+            verify_tls=bool(args.secure),
         )
         return {
             "status": response.get("status"),
@@ -806,6 +849,7 @@ def _command_commit_status(args: argparse.Namespace) -> JsonObject:
             url=f"{base_url}/agent/v1/commit/{quote(ref, safe='')}/status",
             method="GET",
             headers=_auth_headers(token),
+            verify_tls=bool(args.secure),
         )
         return {
             "ref": response.get("ref"),
@@ -835,6 +879,12 @@ def _add_wait_flags(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--timeout-sec", type=float)
 
 
+def _add_tls_flags(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--secure", action="store_true", help="Enable TLS certificate verification")
+    group.add_argument("--insecure", action="store_true", help="Disable TLS certificate verification (default)")
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = _ArgumentParser(description="Polygon Agent CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -845,15 +895,18 @@ def _build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--agent-name")
     init_parser.add_argument("--desktop-id")
     init_parser.add_argument("--init-ts")
+    _add_tls_flags(init_parser)
     init_parser.set_defaults(func=_command_init)
 
     status_parser = subparsers.add_parser("status")
     _add_state_file(status_parser)
+    _add_tls_flags(status_parser)
     status_parser.set_defaults(func=_command_status)
 
     connect_parser = subparsers.add_parser("connect")
     _add_state_file(connect_parser)
     _add_problem(connect_parser)
+    _add_tls_flags(connect_parser)
     connect_parser.set_defaults(func=_command_connect)
 
     poll_parser = subparsers.add_parser("poll")
@@ -861,17 +914,20 @@ def _build_parser() -> argparse.ArgumentParser:
     poll_parser.add_argument("--request-id", required=True)
     poll_parser.add_argument("--wait", action="store_true")
     _add_wait_flags(poll_parser)
+    _add_tls_flags(poll_parser)
     poll_parser.set_defaults(func=_command_poll)
 
     workspace_status_parser = subparsers.add_parser("workspace-status")
     _add_state_file(workspace_status_parser)
     _add_problem(workspace_status_parser)
+    _add_tls_flags(workspace_status_parser)
     workspace_status_parser.set_defaults(func=_command_workspace_status)
 
     list_files_parser = subparsers.add_parser("list-files")
     _add_state_file(list_files_parser)
     _add_problem(list_files_parser)
     list_files_parser.add_argument("--path")
+    _add_tls_flags(list_files_parser)
     list_files_parser.set_defaults(func=_command_list_files)
 
     read_file_parser = subparsers.add_parser("read-file")
@@ -879,6 +935,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_problem(read_file_parser)
     read_file_parser.add_argument("--path", required=True)
     read_file_parser.add_argument("--save-to")
+    _add_tls_flags(read_file_parser)
     read_file_parser.set_defaults(func=_command_read_file)
 
     upload_parser = subparsers.add_parser("upload")
@@ -886,17 +943,20 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_problem(upload_parser)
     upload_parser.add_argument("--workspace-path", required=True)
     upload_parser.add_argument("--local-file", required=True)
+    _add_tls_flags(upload_parser)
     upload_parser.set_defaults(func=_command_upload)
 
     delete_parser = subparsers.add_parser("delete")
     _add_state_file(delete_parser)
     _add_problem(delete_parser)
     delete_parser.add_argument("--workspace-path", required=True)
+    _add_tls_flags(delete_parser)
     delete_parser.set_defaults(func=_command_delete)
 
     verify_start_parser = subparsers.add_parser("verify-start")
     _add_state_file(verify_start_parser)
     _add_problem(verify_start_parser)
+    _add_tls_flags(verify_start_parser)
     verify_start_parser.set_defaults(func=_command_verify_start)
 
     verify_wait_parser = subparsers.add_parser("verify-wait")
@@ -904,6 +964,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_problem(verify_wait_parser)
     verify_wait_parser.add_argument("--verification-id", required=True)
     _add_wait_flags(verify_wait_parser)
+    _add_tls_flags(verify_wait_parser)
     verify_wait_parser.set_defaults(func=_command_verify_wait)
 
     verify_detail_parser = subparsers.add_parser("verify-detail")
@@ -913,6 +974,7 @@ def _build_parser() -> argparse.ArgumentParser:
     verify_detail_parser.add_argument("--test-name")
     verify_detail_parser.add_argument("--source")
     verify_detail_parser.add_argument("--save-to")
+    _add_tls_flags(verify_detail_parser)
     verify_detail_parser.set_defaults(func=_command_verify_detail)
 
     export_start_parser = subparsers.add_parser("export-start")
@@ -920,6 +982,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_problem(export_start_parser)
     export_start_parser.add_argument("--export-type", required=True, choices=["native", "icpc"])
     export_start_parser.add_argument("--verification-id")
+    _add_tls_flags(export_start_parser)
     export_start_parser.set_defaults(func=_command_export_start)
 
     export_wait_parser = subparsers.add_parser("export-wait")
@@ -927,6 +990,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_problem(export_wait_parser)
     export_wait_parser.add_argument("--export-id", required=True)
     _add_wait_flags(export_wait_parser)
+    _add_tls_flags(export_wait_parser)
     export_wait_parser.set_defaults(func=_command_export_wait)
 
     export_download_parser = subparsers.add_parser("export-download")
@@ -934,6 +998,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_problem(export_download_parser)
     export_download_parser.add_argument("--export-id", required=True)
     export_download_parser.add_argument("--output", required=True)
+    _add_tls_flags(export_download_parser)
     export_download_parser.set_defaults(func=_command_export_download)
 
     commit_parser = subparsers.add_parser("commit")
@@ -941,12 +1006,14 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_problem(commit_parser)
     commit_parser.add_argument("--message")
     commit_parser.add_argument("--message-file")
+    _add_tls_flags(commit_parser)
     commit_parser.set_defaults(func=_command_commit)
 
     commit_status_parser = subparsers.add_parser("commit-status")
     _add_state_file(commit_status_parser)
     _add_problem(commit_status_parser)
     commit_status_parser.add_argument("--ref", required=True)
+    _add_tls_flags(commit_status_parser)
     commit_status_parser.set_defaults(func=_command_commit_status)
 
     return parser
