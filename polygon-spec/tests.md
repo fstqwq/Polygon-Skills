@@ -45,7 +45,17 @@ Test count and coverage:
 expected: accepted
 ```
 
-Valid `expected` values: `accepted`, `wrong_answer`, `time_limit_exceeded`, `run_time_error`, `rejected`.
+Valid `expected` values:
+
+| Value | Meaning |
+|-------|---------|
+| `accepted` | Must pass all tests |
+| `wrong_answer` | Expected to fail with WA on at least one test |
+| `tle_or_correct` | Algorithmically correct, but may either pass or hit TL under the configured limits |
+| `tle_or_re` | Expected to hit TL or RE, either outcome is acceptable |
+| `time_limit_exceeded` | Expected to hit TL on at least one test |
+| `run_time_error` | Expected to hit RE on at least one test |
+| `rejected` | Generic negative solution; expected to fail by WA, TL, or RE |
 
 ---
 

@@ -84,6 +84,7 @@ Check:
 - [ ] At least one `accepted` solution exists (`std.cpp`)
 - [ ] `build.json` `accepted_solution_source` points to an existing file
 - [ ] Brute force solution exists (`brute_force.cpp`, expected TLE or accepted)
+- [ ] Correct-but-too-slow translations use `tle_or_correct`, not plain `time_limit_exceeded`
 - [ ] At least one `rejected` solution exists (greedy, dummy, etc.)
 - [ ] Solution code style follows `/polygon-solution` conventions (no comments, no return 0, etc.)
 - [ ] If multi-language: Java and/or Python translations exist

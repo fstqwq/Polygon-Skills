@@ -85,7 +85,7 @@ Wait for the user to approve or redirect before writing code.
 After the main correct solution is committed, translate it to Python first, then optionally Java. These must be direct, faithful translations -- same algorithm, same logic.
 
 - Filename: `solutions/ac_python.py` (priority), `solutions/ac_java.java` (if requested)
-- Expected: `accepted`
+- Expected: `accepted`, or `tle_or_correct` if the translation is algorithmically correct but may time out under the configured limits
 - Purpose: verifies that time/memory limits are achievable in other languages
 
 ### Step F: Additional approaches
@@ -180,7 +180,14 @@ If yes, write the solution with the user's specified expected behavior and repea
    ```
    expected: accepted
    ```
-   Valid values: `accepted`, `wrong_answer`, `time_limit_exceeded`, `run_time_error`, `rejected`.
+   Valid values:
+   - `accepted` -- must pass all tests
+   - `wrong_answer` -- expected to fail with WA
+   - `tle_or_correct` -- correct algorithm, but either AC or TL is acceptable
+   - `tle_or_re` -- either TL or RE is acceptable
+   - `time_limit_exceeded` -- expected to fail with TL
+   - `run_time_error` -- expected to fail with RE
+   - `rejected` -- generic negative solution; any non-AC failure is acceptable
 
 6. **Show the code to the user** and wait for feedback before committing.
 

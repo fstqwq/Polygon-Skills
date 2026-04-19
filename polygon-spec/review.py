@@ -27,7 +27,15 @@ from pathlib import Path
 
 VALID_MODES = {"pass-fail", "interactive"}
 VALID_KINDS = {"manual", "gen"}
-VALID_EXPECTED = {"accepted", "wrong_answer", "time_limit_exceeded", "run_time_error", "rejected"}
+VALID_EXPECTED = {
+    "accepted",
+    "wrong_answer",
+    "tle_or_correct",
+    "tle_or_re",
+    "time_limit_exceeded",
+    "run_time_error",
+    "rejected",
+}
 TEST_ID_RE = re.compile(r"^[0-9]{3}$")
 SOURCE_PATH_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./-]{0,200}$")
 
