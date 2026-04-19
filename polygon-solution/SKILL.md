@@ -82,10 +82,10 @@ Wait for the user to approve or redirect before writing code.
 
 ### Step E: Language translations
 
-After the main correct solution is committed, translate it to Python first, then optionally Java. These must be direct, faithful translations -- same algorithm, same logic.
+After the main correct solution is committed, translate it to Python first, then optionally Java. These must be faithful translations: same algorithm, same proof assumptions, same corner-case behavior. Make small constant-factor optimizations when they do not change the algorithm, such as faster input parsing, iterative loops instead of avoidable helper calls, preallocated lists/arrays, or buffered output.
 
 - Filename: `solutions/ac_python.py` (priority), `solutions/ac_java.java` (if requested)
-- Expected: `accepted`, or `tle_or_correct` if the translation is algorithmically correct but may time out under the configured limits
+- Expected: `accepted`, or `tle_or_correct` if the faithful translation is algorithmically correct but may time out under the configured limits even after reasonable constant-factor optimization
 - Purpose: verifies that time/memory limits are achievable in other languages
 
 ### Step F: Additional approaches
@@ -131,7 +131,7 @@ If yes, write the solution with the user's specified expected behavior and repea
    main()
    ```
 
-   - Use `input()` and `print()`.
+   - Use `input()` and `print()` by default; switch to `sys.stdin.buffer` and buffered output when needed for constant-factor performance.
    - Wrap logic in `main()` -- avoid top-level code beyond the `main()` call.
    - No imports beyond standard library. Prefer `sys`, `collections`, `heapq`, `bisect`, `math`.
    - No type hints, no docstrings, no classes unless necessary.
@@ -156,8 +156,8 @@ If yes, write the solution with the user's specified expected behavior and repea
    ```
 
    - Class name: `Main`.
-   - Use `Scanner` for input, `System.out.println` for output.
-   - For performance-critical code: use `BufferedReader` / `PrintWriter` instead.
+   - Use `Scanner` for input, `System.out.println` for output by default.
+   - For performance-critical code, use `BufferedInputStream` or `BufferedReader` and `PrintWriter` for constant-factor performance.
    - For interactive problems: `System.out.flush()` after each output.
 
 ### Common rules (all languages)
