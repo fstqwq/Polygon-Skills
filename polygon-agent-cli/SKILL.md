@@ -1,6 +1,7 @@
 ---
 name: polygon-agent-cli
 description: "Shared CLI for Polygon agent workflows. Use when any polygon-agent-* skill needs to execute a real /agent/v1/* operation through a stable cross-platform script."
+user-invocable: false
 ---
 
 # Polygon Agent -- Shared CLI

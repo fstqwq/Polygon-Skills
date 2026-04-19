@@ -48,6 +48,14 @@ temp/                   # throwaway test files (not committed, gitignored)
 - Interactive problems use `interactor_source` instead and must not set `checker_source`.
 - Do not store official answers in the source repository or package. There is no `tests/answers/` directory in the canonical layout; answers are produced by the verification/package pipeline from the accepted solution.
 
+## Judging Posture
+
+- Treat local compilation and local runs as advisory sanity checks only.
+- Treat local timing as machine-dependent. Python AC/TLE locally is only a relative signal.
+- Use online Polygon-Replica Verification as the authority for final verdicts, limits, and performance.
+- Do not change compilers, packages, time limits, or runtime environment just to make a local check pass unless the user explicitly asks.
+- Do not weaken tests to fit an existing solution. Fix the solution, fix the spec, or record the expected failure.
+
 ## Language Model
 
 ### Directory structure

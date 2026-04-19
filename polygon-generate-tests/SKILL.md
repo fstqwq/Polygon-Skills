@@ -18,6 +18,16 @@ Identify:
 - **Special structure**: trees, graphs, permutations, strings, geometry?
 - **Small exhaustive coverage opportunity**: can all valid instances up to some small bound be enumerated exactly, and if so, how many test files would that require under the repository constraints?
 
+## Test-setting posture
+
+Tests are adversarial evidence, not support for the current solution set.
+
+- Design tests to expose likely contestant mistakes.
+- Do not remove or soften tests because an intended solution, translation, or local run fails.
+- Treat failed wrong solutions as evidence that the tests are doing useful work.
+- If `std.cpp` fails, stop and investigate `std.cpp`, constraints, validator, or statement before weakening tests.
+- Use local timing only as a relative stress signal. Final performance comes from online Polygon-Replica Verification.
+
 ---
 
 ## Phase 2: Design the test plan
@@ -309,3 +319,5 @@ Always shuffle node labels -- otherwise node 1 is always the root and low-number
 - If you plan small exhaustive coverage, estimate the required number of files first and keep that block within 20 files by default.
 - Most finished problems should have roughly 20-70 tests. Fewer than 20 tests needs an explicit reason, such as tiny exhaustive coverage, very expensive tests, or an interactive format with limited meaningful cases.
 - If `tests/spec.json` is reduced or reorganized, remove unreferenced files from the test directories.
+- Never weaken tests to make a solution pass.
+- Treat local timing as advisory only; online Polygon-Replica Verification is authoritative.

@@ -97,6 +97,16 @@ polygon-local-export   -> create a local zip file for upload
 | `polygon-statement/check_formulas.py` | LaTeX formula validation |
 | `polygon-interactor/testing_tool.md` | Testing tool writing guide |
 
+## Global posture
+
+Local compile/run results are sanity checks only. Timing-sensitive results, including Python AC/TLE behavior, are relative signals from the current machine and must not be treated as final. Online Polygon-Replica Verification on the configured judgehost is authoritative for final verdicts, limits, and performance.
+
+Skills are skeptical by default. Preserve the problem-setting standard instead of making the current local attempt pass.
+
+- Do not modify the local runtime environment to make a check pass unless the user explicitly asks.
+- Do not weaken, delete, or avoid tests because a solution fails them.
+- When a solution or statement appears to pass, still look for contestant failure modes: boundary cases, overflow, precision, complexity traps, stale state across test cases, output branches, and interaction protocol mistakes.
+
 ## Conventions
 
 - UTF-8 everywhere. Em-dashes written as ASCII ` -- `, never as a Unicode em-dash.

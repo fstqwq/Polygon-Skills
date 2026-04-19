@@ -96,6 +96,14 @@ If yes, write the solution with the user's specified expected behavior and repea
 
 ---
 
+## Verification posture
+
+- Treat local runs as advisory. Confirm final accepted/TLE behavior through online Polygon-Replica Verification.
+- If a solution fails strong tests, suspect the solution, complexity, implementation, or expected verdict before suspecting the tests.
+- Do not weaken tests, lower constraints, or change limits to make a solution pass.
+- For Python translations, local timing only indicates relative risk. Use `tle_or_correct` when the algorithm is correct but performance is uncertain, and rely on Verification for the final verdict.
+- Do not modify the local runtime environment to rescue a solution unless the user explicitly asks.
+
 ## For each solution
 
 4. **Write the code**. Use C++ by default. For Step E translations, use the target language.

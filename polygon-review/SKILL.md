@@ -5,6 +5,10 @@ description: "Audit the problem for completeness, consistency, and quality befor
 
 # Review Problem
 
+## Review posture
+
+Be skeptical. Local green runs are not final proof, especially for timing-sensitive Python or C++ behavior. Look for contestant failure modes and for tests that were shaped around existing solutions instead of the stated problem.
+
 ## Procedure
 
 Run all checks in order. Produce a report in `draft/review.md` with findings grouped by section.
@@ -73,6 +77,7 @@ Check:
 - [ ] If `rej_*` solutions exist: anti-hack tests are designed to break them
 - [ ] If multi-test: includes "increasing n" and "max T min n" patterns
 - [ ] Total test count is reasonable (typically 20-70 for most problems; fewer than 20 requires an explicit reason)
+- [ ] No tests appear weakened, deleted, or avoided only because a current solution failed them
 
 Report: test count breakdown and coverage gaps.
 
@@ -88,6 +93,7 @@ Check:
 - [ ] At least one `rejected` solution exists (greedy, dummy, etc.)
 - [ ] Solution code style follows `/polygon-solution` conventions (no comments, no return 0, etc.)
 - [ ] If multi-language: Java and/or Python translations exist
+- [ ] Timing-sensitive accepted/TLE expectations are backed by online Verification or clearly marked as local-only uncertainty
 
 Report: solution inventory with expected verdicts.
 
@@ -174,3 +180,4 @@ Show the report to the user and suggest which `/polygon-*` skill to use for each
 - Report facts, not opinions. If something is ambiguous, flag it as a question for the user.
 - Do not auto-fix issues. List them and point to the right skill.
 - The agent CAN and SHOULD read all source files to perform semantic checks (not just structural).
+- Do not recommend changing the local runtime environment, weakening tests, or lowering constraints just to make a local run pass.

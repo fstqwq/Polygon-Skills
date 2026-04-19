@@ -18,6 +18,12 @@ g++ -std=c++20 -O2 -o temp/validator validators/validator.cpp -I <skills>/polygo
 
 All local compile outputs, logs, diagnostics, and ad-hoc input/output files belong under `temp/`. Never place temporary binaries in the repository root or beside component sources.
 
+## Local execution caveat
+
+Local compile/run results are sanity checks only. Timing-sensitive results depend on the machine, OS, interpreter, compiler, load, and input plumbing. Treat local Python AC/TLE and local C++ timing as relative diagnostics, not final verdicts.
+
+Do not tune time limits, weaken tests, or modify the runtime environment based only on local timing. Final correctness and performance are determined by Polygon-Replica Verification on judgehost.
+
 ## Best-effort policy
 
 Compilation is best-effort:
