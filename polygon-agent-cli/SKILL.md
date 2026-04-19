@@ -9,17 +9,15 @@ user-invocable: false
 ## Purpose
 
 This skill provides the shared command-line entrypoint used by:
-- `polygon-agent-init`
-- `polygon-agent-connect`
+- `polygon-agent-auth`
 - `polygon-agent-pull`
-- `polygon-agent-fetch`
 - `polygon-agent-push`
 - `polygon-agent-verification`
 - `polygon-agent-export`
 - `polygon-agent-commit`
 
 Use the CLI instead of writing ad hoc Python, curl, or shell code for `/agent/v1/*`.
-For full local mirrors, prefer `clone` and `pull` over one-file-at-a-time fetches.
+For full local mirrors, prefer `clone` and `pull` over one-file-at-a-time reads.
 
 ## Entry Point
 

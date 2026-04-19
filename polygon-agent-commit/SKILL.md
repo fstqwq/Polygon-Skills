@@ -1,37 +1,26 @@
 ---
 name: polygon-agent-commit
-description: "Commit and publish workspace changes through the Polygon Agent token workflow. Use when committing via /agent/v1/commit with a bearer token. HIGH RISK -- requires explicit user approval."
+description: "Commit and publish Polygon workspace changes through the agent CLI. HIGH RISK -- use only after explicit user approval."
 ---
 
 # Polygon Agent -- Commit
 
-## When to Use This Skill
+## When to Use
 
-Use this skill when:
-- the user explicitly asked you to commit and publish
-- verification is already in a good state
-- you already hold a `commit` scope token
+Use this skill only when the user explicitly asks to commit/publish remote workspace changes.
 
-## Required Token Scope
+Requires `commit` scope. If the cached token has lower scope, use `polygon-agent-auth` to request a commit token.
 
-**`commit`**
+## Mandatory Approval
 
-If you only have `readonly` or `workspace`, request a new token through `polygon-agent-connect`.
+Before running commit, show the user:
+- what will be committed
+- the proposed commit message
+- current verification status, if available
 
-## Mandatory Human Approval
+Run the command only after explicit affirmative approval. Do not commit as a side effect of push, verification, or export.
 
-Before running the commit command, you MUST:
-
-1. show the user what will be committed
-2. show the proposed commit message
-3. get explicit affirmative text approval
-4. only then run the command
-
-You must not auto-commit as a side effect of another workflow.
-
-## Primary Path
-
-### Commit with inline message
+## Commit
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py commit \
@@ -39,17 +28,9 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit \
   --message "add brute force solution"
 ```
 
-### Commit with message file
+Use `--message-file` for quote-sensitive or multi-line messages.
 
-```bash
-python skills/polygon-agent-cli/scripts/polygon_agent.py commit \
-  --problem "alice/aplusb" \
-  --message-file "./commit-message.txt"
-```
-
-The CLI requires exactly one of `--message` or `--message-file`.
-
-### Check publish status
+Check publish status:
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
@@ -57,13 +38,12 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
   --ref "abc123def456"
 ```
 
-## Notes
+## Rules
 
-- the server-side commit endpoint handles add, commit, push, and rollback on push failure
-- if there are no changes, the endpoint may still succeed without creating a new commit
-- the CLI only invokes the endpoint; approval discipline stays in this skill
+- The server-side endpoint handles add, commit, push, and rollback on push failure.
+- If there are no changes, the endpoint may succeed without creating a new commit.
+- Approval discipline stays in this skill; the CLI only invokes the endpoint.
 
 ## Reference
 
-- Shared CLI commands: `skills/polygon-agent-cli/references/cli.md`
-- Endpoint reference: `skills/polygon-agent-init/references/agent-api.md`
+Read `skills/polygon-agent-cli/references/cli.md` for message-file usage.

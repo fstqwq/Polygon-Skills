@@ -1,35 +1,26 @@
 ---
 name: polygon-agent-push
-description: "Push a local Polygon problem mirror to the remote workspace through the agent token workflow. Use when applying local clone changes via /agent/v1/workspace/apply."
+description: "Push a local Polygon problem mirror to the remote workspace through the agent CLI. Use when applying local clone changes atomically."
 ---
 
 # Polygon Agent -- Push
 
-## When to Use This Skill
+## When to Use
 
-Use this skill when:
-- you have a local clone created by `polygon-agent-pull`
-- you need to apply local file additions, edits, and deletions to the remote workspace
-- you want one atomic remote workspace update
+Use this skill when a local mirror created by `polygon-agent-pull` should replace the remote workspace working tree.
 
-## Required Token Scope
+Requires `workspace` scope or higher. If the cached token is `readonly`, use `polygon-agent-auth` to request a higher-scope token.
 
-**`workspace`** or higher.
+## Push Full Local Mirror
 
-If you only have `readonly`, request a higher-scope token through `polygon-agent-connect`.
-
-## Primary Path
-
-### Push Full Local Mirror
-
-Run this from the workspace root that contains `./.polygon-agent/state.json`:
+Run from the workspace root containing `./.polygon-agent/state.json`:
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py push \
   --problem "alice/aplusb"
 ```
 
-If your current directory is already inside the problem repo, pass both paths explicitly:
+If the current directory is already inside the problem repo, pass paths explicitly:
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py push \
@@ -38,41 +29,16 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py push \
   --target-dir "."
 ```
 
-`push` sends one full ZIP, the server compares it with the remote working tree, then applies it atomically.
+`push` uploads one full ZIP, asks the server to compare it, then applies it atomically.
 
-### Single-File Convenience
+## Rules
 
-```bash
-python skills/polygon-agent-cli/scripts/polygon_agent.py upload \
-  --problem "alice/aplusb" \
-  --workspace-path "solutions/brute.py" \
-  --local-file "./alice/aplusb/solutions/brute.py"
-```
-
-### Delete
-
-```bash
-python skills/polygon-agent-cli/scripts/polygon_agent.py delete \
-  --problem "alice/aplusb" \
-  --workspace-path "solutions/brute.py"
-```
-
-## Typical Workflow
-
-1. fetch or inspect current workspace state
-2. edit the local mirror
-3. run `push`
-4. run verification with `polygon-agent-verification`
-5. commit only after the user explicitly asks for it
-
-## Notes
-
-- `push` ignores `.git/`, `temp/`, `draft/`, hidden paths, and invalid workspace roots
-- UTF-8 text files are LF-normalized before upload
-- push modifies only the workspace working tree
-- push does not trigger verification automatically
+- Push modifies only the remote workspace working tree.
+- Push does not commit or start verification.
+- Push ignores `.git/`, `temp/`, `draft/`, hidden paths, and invalid workspace roots.
+- Use `polygon-agent-verification` after push when final verdicts matter.
+- Use `polygon-agent-commit` only after the user explicitly asks to publish.
 
 ## Reference
 
-- Shared CLI commands: `skills/polygon-agent-cli/references/cli.md`
-- Endpoint reference: `skills/polygon-agent-init/references/agent-api.md`
+Read `skills/polygon-agent-cli/references/cli.md` for upload/delete convenience commands.
