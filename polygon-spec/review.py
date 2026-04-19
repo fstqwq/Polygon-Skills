@@ -10,7 +10,7 @@ Checks:
   - config/build.json     (schema + file references)
   - tests/spec.json       (schema + file existence)
   - solutions/*.desc      (expected behavior + source existence)
-  - statement-sections/   (required files)
+  - statement-sections/   (required files and interaction layout)
   - completeness warnings (missing components, no samples, etc.)
 
 Outputs a report with sections: Status, Warnings, Errors.
@@ -107,6 +107,17 @@ def _errors_build_json(root: Path) -> list[str]:
                     errors.append(f"config/build.json: generator_sources[{i}] must be a string")
                 else:
                     errors.extend(_check_source_path(root, item, f"generator_sources[{i}]", "config/build.json"))
+    mode = _read_valid_problem_mode(root)
+    checker_source = data.get("checker_source", "")
+    interactor_source = data.get("interactor_source", "")
+    if mode == "pass-fail":
+        if isinstance(checker_source, str) and checker_source != "" and not checker_source.startswith("checkers/"):
+            errors.append("config/build.json: checker_source must be under checkers/ for pass-fail problems")
+        if isinstance(interactor_source, str) and interactor_source != "":
+            errors.append("config/build.json: interactor_source must be empty for pass-fail problems")
+    elif mode == "interactive":
+        if isinstance(checker_source, str) and checker_source != "":
+            errors.append("config/build.json: checker_source must be empty for interactive problems")
     return errors
 
 
@@ -199,6 +210,43 @@ def _errors_solution_descs(root: Path) -> list[str]:
     return errors
 
 
+def _read_valid_problem_mode(root: Path) -> str:
+    path = root / "config" / "problem.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    mode = data.get("mode")
+    if mode == "pass-fail" or mode == "interactive":
+        return mode
+    return ""
+
+
+def _errors_statement_interaction_layout(root: Path) -> list[str]:
+    mode = _read_valid_problem_mode(root)
+    if not mode:
+        return []
+
+    sections_dir = root / "statement-sections"
+    if not sections_dir.is_dir():
+        return []
+
+    errors: list[str] = []
+    for lang_dir in sorted(sections_dir.iterdir()):
+        if not lang_dir.is_dir() or lang_dir.is_symlink():
+            continue
+        interaction_path = lang_dir / "interaction.tex"
+        rel_path = f"statement-sections/{lang_dir.name}/interaction.tex"
+        if mode == "interactive":
+            if not interaction_path.exists():
+                errors.append(f"{rel_path}: missing for interactive problem")
+        elif interaction_path.exists():
+            errors.append(f"{rel_path}: must not exist for pass-fail problem")
+    return errors
+
+
 def _warnings_completeness(root: Path) -> list[str]:
     """Warn about missing content that a finished problem should have."""
     warnings: list[str] = []
@@ -206,33 +254,24 @@ def _warnings_completeness(root: Path) -> list[str]:
     if not testlib_path.exists():
         warnings.append("third_party/testlib/testlib.h: missing -- required for import")
     build_path = root / "config" / "build.json"
+    build: dict[str, object] = {}
     if not build_path.exists():
         warnings.append("config/build.json: file missing -- no components configured")
     else:
         try:
-            build = json.loads(build_path.read_text(encoding="utf-8"))
+            build_obj = json.loads(build_path.read_text(encoding="utf-8"))
         except Exception:
-            build = {}
-        if isinstance(build, dict):
+            build_obj = {}
+        if isinstance(build_obj, dict):
+            build = build_obj
             if not build.get("accepted_solution_source"):
                 warnings.append("config/build.json: no accepted solution configured")
             if not build.get("validator_source"):
                 warnings.append("config/build.json: no validator configured")
 
-    problem_path = root / "config" / "problem.json"
-    mode = ""
-    try:
-        problem = json.loads(problem_path.read_text(encoding="utf-8"))
-        mode = problem.get("mode", "")
-    except Exception:
-        pass
-    checkers_dir = root / "checkers"
-    has_checker = checkers_dir.is_dir() and any(
-        f.is_file() and not f.name.startswith(".") for f in checkers_dir.iterdir()
-    ) if checkers_dir.exists() else False
-    if not has_checker and mode != "interactive":
-        warnings.append("checkers/: no checker source found")
-
+    mode = _read_valid_problem_mode(root)
+    if build_path.exists() and mode == "pass-fail" and not build.get("checker_source"):
+        warnings.append("config/build.json: no checker configured")
     spec_path = root / "tests" / "spec.json"
     if not spec_path.exists():
         warnings.append("tests/spec.json: no tests defined")
@@ -405,6 +444,7 @@ def validate(root: Path) -> tuple[list[str], list[str]]:
     errors.extend(_errors_build_json(root))
     errors.extend(_errors_spec_json(root))
     errors.extend(_errors_solution_descs(root))
+    errors.extend(_errors_statement_interaction_layout(root))
     warnings: list[str] = []
     warnings.extend(_warnings_completeness(root))
     warnings.extend(_warnings_judging_time(root))

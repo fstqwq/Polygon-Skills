@@ -12,7 +12,7 @@
 | Field | Type | Values | Note |
 |-------|------|--------|------|
 | `mode` | string | `"pass-fail"` or `"interactive"` | required |
-| `pass_limit` | int | ≥ 1 | 1 for normal; ≥ 2 for multi-pass interactive |
+| `pass_limit` | int | ≥ 1 | 1 for normal; ≥ 2 for multi-pass problems |
 | `time_limit_ms` | int | > 0 | milliseconds |
 | `memory_limit_mb` | int | > 0 | megabytes |
 
@@ -24,7 +24,7 @@
 {
   "accepted_solution_source": "solutions/std.cpp",
   "validator_source": "validators/validator.cpp",
-  "checker_source": "checkers/checker.cpp",
+  "checker_source": "",
   "interactor_source": "",
   "generator_sources": []
 }
@@ -34,12 +34,13 @@
 |-------|------|------|
 | `accepted_solution_source` | string | repo-relative path to the main AC solution |
 | `validator_source` | string | repo-relative path to the validator; empty if none |
-| `checker_source` | string | repo-relative path to checker source (standard or custom); empty for auto-discovery |
+| `checker_source` | string | repo-relative path to the repository checker source; empty until configured; empty/absent for interactive |
 | `interactor_source` | string | repo-relative path to the interactor; empty for non-interactive |
 | `generator_sources` | array | list of repo-relative paths to generator sources |
 
 Rules:
 - All paths are repo-relative (e.g., `"solutions/std.cpp"`).
 - Referenced files must exist.
-- Standard checkers are copied into `checkers/` and referenced via `checker_source` like any other checker.
-- For interactive problems: set `interactor_source`, leave `checker_source` empty.
+- Standard checkers are copied into `checkers/` and referenced via `checker_source` like any other checker. There is no separate active standard-checker setting.
+- For pass-fail problems: leave `checker_source` empty until the user chooses a checker. Once configured, it must point to a file under `checkers/`.
+- For interactive problems: set `interactor_source`, leave `checker_source` empty or absent.

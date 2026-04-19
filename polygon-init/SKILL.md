@@ -58,14 +58,29 @@ description: "Initialize a new problem repository from scratch."
 
 5. **Write config/problem.json** with the confirmed parameters. Refer to polygon-spec for the schema.
 
-6. **Write config/build.json** with empty defaults:
+6. **Write config/build.json** with no checker selected yet.
+
+   For pass-fail problems:
    ```json
    {
      "accepted_solution_source": "",
      "validator_source": "",
+     "checker_source": "",
      "generator_sources": []
    }
    ```
+
+   For interactive problems, do not create a checker and write:
+   ```json
+   {
+     "accepted_solution_source": "",
+     "validator_source": "",
+     "interactor_source": "",
+     "generator_sources": []
+   }
+   ```
+
+   Do not copy any standard checker during init. The checker remains empty until the user chooses one with `/polygon-checker`.
 
 7. **Write statement template files** (these are fixed boilerplate -- do not customize):
    - `statement/statements.ftl` -- copy from `<skills>/polygon-init/templates/statements.ftl`
@@ -81,6 +96,8 @@ description: "Initialize a new problem repository from scratch."
    - `output.tex`  -- empty
    - `notes.tex`  -- empty
    - `interaction.tex`  -- empty (if interactive)
+
+   Do not create `interaction.tex` for pass-fail problems.
 
    Additional languages can be added later via the UI or by creating new `statement-sections/<language>/` directories.
 

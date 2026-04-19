@@ -12,7 +12,7 @@ user-invocable: false
 config/
   problem.json          # judging mode and resource limits
   build.json            # component source references
-checkers/               # checker sources (standard or custom)
+checkers/               # pass-fail checker sources after configured
 validators/             # input validator sources
 interactors/            # interactor sources (interactive problems)
 generators/             # generator sources
@@ -29,7 +29,7 @@ statement-sections/
     input.tex           # input format description
     output.tex          # output format description
     notes.tex           # notes / explanations for samples
-    interaction.tex     # interaction protocol (interactive only)
+    interaction.tex     # interaction protocol (interactive problems only)
 tests/
   spec.json             # ordered test specification
   manual/               # manual test input files
@@ -44,6 +44,8 @@ temp/                   # throwaway test files (not committed, gitignored)
 - `attachments/` is git-tracked and included in ICPC package export. Contents are distributed to contestants.
 - `temp/` is for local testing scratch files (e.g. testing tool test programs). Not committed  --  add to `.gitignore`.
 - `draft/` is git-tracked but excluded from the zip package.
+- Pass-fail problems start with no checker selected. Once configured, `config/build.json` `checker_source` points to a file under `checkers/`.
+- Interactive problems use `interactor_source` instead and must not set `checker_source`.
 
 ## Language Model
 
@@ -74,7 +76,7 @@ These files are NOT language-specific. The same template compiles all languages.
 
 ### Adding a new language
 
-Create the directory and populate it with the full set of section files:
+Create the directory and populate it with the canonical section files:
 ```
 statement-sections/<language>/
   name.tex
@@ -82,10 +84,16 @@ statement-sections/<language>/
   input.tex
   output.tex
   notes.tex
-  interaction.tex
 ```
 
 All files start empty (or with the problem title for `name.tex`).
+
+For interactive problems only, also create:
+```
+statement-sections/<language>/interaction.tex
+```
+
+For pass-fail problems, `interaction.tex` must not exist.
 
 ### LaTeX engine selection
 

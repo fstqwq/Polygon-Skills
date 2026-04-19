@@ -148,6 +148,8 @@ Write for contestants. Assume they know how to program, understand standard inpu
    - `statement-sections/<lang>/notes.tex`  --  sample notes (if any)
    - `statement-sections/<lang>/interaction.tex`  --  interaction protocol (if interactive)
 
+   For pass-fail problems, do not create `interaction.tex`; delete any existing `statement-sections/<lang>/interaction.tex` files.
+
 10. **Check formula consistency** across languages:
     ```
     python <skills>/polygon-statement/check_formulas.py

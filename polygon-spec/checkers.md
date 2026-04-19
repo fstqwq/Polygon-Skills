@@ -1,6 +1,6 @@
 # Standard Testlib Checkers
 
-Standard checkers are used by copying from `<skills>/polygon-checker/standard/` into `checkers/` and setting `checker_source` in `build.json`. The system detects standard checkers by content hash. The checker name is the filename without `.cpp` (e.g. `wcmp`).
+Standard checkers are used by copying from `<skills>/polygon-checker/standard/` into `checkers/` and setting `checker_source` in `build.json`. Judging always uses the repository file named by `checker_source`; `std::...` names are only UI/documentation labels derived from content. The checker name is the filename without `.cpp` (e.g. `wcmp`).
 
 | Situation | Checker | Notes |
 |-----------|---------|-------|
@@ -24,4 +24,4 @@ Standard checkers are used by copying from `<skills>/polygon-checker/standard/` 
 | `Case N:` format, token sequence | `casewcmp` | Format: `Case 1: <tok1> <tok2> ...` |
 | Partial scoring | `pointscmp` / `pointsinfo` | Example templates only; usually needs customization. |
 | Multiple valid answers | Write a custom checker | Use the `polygon-checker` skill. |
-| Interactive problem | No checker needed | Use the `polygon-interactor` skill instead. |
+| Interactive problem | No checker source | Use `interactor_source` via the `polygon-interactor` skill instead. |

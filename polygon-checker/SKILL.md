@@ -5,6 +5,8 @@ description: "Write or select a checker (wcmp, ncmp, rcmp, or custom)."
 
 # Write or Configure Checker
 
+The only runtime checker is the repository source named by `config/build.json` `checker_source`. Standard checker selection means copying a standard source into `checkers/` and pointing `checker_source` at that copy; do not store `std::...` as configuration.
+
 ## Procedure
 
 ### Option A: Standard Checker (preferred when applicable)

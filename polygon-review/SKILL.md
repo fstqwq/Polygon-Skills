@@ -48,7 +48,7 @@ Report: list mismatches between statement and validator.
 
 ### Step 4: Checker review
 
-Read `config/build.json` for the checker type and `checkers/` for custom checkers.
+Read `config/build.json` for `checker_source`. Judging uses that repository source directly; if it matches a standard checker by content, treat it as a standard checker copy.
 
 Check:
 - [ ] Checker type is appropriate for the problem (e.g., `wcmp` for exact match, `rcmp6` for floating point)
