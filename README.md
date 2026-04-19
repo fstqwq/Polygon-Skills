@@ -105,4 +105,4 @@ polygon-local-export   -> create a local zip file for upload
 - When materializing a remote Polygon problem locally, use `./<owner>/<problem>/` as the default repo path.
   Example: `./fstqwq/a-plus-b/`, not `./a-plus-b/`.
 - `draft/` is for working files (plans, reviews). Not exported.
-- `temp/` is local scratch. Not exported.
+- All local scratch, compile outputs, downloaded artifacts, generated diagnostics, and throwaway test programs must live under `temp/`. `temp/` is not exported or committed.

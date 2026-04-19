@@ -250,6 +250,17 @@ def _errors_statement_interaction_layout(root: Path) -> list[str]:
 def _warnings_completeness(root: Path) -> list[str]:
     """Warn about missing content that a finished problem should have."""
     warnings: list[str] = []
+    gitignore_path = root / ".gitignore"
+    if not gitignore_path.exists():
+        warnings.append(".gitignore: missing -- temp/ must be ignored")
+    else:
+        try:
+            gitignore_lines = gitignore_path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            gitignore_lines = []
+        ignored_patterns = {line.strip() for line in gitignore_lines if line.strip() and not line.strip().startswith("#")}
+        if "temp/" not in ignored_patterns and "/temp/" not in ignored_patterns:
+            warnings.append(".gitignore: temp/ is not ignored")
     testlib_path = root / "third_party" / "testlib" / "testlib.h"
     if not testlib_path.exists():
         warnings.append("third_party/testlib/testlib.h: missing -- required for import")

@@ -41,6 +41,7 @@ The CLI is:
 - Use plain flags such as `--problem`, `--request-id`, `--workspace-path`, `--local-file`, and `--message`.
 - Use `--message-file` for quote-sensitive commit messages.
 - Use `--save-to` or `--output` for large or binary payloads.
+- Save one-off downloads, diagnostics, and exported artifacts under the problem repo's `temp/` unless the file is intentionally becoming tracked workspace content.
 
 ## Output Rules
 

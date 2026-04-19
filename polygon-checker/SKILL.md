@@ -93,7 +93,8 @@ The only runtime checker is the repository source named by `config/build.json` `
 
 6. **Compile** (best-effort, see `polygon-spec/compile.md`):
    ```
-   g++ -std=c++20 -O2 -o checker checkers/checker.cpp -I <skills>/polygon-spec
+   mkdir -p temp
+   g++ -std=c++20 -O2 -o temp/checker checkers/checker.cpp -I <skills>/polygon-spec
    ```
    If no compiler is available locally (and no WSL on Windows), report to the user and skip.
 

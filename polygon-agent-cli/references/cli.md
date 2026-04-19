@@ -133,7 +133,7 @@ Save to disk:
 python skills/polygon-agent-cli/scripts/polygon_agent.py read-file \
   --problem "alice/aplusb" \
   --path "attachments/logo.png" \
-  --save-to "./alice/aplusb/attachments/logo.png"
+  --save-to "./alice/aplusb/temp/logo.png"
 ```
 
 ### Upload
@@ -242,6 +242,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
 - `push` sends one full ZIP and uses server-side atomic apply.
 - Agent-managed UTF-8 text files are LF-canonical; binary files are preserved byte-for-byte.
 - `export-download` always requires `--output`.
+- Save one-off downloads, verification details, and exported ZIPs under the problem repo's `temp/` unless the file is intentionally becoming tracked workspace content.
 - Stateful commands use `--state-file` if provided; otherwise they use `./.polygon-agent/state.json` under the current working directory.
 - When saving a remote problem locally, use `./<owner>/<problem>/` as the default repo path.
 - Keep downloaded or mirrored files under that repo root instead of flattening them into `./<problem>/`.

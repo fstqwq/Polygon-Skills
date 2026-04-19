@@ -49,7 +49,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py read-file \
 python skills/polygon-agent-cli/scripts/polygon_agent.py read-file \
   --problem "alice/aplusb" \
   --path "attachments/logo.png" \
-  --save-to "./alice/aplusb/attachments/logo.png"
+  --save-to "./alice/aplusb/temp/logo.png"
 ```
 
 Use `--save-to` for binary files or large content when you do not want inline JSON content.
@@ -60,6 +60,7 @@ Use `--save-to` for binary files or large content when you do not want inline JS
 - file content is returned as UTF-8 text or base64, matching the server response
 - if the remote path is a directory, the CLI returns an error instead of pretending it is a file
 - if you mirror remote files into a local repo, use `./<owner>/<problem>/` as the repo root
+- downloaded one-off files must be saved under that repo's `temp/` unless they are intentionally becoming source, test data, statement content, or attachments
 
 ## Reference
 

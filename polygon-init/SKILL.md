@@ -48,6 +48,7 @@ description: "Initialize a new problem repository from scratch."
    tests/manual/
    tests/generator/
    tests/answers/
+   temp/
    third_party/testlib/
    ```
 
@@ -55,6 +56,13 @@ description: "Initialize a new problem repository from scratch."
    ```
    cp <skills>/polygon-spec/testlib.h third_party/testlib/testlib.h
    ```
+
+   Write `.gitignore`:
+   ```gitignore
+   temp/
+   ```
+
+   `temp/` is the only place for scratch files and must not be committed.
 
 5. **Write config/problem.json** with the confirmed parameters. Refer to polygon-spec for the schema.
 

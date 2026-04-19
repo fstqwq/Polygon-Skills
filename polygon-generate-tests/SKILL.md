@@ -205,7 +205,8 @@ After the user approves the plan, implement each part sequentially. IDs are cont
 
 4. **Compile (best-effort**, see `polygon-spec/compile.md`):
    ```
-   g++ -std=c++20 -O2 -o gen generators/{name}.cpp -I <skills>/polygon-spec
+   mkdir -p temp
+   g++ -std=c++20 -O2 -o temp/gen generators/{name}.cpp -I <skills>/polygon-spec
    ```
 
 ### Commit

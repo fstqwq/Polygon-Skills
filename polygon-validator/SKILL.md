@@ -163,7 +163,8 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 
 7. **Compile** (best-effort, see `polygon-spec/compile.md`):
    ```
-   g++ -std=c++20 -O2 -o validator validators/validator.cpp -I <skills>/polygon-spec
+   mkdir -p temp
+   g++ -std=c++20 -O2 -o temp/validator validators/validator.cpp -I <skills>/polygon-spec
    ```
    If no compiler is available locally (and no WSL on Windows), report to the user and skip.
 

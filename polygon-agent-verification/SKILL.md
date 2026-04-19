@@ -53,7 +53,7 @@ Save to a local file:
 python skills/polygon-agent-cli/scripts/polygon_agent.py verify-detail \
   --problem "alice/aplusb" \
   --verification-id "ver-0123456789ab" \
-  --save-to "./verification.yaml"
+  --save-to "./alice/aplusb/temp/verification.yaml"
 ```
 
 Zoom into a specific test:
@@ -80,6 +80,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py verify-detail \
 - only one verification can run at a time per workspace
 - a running verification uses the workspace state captured at start time
 - the CLI does not return verbose polling logs by default
+- saved verification reports are diagnostics and must go under the local problem repo's `temp/`
 
 ## Reference
 

@@ -42,7 +42,7 @@ temp/                   # throwaway test files (not committed, gitignored)
 ```
 
 - `attachments/` is git-tracked and included in ICPC package export. Contents are distributed to contestants.
-- `temp/` is for local testing scratch files (e.g. testing tool test programs). Not committed  --  add to `.gitignore`.
+- `temp/` is the only allowed place for local scratch, compile outputs, downloaded artifacts, generated diagnostics, and throwaway test programs. It must be gitignored and never committed.
 - `draft/` is git-tracked but excluded from the zip package.
 - Pass-fail problems start with no checker selected. Once configured, `config/build.json` `checker_source` points to a file under `checkers/`.
 - Interactive problems use `interactor_source` instead and must not set `checker_source`.
@@ -118,6 +118,7 @@ The default template includes `fontspec` + `xeCJK`, so new problems use XeLaTeX.
 - Each meaningful change gets its own commit.
 - Commit messages should be descriptive: `"add accepted solution"`, `"add manual tests 001-003"`, `"update statement legend"`.
 - Do not commit derived/generated files.
+- Do not create scratch files outside `temp/`. If a file is not source, configuration, test data, statement content, or a contestant attachment, put it under `temp/`.
 - The `draft/` directory is committed  -- it is part of the authoring history.
 
 ## Reference Files
