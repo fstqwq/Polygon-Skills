@@ -176,6 +176,14 @@ def _errors_spec_json(root: Path) -> list[str]:
         if tid != expected:
             errors.append(f"tests/spec.json: ids not sequential -- expected '{expected}', got '{tid}'")
             break
+    answers_dir = root / "tests" / "answers"
+    if answers_dir.exists():
+        errors.append("tests/answers/: committed answer files are not allowed")
+    tests_dir = root / "tests"
+    if tests_dir.is_dir():
+        for ans_path in sorted(tests_dir.rglob("*.ans")):
+            rel = ans_path.relative_to(root).as_posix()
+            errors.append(f"{rel}: committed answer files are not allowed")
     return errors
 
 

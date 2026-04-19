@@ -33,7 +33,7 @@ statement-sections/
 tests/
   spec.json             # ordered test specification
   manual/               # manual test input files
-  answers/              # committed answer files
+  generator/            # generator command payload files
 draft/
   statement.md          # problem statement draft (Markdown)
   solution.md           # solution sketch and algorithm notes
@@ -46,6 +46,7 @@ temp/                   # throwaway test files (not committed, gitignored)
 - `draft/` is git-tracked but excluded from the zip package.
 - Pass-fail problems start with no checker selected. Once configured, `config/build.json` `checker_source` points to a file under `checkers/`.
 - Interactive problems use `interactor_source` instead and must not set `checker_source`.
+- Do not store official answers in the source repository or package. There is no `tests/answers/` directory in the canonical layout; answers are produced by the verification/package pipeline from the accepted solution.
 
 ## Language Model
 

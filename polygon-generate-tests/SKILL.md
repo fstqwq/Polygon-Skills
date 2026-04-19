@@ -153,7 +153,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
 ### Manual tests
 
 1. Write `tests/manual/{id}.in` (ends with newline, no trailing spaces)
-2. Write `tests/answers/{id}.ans` if expected output is known
+2. Do **not** write `tests/answers/{id}.ans`; committed answer files are not part of the source repository or package
 3. Add to `tests/spec.json`:
    ```json
    {
@@ -162,7 +162,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
      "sample": true
    }
    ```
-   Ordinary non-interactive sample tests: `"sample": true`, omit `sample_input`/`sample_output`. The statement uses the real `tests/manual/{id}.in` and `tests/answers/{id}.ans` files.
+   Ordinary non-interactive sample tests: `"sample": true`, omit `sample_input`/`sample_output`. The statement uses the real `tests/manual/{id}.in`, and displayed output comes from generated official answers.
    Only add `sample_input`/`sample_output` when the statement must override the displayed sample text, such as interactive problems, spoiler-sensitive samples, or cleaner fixed-format presentation.
    Non-sample manual tests: `"sample": false`, omit `sample_input`/`sample_output`.
 
@@ -222,7 +222,7 @@ git commit -m "tests: add {description}"
 
 If the user asks to see current tests:
 1. Read `tests/spec.json` and list all tests with their IDs, kind, and sample flag.
-2. For manual tests, show `tests/manual/{id}.in` and `tests/answers/{id}.ans`.
+2. For manual tests, show `tests/manual/{id}.in` and any `sample_output` override from `tests/spec.json`.
 3. For gen tests, show the gen command.
 4. Report coverage: how many samples, edge cases, stress, anti-hack, max-stress.
 

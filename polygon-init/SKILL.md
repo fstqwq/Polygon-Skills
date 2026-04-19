@@ -47,7 +47,6 @@ description: "Initialize a new problem repository from scratch."
    statement-sections/<language>/   # one per chosen language
    tests/manual/
    tests/generator/
-   tests/answers/
    temp/
    third_party/testlib/
    ```
