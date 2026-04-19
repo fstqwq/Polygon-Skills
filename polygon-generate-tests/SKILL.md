@@ -111,6 +111,7 @@ Pick the ones relevant to the problem.
 | Always output NO/-1 | Ensure positive cases exist |
 | O(n^2) solution | Maximum n to trigger TLE |
 | Overflow-prone | Values near 2^31 or 2^63 boundaries |
+| Floating-point fragile | Near-degenerate geometry, cancellation, tolerance-boundary answers |
 
 **Part 6 -- Max-stress**: maximum constraints with adversarial structure -- worst-case for the intended algorithm, maximum output size, degenerate structures.
 - Include both exact maximum and near-maximum variants (`N-1`, `M-1`, `max_value-1`) unless the constraint makes that meaningless.
@@ -126,6 +127,22 @@ Check which of these apply to the problem and incorporate into the plan:
 - **Increasing n**: T tests where n grows each case (1, 2, 4, 8, ..., max). Catches solutions that clear arrays to `n+1` but leave stale data from earlier larger cases.
 - **Maximum T, minimum n**: T at maximum, each case has n=1 or minimum. Catches solutions that memset `MAXN` every test case (TLE on large T).
 - Both patterns are mandatory when multi-test is present.
+
+**Integer overflow / width bugs**:
+- If input values can be large, include values around common type boundaries: `2^31-1`, `2^31`, `10^9`, `10^18`, and the stated maximum.
+- Include cases where each individual value fits in 32-bit, but sums, prefix sums, products, squared distances, or pair counts exceed 32-bit.
+- Include mixed-scale cases in the same test: very small values with very large values, zeros if allowed, and negative values if allowed.
+- For binary search or midpoint-heavy problems, include ranges where `l + r` overflows 32-bit and where `r - l` is near the maximum.
+- For shortest paths / DP / cost problems, include answers near and above common wrong `INF` sentinels such as `10^9`, `1e18`, and `LLONG_MAX / 4` when meaningful.
+- For modular arithmetic, include operands near the modulus, products near `mod^2`, and repeated accumulation that overflows before taking modulo.
+
+**Floating-point / precision bugs**:
+- If outputs or computations use real numbers, add cases near the promised tolerance boundary, not only easy integer-looking answers.
+- Include very small and very large magnitudes in the same test when the statement allows it; this catches cancellation and relative-error mistakes.
+- For geometry, include near-collinear points, almost tangent/intersecting objects, coincident or duplicate points if allowed, and distances/areas close to zero.
+- Include cases where the correct answer is exactly zero, very close to zero, and very close to a decision threshold.
+- Include both absolute-error-sensitive and relative-error-sensitive cases if the checker allows either.
+- Avoid relying only on random floating-point data; handcraft at least a few near-degenerate cases.
 
 **Branching-output problems**:
 - If the output has multiple branches such as `YES/NO`, `Alice/Bob`, `possible/impossible`, or `answer / -1`, do not assume random tests cover all branches well.

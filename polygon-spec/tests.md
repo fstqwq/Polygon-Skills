@@ -34,6 +34,8 @@ Test count and coverage:
 - Random/stress tests must repeat each important parameter shape with several different seeds. Default to at least 3 seeds per shape.
 - Boundary-sensitive shapes must include off-by-one variants such as `n = N - 1` and `n = N`, `m = M - 1` and `m = M`, and `value = max - 1` and `value = max` when meaningful.
 - A single random test does not cover a category. Treat a random category as covered only after repeated seeds and after checking that output branches are represented.
+- Integer-heavy problems must include overflow-oriented cases: values near common type limits, sums/products/squared values beyond 32-bit, and mixed small/large values when allowed.
+- Floating-point problems must include precision-oriented cases: near-zero answers, tolerance-boundary answers, mixed magnitudes, and near-degenerate geometry or algebraic configurations when applicable.
 
 ---
 

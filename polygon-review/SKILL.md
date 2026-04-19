@@ -66,6 +66,8 @@ Check:
 - [ ] Sample I/O matches what the statement shows
 - [ ] Edge cases cover minimum and maximum constraints
 - [ ] Edge cases cover off-by-one boundaries (`min+1`, `N-1`, `N`, `max-1`, `max`)
+- [ ] Integer-heavy tests cover overflow risks: large sums/products/squares, type boundaries, and wrong `INF` sentinels
+- [ ] Floating-point tests cover precision risks: near-zero, tolerance-boundary, mixed-magnitude, and near-degenerate cases
 - [ ] Stress tests exist at multiple sizes (small, medium, near-max, max)
 - [ ] Random/stress categories repeat the same parameter shape with multiple seeds
 - [ ] If `rej_*` solutions exist: anti-hack tests are designed to break them
