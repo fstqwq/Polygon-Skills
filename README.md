@@ -51,6 +51,7 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-checker` | "write/pick the checker" | Select built-in or write custom checker |
 | `polygon-interactor` | "write the interactor" | Interactive problem interactor + testing tool |
 | `polygon-solution` | "write solutions" | Brute force -> WA traps -> std -> translations |
+| `polygon-hack` | "hack the problem" | Generate targeted wrong solutions and tests that reject them |
 | `polygon-generate-tests` | "create tests" | Design test plan -> implement test suite |
 | `polygon-review` | "review the problem" | End-to-end audit before local zip creation |
 | `polygon-local-export` | "create a local zip file" | Zip the working tree as a native zip file |
@@ -78,6 +79,7 @@ polygon-statement      -> write the problem statement
 polygon-validator      -> write the validator
 polygon-checker        -> pick or write the checker
 polygon-solution       -> write solutions (brute, WA, std)
+polygon-hack           -> generate targeted wrong solutions and hack tests
 polygon-generate-tests -> design and create tests
 polygon-review         -> audit everything
 polygon-local-export   -> create a local zip file for upload
