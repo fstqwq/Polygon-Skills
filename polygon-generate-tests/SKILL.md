@@ -48,10 +48,10 @@ Example plan:
 - keep the exhaustive block compact
 
 ## Part 4: Stress / random (typically 15-30)
-- gen_random, small (n~10), x5 seeds
-- gen_random, medium (n~1000), x5 seeds
-- gen_random, near-max (n=N-1), x5 seeds
-- gen_random, max (n=N), x5 seeds
+- gen_random, small (n~10), x3 seeds
+- gen_random, medium (n~1000), x3 seeds
+- gen_random, near-max (n=N-1), x3 seeds
+- gen_random, max (n=N), x3 seeds
 
 ## Part 5: Anti-hack (typically 4-10)
 - gen_worstcase -- breaks greedy, x3 variants
@@ -100,7 +100,7 @@ Pick the ones relevant to the problem.
 - Medium (n ~ 100-1000): find off-by-one, overflow
 - Near-boundary (n = N-1, m = M-1, values = max-1): catches strict-inequality and allocation off-by-one bugs
 - Large (n = max): TLE / MLE detection
-- For each random size/category, use several different seeds. Default to at least 5 seeds per category; use 8-10 when the generator distribution is broad or branch coverage is uncertain.
+- For each random size/category, use several different seeds. Default to at least 3 seeds per category; use 5-8 when the generator distribution is broad or branch coverage is uncertain.
 - Do not count one random file as coverage for a category. A random category is only covered after repeated seeds with the same parameter shape.
 
 **Part 5 -- Anti-hack**: tests designed to break specific wrong solutions. For each `rej_*` solution, analyze what input would expose it.
@@ -290,5 +290,5 @@ Always shuffle node labels -- otherwise node 1 is always the root and low-number
 - Generator output must match the exact format the validator expects.
 - Always write the test plan to `draft/tests.md` and get user approval before implementing.
 - If you plan small exhaustive coverage, estimate the required number of files first and keep that block within 20 files by default.
-- Most finished problems should have roughly 35-70 tests. Fewer than 30 tests needs an explicit reason, such as tiny exhaustive coverage, very expensive tests, or an interactive format with limited meaningful cases.
+- Most finished problems should have roughly 20-70 tests. Fewer than 20 tests needs an explicit reason, such as tiny exhaustive coverage, very expensive tests, or an interactive format with limited meaningful cases.
 - If `tests/spec.json` is reduced or reorganized, remove unreferenced files from the test directories.

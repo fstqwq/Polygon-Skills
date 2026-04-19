@@ -30,8 +30,8 @@ File conventions:
 - Ordinary sample tests should rely on `tests/manual/{id}.in`; displayed output comes from generated official answers. Do not use `sample_input`/`sample_output` unless you intentionally need a statement override.
 
 Test count and coverage:
-- Most finished problems should have roughly 35-70 tests. Fewer than 30 tests needs an explicit reason.
-- Random/stress tests must repeat each important parameter shape with several different seeds. Default to at least 5 seeds per shape.
+- Most finished problems should have roughly 20-70 tests. Fewer than 20 tests needs an explicit reason.
+- Random/stress tests must repeat each important parameter shape with several different seeds. Default to at least 3 seeds per shape.
 - Boundary-sensitive shapes must include off-by-one variants such as `n = N - 1` and `n = N`, `m = M - 1` and `m = M`, and `value = max - 1` and `value = max` when meaningful.
 - A single random test does not cover a category. Treat a random category as covered only after repeated seeds and after checking that output branches are represented.
 

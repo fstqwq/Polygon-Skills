@@ -70,7 +70,7 @@ Check:
 - [ ] Random/stress categories repeat the same parameter shape with multiple seeds
 - [ ] If `rej_*` solutions exist: anti-hack tests are designed to break them
 - [ ] If multi-test: includes "increasing n" and "max T min n" patterns
-- [ ] Total test count is reasonable (typically 35-70 for most problems; fewer than 30 requires an explicit reason)
+- [ ] Total test count is reasonable (typically 20-70 for most problems; fewer than 20 requires an explicit reason)
 
 Report: test count breakdown and coverage gaps.
 
