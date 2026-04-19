@@ -23,6 +23,15 @@ Storage mechanism (memory, file, env) is agent-specific -- this only defines the
       "scope": "workspace",
       "expires_at": "2026-04-14T10:00:00Z"
     }
+  },
+  "pending_access": {
+    "alice/aplusb": {
+      "request_id": "ar-0123456789abcdef",
+      "approve_url": "http://polygon.example.com/agent/approve/ar-0123456789abcdef",
+      "expires_in": 600,
+      "problem": "alice/aplusb",
+      "required_scope": "workspace"
+    }
   }
 }
 ```
@@ -37,6 +46,7 @@ Storage mechanism (memory, file, env) is agent-specific -- this only defines the
 | `identity` | Agent's own metadata, sent at registration | Fixed |
 | `user` | Response from `/agent/v1/register/{code}` | Session |
 | `tokens[problem]` | Response from first `poll` after approval | Per-problem, time-limited |
+| `pending_access[problem]` | Response from access request before approval | Until approved, denied, or expired |
 
 ## Rules
 
@@ -70,6 +80,8 @@ Storage mechanism (memory, file, env) is agent-specific -- this only defines the
 - `tokens` is keyed by problem slug (e.g., `"alice/aplusb"`).
   Each problem requires a separate approval and has its own token.
 
+- `pending_access` is optional. The shared CLI uses it so `clone` can create an approval request, return the approval URL, and continue on a later rerun after the user approves.
+
 - If a token returns 401, discard it and re-request access for that problem.
 
 - The agent does not need to store scope or expires_at explicitly.
@@ -80,4 +92,4 @@ Storage mechanism (memory, file, env) is agent-specific -- this only defines the
 
 - Do not store the registration code -- it is one-time use.
 - Do not store the user's password or session cookie.
-- Do not store approval URLs -- they are only needed during the approval flow.
+- Do not store approval URLs after approval completes. Pending approval URLs may live under `pending_access` until approved, denied, or expired.

@@ -53,6 +53,55 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py poll \
 
 Polls approval status and saves the token on the first approved response.
 
+### Clone
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py clone \
+  --problem "alice/aplusb"
+```
+
+Mirrors the full remote workspace into `./alice/aplusb/`, initializes Git, and creates an initial local commit.
+
+Run from the workspace root that contains `./.polygon-agent/state.json`, or pass `--state-file` and `--target-dir` explicitly.
+
+If no usable token exists, `clone` automatically requests access and returns `approval_status`, `approve_url`, and `required_scope:"workspace"`. Show the URL to the user, ask them to approve workspace access, then rerun `clone`.
+
+Optional flags:
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py clone \
+  --problem "alice/aplusb" \
+  --target-dir "./work/alice/aplusb"
+```
+
+`clone` downloads `/agent/v1/workspace/snapshot`. It does not use package export.
+
+### Pull
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py pull \
+  --problem "alice/aplusb"
+```
+
+Updates an existing clone at `./alice/aplusb/`.
+
+Run from the same workspace root used for `clone`, or pass `--state-file` and `--target-dir` explicitly.
+
+`pull` does not auto-connect. If the token is missing, invalid, or insufficient, run `clone` again or use explicit `connect` / `poll`.
+
+Before applying remote changes, `pull` commits local dirty state. After applying remote changes, it commits the synchronized mirror if anything changed.
+
+### Push
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py push \
+  --problem "alice/aplusb"
+```
+
+Uploads the full local mirror as one ZIP, asks the server to compare it, then atomically applies it to the remote working tree.
+
+`push` requires `workspace` scope or higher. It does not commit the remote workspace; run `commit` only after the user asks for it.
+
 ### Workspace Status
 
 ```bash
@@ -187,6 +236,11 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
 
 - The CLI never approves browser requests on its own.
 - The CLI never requires inline JSON bodies.
+- `clone` auto-requests access when needed, but the user must still approve the browser request.
+- `pull` never auto-requests access.
+- `clone` and `pull` manage local Git commits as recovery boundaries.
+- `push` sends one full ZIP and uses server-side atomic apply.
+- Agent-managed UTF-8 text files are LF-canonical; binary files are preserved byte-for-byte.
 - `export-download` always requires `--output`.
 - Stateful commands use `--state-file` if provided; otherwise they use `./.polygon-agent/state.json` under the current working directory.
 - When saving a remote problem locally, use `./<owner>/<problem>/` as the default repo path.

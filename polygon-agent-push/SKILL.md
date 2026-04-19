@@ -1,6 +1,6 @@
 ---
 name: polygon-agent-push
-description: "Upload or delete workspace files in a Polygon problem through the agent token workflow. Use when pushing local changes to a Polygon workspace via /agent/v1/workspace/* write endpoints."
+description: "Push a local Polygon problem mirror to the remote workspace through the agent token workflow. Use when applying local clone changes via /agent/v1/workspace/apply."
 ---
 
 # Polygon Agent -- Push
@@ -8,9 +8,9 @@ description: "Upload or delete workspace files in a Polygon problem through the 
 ## When to Use This Skill
 
 Use this skill when:
-- you need to upload a local file into the remote workspace
-- you need to delete a remote workspace file
-- you already know what should change and want to update the cloud workspace state
+- you have a local clone created by `polygon-agent-sync`
+- you need to apply local file additions, edits, and deletions to the remote workspace
+- you want one atomic remote workspace update
 
 ## Required Token Scope
 
@@ -20,13 +20,33 @@ If you only have `readonly`, request a higher-scope token through `polygon-agent
 
 ## Primary Path
 
-### Upload
+### Push Full Local Mirror
+
+Run this from the workspace root that contains `./.polygon-agent/state.json`:
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py push \
+  --problem "alice/aplusb"
+```
+
+If your current directory is already inside the problem repo, pass both paths explicitly:
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py push \
+  --problem "alice/aplusb" \
+  --state-file "../.polygon-agent/state.json" \
+  --target-dir "."
+```
+
+`push` sends one full ZIP, the server compares it with the remote working tree, then applies it atomically.
+
+### Single-File Convenience
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py upload \
   --problem "alice/aplusb" \
   --workspace-path "solutions/brute.py" \
-  --local-file "./brute.py"
+  --local-file "./alice/aplusb/solutions/brute.py"
 ```
 
 ### Delete
@@ -40,13 +60,15 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py delete \
 ## Typical Workflow
 
 1. fetch or inspect current workspace state
-2. update remote files with `upload` and `delete`
-3. run verification with `polygon-agent-verification`
-4. commit only after the user explicitly asks for it
+2. edit the local mirror
+3. run `push`
+4. run verification with `polygon-agent-verification`
+5. commit only after the user explicitly asks for it
 
 ## Notes
 
-- upload always reads content from `--local-file`; do not construct file content inline in shell
+- `push` ignores `.git/`, `temp/`, `draft/`, hidden paths, and invalid workspace roots
+- UTF-8 text files are LF-normalized before upload
 - push modifies only the workspace working tree
 - push does not trigger verification automatically
 

@@ -12,6 +12,8 @@ Use this skill when:
 - you need to enumerate files
 - you need to read one file from a problem workspace
 
+Use `polygon-agent-sync` instead when you need a full local clone or pull of the remote workspace.
+
 ## Required Token Scope
 
 **`readonly`** or higher.

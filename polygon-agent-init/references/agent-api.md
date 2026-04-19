@@ -48,15 +48,18 @@ These are for the human user in a browser. Agents do not call these directly.
 | Method | Path | Query | Response |
 |--------|------|-------|----------|
 | GET | `/agent/v1/workspace/status` | — | `{"problem", "user", "workspace_id", "head_commit", "dirty", "git"}` |
+| GET | `/agent/v1/workspace/snapshot` | — | binary `application/zip`, current working tree snapshot |
+| POST | `/agent/v1/workspace/compare` | multipart: `archive` full workspace ZIP | `{"problem", "head_commit", "dirty", "changed", "uploads", "deletes", "same"}` |
 | GET | `/agent/v1/workspace/files` | `path?` | `{"base_path", "entries": [{"path", "is_dir", "is_file"}], "truncated"}` |
 | GET | `/agent/v1/workspace/file` | `path` | `{"path", "is_dir", "size_bytes", "media_type", "encoding", "content"}` |
 
-Note: `workspace/file` returns `content` as either UTF-8 text (`"encoding": "utf-8"`) or base64 (`"encoding": "base64"`).
+Note: `workspace/snapshot` and `workspace/compare` normalize UTF-8 text files to LF for comparison. Binary files are byte-preserving.
 
 ### Workspace Write (min_scope: `workspace`)
 
 | Method | Path | Body | Response |
 |--------|------|------|----------|
+| POST | `/agent/v1/workspace/apply` | multipart: `base_head_commit?` + `archive` full workspace ZIP | `{"problem", "head_commit", "dirty", "applied", "changed", "uploads", "deletes", "same"}` |
 | POST | `/agent/v1/workspace/upload` | multipart: `path` (form field) + `file` | `{"ok", "path", "bytes"}` |
 | DELETE | `/agent/v1/workspace/files/{path}` | — | `{"ok", "path"}` |
 
@@ -78,7 +81,7 @@ readonly < workspace < commit
 | Scope | Can do |
 |-------|--------|
 | `readonly` | verification, export, workspace read, commit status |
-| `workspace` | above + workspace upload/delete |
+| `workspace` | above + workspace apply/upload/delete |
 | `commit` | above + commit |
 
 Effective permission = `min(token_scope, user_ACL)`.
@@ -90,6 +93,8 @@ All workspace paths are workspace-relative. The server rejects:
 - Absolute paths
 - `..` traversal
 - Symlink escape
+- Hidden paths
+- Root paths outside the workspace source allowlist
 
 ## Error Responses
 

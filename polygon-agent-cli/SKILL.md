@@ -10,6 +10,7 @@ description: "Shared CLI for Polygon agent workflows. Use when any polygon-agent
 This skill provides the shared command-line entrypoint used by:
 - `polygon-agent-init`
 - `polygon-agent-connect`
+- `polygon-agent-sync`
 - `polygon-agent-fetch`
 - `polygon-agent-push`
 - `polygon-agent-verification`
@@ -17,6 +18,7 @@ This skill provides the shared command-line entrypoint used by:
 - `polygon-agent-commit`
 
 Use the CLI instead of writing ad hoc Python, curl, or shell code for `/agent/v1/*`.
+For full local mirrors, prefer `clone` and `pull` over one-file-at-a-time fetches.
 
 ## Entry Point
 
@@ -74,6 +76,16 @@ Example:
 `./fstqwq/a-plus-b/`
 
 Do not collapse the owner name away into `./a-plus-b/`. The owner-qualified path matches the remote problem slug and avoids collisions.
+
+## Clone / Pull Rules
+
+- `clone --problem owner/problem` mirrors into `./owner/problem/` by default.
+- `clone` auto-requests access when no usable token exists. It returns `approve_url` and `required_scope:"workspace"`; show that URL to the user and rerun `clone` after approval.
+- `pull` updates an existing clone and never auto-requests access.
+- `push` uploads the full local mirror ZIP and applies it atomically on the server.
+- both commands use local Git commits as recovery points.
+- both commands preserve `.git/`, `temp/`, and `draft/`.
+- agent-managed UTF-8 text files are LF-canonical; binary files are byte-preserving.
 
 ## TLS Rules
 
