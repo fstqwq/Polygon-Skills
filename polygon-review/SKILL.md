@@ -65,10 +65,12 @@ Check:
 - [ ] At least 1 sample test exists
 - [ ] Sample I/O matches what the statement shows
 - [ ] Edge cases cover minimum and maximum constraints
-- [ ] Stress tests exist at multiple sizes (small, medium, max)
+- [ ] Edge cases cover off-by-one boundaries (`min+1`, `N-1`, `N`, `max-1`, `max`)
+- [ ] Stress tests exist at multiple sizes (small, medium, near-max, max)
+- [ ] Random/stress categories repeat the same parameter shape with multiple seeds
 - [ ] If `rej_*` solutions exist: anti-hack tests are designed to break them
 - [ ] If multi-test: includes "increasing n" and "max T min n" patterns
-- [ ] Total test count is reasonable (typically 15-50 for most problems)
+- [ ] Total test count is reasonable (typically 35-70 for most problems; fewer than 30 requires an explicit reason)
 
 Report: test count breakdown and coverage gaps.
 

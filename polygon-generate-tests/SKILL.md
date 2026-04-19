@@ -33,29 +33,32 @@ Example plan:
 - sample 1 from statement
 - sample 2 from statement
 
-## Part 2: Edge cases (typically 3-8)
+## Part 2: Edge cases (typically 6-12)
 - n=1, minimum input
+- n=N-1 and n=N for maximum-bound off-by-one coverage
+- n=min+1 for minimum-bound off-by-one coverage
 - all elements equal
 - maximum values at minimum size
 - already sorted
 - reverse sorted
 
-## Part 3: Small exhaustive coverage (typically 1-10)
+## Part 3: Small exhaustive coverage (typically 3-15)
 - enumerate all valid instances up to the largest feasible small bound
 - slice the boundary layer if one file would exceed the repository constraints
 - keep the exhaustive block compact
 
-## Part 4: Stress / random (typically 5-15)
-- gen_random, small (n~10), x3
-- gen_random, medium (n~1000), x3
-- gen_random, max (n=200000), x5
+## Part 4: Stress / random (typically 15-30)
+- gen_random, small (n~10), x5 seeds
+- gen_random, medium (n~1000), x5 seeds
+- gen_random, near-max (n=N-1), x5 seeds
+- gen_random, max (n=N), x5 seeds
 
-## Part 5: Anti-hack (typically 2-5)
-- gen_worstcase -- breaks greedy
+## Part 5: Anti-hack (typically 4-10)
+- gen_worstcase -- breaks greedy, x3 variants
 - manual -- always-YES case, breaks dummy
 
-## Part 6: Max-stress (typically 2-5)
-- gen_maxstress -- adversarial structure, x2
+## Part 6: Max-stress (typically 4-10)
+- gen_maxstress -- adversarial structure at N-1 and N, x2 seeds each
 
 ## Part 7: Extra
 (ask user for additional ideas)
@@ -72,7 +75,9 @@ IDs are assigned sequentially when implementing (001, 002, ...), no gaps.
 | Category | Examples |
 |----------|----------|
 | Minimum size | n=1, n=0, empty input |
+| Minimum off-by-one | n=min, n=min+1 |
 | Max values at min size | n=1 with a[i]=10^9 |
+| Maximum off-by-one | n=N-1, n=N; m=M-1, m=M; value=max-1, value=max |
 | All-same | all elements equal, all edges same weight |
 | Sorted / reverse-sorted | already sorted, reverse order |
 | Binary | all 0s, all 1s, alternating |
@@ -93,7 +98,10 @@ Pick the ones relevant to the problem.
 **Part 4 -- Stress (random)**: random tests at varying sizes.
 - Small (n ~ 5-10): fast, debuggable, good for stress vs brute force
 - Medium (n ~ 100-1000): find off-by-one, overflow
+- Near-boundary (n = N-1, m = M-1, values = max-1): catches strict-inequality and allocation off-by-one bugs
 - Large (n = max): TLE / MLE detection
+- For each random size/category, use several different seeds. Default to at least 5 seeds per category; use 8-10 when the generator distribution is broad or branch coverage is uncertain.
+- Do not count one random file as coverage for a category. A random category is only covered after repeated seeds with the same parameter shape.
 
 **Part 5 -- Anti-hack**: tests designed to break specific wrong solutions. For each `rej_*` solution, analyze what input would expose it.
 
@@ -105,6 +113,8 @@ Pick the ones relevant to the problem.
 | Overflow-prone | Values near 2^31 or 2^63 boundaries |
 
 **Part 6 -- Max-stress**: maximum constraints with adversarial structure -- worst-case for the intended algorithm, maximum output size, degenerate structures.
+- Include both exact maximum and near-maximum variants (`N-1`, `M-1`, `max_value-1`) unless the constraint makes that meaningless.
+- Repeat adversarial generators with different seeds or perturbations so a hard-coded or shape-specific wrong solution cannot pass one instance by accident.
 
 **Part 7 -- Extra**: ask the user: "Do you have any specific test scenarios you want to add?" Add whatever they suggest.
 
@@ -203,6 +213,8 @@ After the user approves the plan, implement each part sequentially. IDs are cont
    ```
    Last argument is the seed -- vary it per test. The payload file contains the full command line (generator name + arguments).
 
+   For random/stress generators, write multiple payload files with the same parameter shape and different seeds. For boundary-sensitive dimensions, include both exact and off-by-one values such as `N-1`, `N`, `M-1`, `M`, `max_value-1`, and `max_value`.
+
 4. **Compile (best-effort**, see `polygon-spec/compile.md`):
    ```
    mkdir -p temp
@@ -278,4 +290,5 @@ Always shuffle node labels -- otherwise node 1 is always the root and low-number
 - Generator output must match the exact format the validator expects.
 - Always write the test plan to `draft/tests.md` and get user approval before implementing.
 - If you plan small exhaustive coverage, estimate the required number of files first and keep that block within 20 files by default.
+- Most finished problems should have roughly 35-70 tests. Fewer than 30 tests needs an explicit reason, such as tiny exhaustive coverage, very expensive tests, or an interactive format with limited meaningful cases.
 - If `tests/spec.json` is reduced or reorganized, remove unreferenced files from the test directories.
