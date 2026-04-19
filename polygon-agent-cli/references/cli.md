@@ -155,6 +155,15 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py delete \
 
 ### Verify Start
 
+From a local mirror, run `push` first so verification captures the intended remote workspace version:
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py push \
+  --problem "alice/aplusb"
+```
+
+Then start verification:
+
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py verify-start \
   --problem "alice/aplusb"
