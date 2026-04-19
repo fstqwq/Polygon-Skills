@@ -10,7 +10,7 @@ description: "Shared CLI for Polygon agent workflows. Use when any polygon-agent
 This skill provides the shared command-line entrypoint used by:
 - `polygon-agent-init`
 - `polygon-agent-connect`
-- `polygon-agent-sync`
+- `polygon-agent-pull`
 - `polygon-agent-fetch`
 - `polygon-agent-push`
 - `polygon-agent-verification`

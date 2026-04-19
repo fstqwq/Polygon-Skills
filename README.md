@@ -63,7 +63,7 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-agent-cli` | internal shared CLI | Cross-platform script entrypoint for all Polygon agent API workflows |
 | `polygon-agent-init` | "initialize Polygon agent" | Register an agent session and persist state |
 | `polygon-agent-connect` | "connect agent to problem" | Request access and cache a problem token |
-| `polygon-agent-sync` | "clone/pull remote problem" | Mirror a full remote workspace into a local Git repo |
+| `polygon-agent-pull` | "clone/pull remote problem" | Mirror a full remote workspace into a local Git repo |
 | `polygon-agent-fetch` | "read workspace via agent" | Workspace status, list files, read file |
 | `polygon-agent-push` | "push workspace via agent" | Atomically apply a local workspace mirror |
 | `polygon-agent-verification` | "run verification via agent" | Start, wait for, and inspect verification |

@@ -8,7 +8,7 @@ description: "Push a local Polygon problem mirror to the remote workspace throug
 ## When to Use This Skill
 
 Use this skill when:
-- you have a local clone created by `polygon-agent-sync`
+- you have a local clone created by `polygon-agent-pull`
 - you need to apply local file additions, edits, and deletions to the remote workspace
 - you want one atomic remote workspace update
 

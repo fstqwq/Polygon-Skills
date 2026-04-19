@@ -1,9 +1,9 @@
 ---
-name: polygon-agent-sync
+name: polygon-agent-pull
 description: "Clone or pull a full remote Polygon problem workspace into a local Git repo through the agent CLI."
 ---
 
-# Polygon Agent -- Sync
+# Polygon Agent -- Pull
 
 ## When to Use This Skill
 
@@ -67,7 +67,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py clone \
   --target-dir "./work/alice/aplusb"
 ```
 
-Sync always uses `/agent/v1/workspace/snapshot`. Native export is only for package export, not workspace sync.
+Clone and pull always use `/agent/v1/workspace/snapshot`. Native export is only for package export, not workspace mirroring.
 
 ## Rules
 
@@ -76,7 +76,7 @@ Sync always uses `/agent/v1/workspace/snapshot`. Native export is only for packa
 - The user must approve workspace scope when `clone` returns an approval URL.
 - Both commands preserve `.git/`, `temp/`, and `draft/`.
 - UTF-8 text files are written with LF newlines locally.
-- All other files are remote-owned after sync.
+- All other files are remote-owned after clone or pull.
 - Do not flatten remote problems into `./aplusb/`; use `./alice/aplusb/`.
 
 ## Reference
