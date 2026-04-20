@@ -25,3 +25,15 @@ Standard checkers are used by copying from `<skills>/polygon-checker/standard/` 
 | Partial scoring | `pointscmp` / `pointsinfo` | Example templates only; usually needs customization. |
 | Multiple valid answers | Write a custom checker | Use the `polygon-checker` skill. |
 | Interactive problem | No checker source | Use `interactor_source` via the `polygon-interactor` skill instead. |
+
+## Custom Checker Format Policy
+
+Custom checkers should validate the semantic answer only. Do not check input or output format in a checker.
+
+Rules:
+
+- Do not use `readSpace()`, `readEoln()`, or `readEof()`.
+- Use token-based reads such as `readInt()`, `readToken()`, and `readWord()`.
+- `testlib.h` itself will take care of extra dirt in participant's output.
+
+Input whitespace and line structure belong to validators, not checkers.

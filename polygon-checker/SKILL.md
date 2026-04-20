@@ -47,6 +47,7 @@ The only runtime checker is the repository source named by `config/build.json` `
        // Read and validate the answer from `in`
        // Use in.readInt(), in.readToken(), etc.
        // Use in.quitf(_wa, ...) for invalid answers
+       // Do not check input/output format here; validate semantic answer only.
        return true;
    }
 
@@ -78,7 +79,8 @@ The only runtime checker is the repository source named by `config/build.json` `
    - `in.quitf(_wa, ...)` on invalid answers  -- testlib maps this to `_fail` automatically when called on `ans`
    - Three streams: `inf` (input), `ouf` (contestant output), `ans` (jury answer)
    - Checkers should validate answer semantics, not validator-style whitespace. Prefer token-based reads like `readInt()`, `readToken()`, and `readWord()`.
-   - Do not use `readSpace()` / `readEoln()` in a checker unless the output format explicitly requires exact whitespace.
+   - **Do not check input or output format in a checker.** Do not use `readSpace()`, `readEoln()`, or `readEof()`.
+   - `testlib.h` itself will take care of extra dirt in participant's output.
    - Verdicts: `_ok`, `_wa`, `_fail` only. Do not use `_pe`
    - **Multi-test**: call `setTestCase(t)` (1-indexed) at the top of each test case loop iteration  -- mandatory for proper per-testcase error messages
 
@@ -168,7 +170,9 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 - **Prefer standard checkers** unless the problem genuinely needs a custom one.
 - Ask the user: "Does this problem have a unique answer, or can there be multiple valid answers?" This determines whether a standard checker suffices.
 - Custom checkers must handle malformed contestant output gracefully (use `ouf.readInt()` etc., which auto-quit with WA on parse failure).
-- Exact whitespace belongs to validators. A checker should not reject output just because it used a newline where a space would also parse, unless the statement explicitly makes whitespace part of the required output format.
+- **Do not check input or output format in a checker.** Do not use `readSpace()`, `readEoln()`, or `readEof()`.
+- `testlib.h` itself will take care of extra dirt in participant's output.
+- Exact whitespace belongs to validators. A checker should validate answer semantics only.
 - Do not re-validate `inf` formatting in a checker. If input whitespace/line structure must be enforced, that belongs in `validators/validator.cpp`.
 - Verdicts: use only `_ok` (accepted), `_wa` (wrong answer), `_fail` (judge error). Do not use `_pe`.
 - **`quitf(_ok, ...)` message must start with `"ok"`** (e.g. `quitf(_ok, "ok, correct")`, `quitf(_ok, "ok, n=%d", n)`). This makes logs immediately scannable.
