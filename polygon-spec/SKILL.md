@@ -46,6 +46,8 @@ temp/                   # throwaway test files (not committed, gitignored)
 - `draft/` is git-tracked but excluded from the zip package.
 - Pass-fail problems start with no checker selected. Once configured, `config/build.json` `checker_source` points to a file under `checkers/`.
 - Interactive problems use `interactor_source` instead and must not set `checker_source`.
+- Keep `config/build.json` keys in canonical schema order: `accepted_solution_source`, `validator_source`, `checker_source`, `interactor_source`, `generator_sources`.
+- Write JSON and source files with LF line endings, not CRLF.
 - Do not store official answers in the source repository or package. There is no `tests/answers/` directory in the canonical layout; answers are produced by the verification/package pipeline from the accepted solution.
 
 ## Judging Posture

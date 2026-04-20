@@ -41,6 +41,8 @@
 Rules:
 - All paths are repo-relative (e.g., `"solutions/std.cpp"`).
 - Referenced files must exist.
+- Keep `build.json` keys in the schema order shown above: `accepted_solution_source`, `validator_source`, `checker_source`, `interactor_source`, `generator_sources`. Omit unused optional keys rather than moving them.
+- Write JSON and source files with LF line endings.
 - Standard checkers are copied into `checkers/` and referenced via `checker_source` like any other checker. There is no separate active standard-checker setting.
 - For pass-fail problems: leave `checker_source` empty until the user chooses a checker. Once configured, it must point to a file under `checkers/`.
 - For interactive problems: set `interactor_source`, leave `checker_source` empty or absent.
