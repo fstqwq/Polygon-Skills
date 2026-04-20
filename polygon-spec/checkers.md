@@ -34,6 +34,7 @@ Rules:
 
 - Do not use `readSpace()`, `readEoln()`, or `readEof()`.
 - Use token-based reads such as `readInt()`, `readToken()`, and `readWord()`.
+- Keep lexical restrictions that define the answer token itself, such as `readToken("[A-Za-z]{2,3}", "verdict")`, integer ranges, and explicit `YES`/`NO` enum checks.
 - `testlib.h` itself will take care of extra dirt in participant's output.
 
 Input whitespace and line structure belong to validators, not checkers.

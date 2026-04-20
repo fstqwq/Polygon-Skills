@@ -47,6 +47,8 @@ The only runtime checker is the repository source named by `config/build.json` `
        // Read and validate the answer from `in`
        // Use in.readInt(), in.readToken(), etc.
        // Use in.quitf(_wa, ...) for invalid answers
+       // Keep lexical checks that define the answer token itself,
+       // e.g. in.readToken("[A-Za-z]{2,3}", "verdict") for YES/NO.
        // Do not check input/output format here; validate semantic answer only.
        return true;
    }
@@ -79,6 +81,7 @@ The only runtime checker is the repository source named by `config/build.json` `
    - `in.quitf(_wa, ...)` on invalid answers  -- testlib maps this to `_fail` automatically when called on `ans`
    - Three streams: `inf` (input), `ouf` (contestant output), `ans` (jury answer)
    - Checkers should validate answer semantics, not validator-style whitespace. Prefer token-based reads like `readInt()`, `readToken()`, and `readWord()`.
+   - Lexical restrictions for a semantic token are still part of answer validation. Keep bounded reads like `readToken("[A-Za-z]{2,3}", "verdict")`, `readInt(l, r, "x")`, or explicit enum checks for `YES`/`NO`; do not replace them with unconstrained `readToken("verdict")`.
    - **Do not check input or output format in a checker.** Do not use `readSpace()`, `readEoln()`, or `readEof()`.
    - `testlib.h` itself will take care of extra dirt in participant's output.
    - Verdicts: `_ok`, `_wa`, `_fail` only. Do not use `_pe`
@@ -170,6 +173,7 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 - **Prefer standard checkers** unless the problem genuinely needs a custom one.
 - Ask the user: "Does this problem have a unique answer, or can there be multiple valid answers?" This determines whether a standard checker suffices.
 - Custom checkers must handle malformed contestant output gracefully (use `ouf.readInt()` etc., which auto-quit with WA on parse failure).
+- Lexical restrictions for answer tokens are semantic validation. Keep regex/range/enum checks that define valid tokens, for example `readToken("[A-Za-z]{2,3}", "verdict")` followed by a `YES`/`NO` check.
 - **Do not check input or output format in a checker.** Do not use `readSpace()`, `readEoln()`, or `readEof()`.
 - `testlib.h` itself will take care of extra dirt in participant's output.
 - Exact whitespace belongs to validators. A checker should validate answer semantics only.

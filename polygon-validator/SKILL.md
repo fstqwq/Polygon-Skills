@@ -68,18 +68,28 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
    | `inf.readEoln()` | Expect newline |
    | `inf.readEof()` | Expect end of file (must be last) |
    | `inf.readSpace()` | Expect single space |
-   | `format("a[%d]", i)` | Format variable name for error messages |
+   | `format("...", ...)` | Use in `ensuref` messages only; do not use it to generate read variable names |
    | `ensuref(cond, "msg", ...)` | Assert a condition with printf-style message |
 
    ### Polygon conventions
 
-   **Boundary value naming (`~`):** Codeforces Polygon checks that every named variable hits both its min and max values across the entire test suite. Use `~` to suppress this check when a boundary can't or shouldn't be reached:
+   **Stable boundary variable names:** Polygon-Replica validator logs aggregate boundary hits by the variable name passed to `readInt`/`readLong`/`readReal`/etc. Use stable, analyzable names. Do not generate names with indices.
+
+   | Do | Don't |
+   |----|-------|
+   | `inf.readInt(1, 100, "a")` for every array element | `inf.readInt(1, 100, format("a[%d]", i))` |
+   | `inf.readInt(1, 100, "a_ij")` for matrix elements | `inf.readInt(1, 100, format("a[%d][%d]", i, j))` |
+   | `inf.readInt(1, n, "u")`, `inf.readInt(1, n, "v")` for edges | `format("u[%d]", i)`, `format("v[%d]", i)` |
+
+   Dynamic names fragment the overview log and names with digits/brackets are not bounds-analyzable by testlib. Put indices in `ensuref` messages instead.
+
+   **Boundary value naming (`~`):** Codeforces Polygon checks that every named variable hits both its min and max values across the entire test suite. Use `~` on the side whose boundary should be skipped:
 
    | Name | Meaning |
    |------|---------|
    | `"n"` | Must hit both min and max of n across tests |
-   | `"~T"` | T doesn't need to hit its boundary values (boundary coverage skipped) |
-   | `"u~"` | u won't hit its upper bound (e.g. $u < v$ constrains $u < n$) |
+   | `"~T"` | T doesn't need to hit its lower bound; max still should be hit |
+   | `"u~"` | u doesn't need to hit its upper bound (e.g. $u < v$ constrains $u < n$) |
    | `"~x~"` | x doesn't need to hit either bound |
 
    **Regex limitations:** Testlib has its own pattern engine (not POSIX/PCRE). Key differences from standard regex:
@@ -109,7 +119,7 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
        ensuref(sum_n <= 200000, "sum of n exceeds 200000");
        for (int i = 0; i < n; i++) {
            if (i > 0) inf.readSpace();
-           inf.readInt(1, 1000000000, format("a[%d]", i));
+           inf.readInt(1, 1000000000, "a");
        }
        inf.readEoln();
    }
@@ -121,9 +131,9 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
    inf.readEoln();
    vector<vector<int>> adj(n + 1);
    for (int i = 0; i < n - 1; i++) {
-       int u = inf.readInt(1, n, format("u[%d]", i));
+       int u = inf.readInt(1, n, "u");
        inf.readSpace();
-       int v = inf.readInt(1, n, format("v[%d]", i));
+       int v = inf.readInt(1, n, "v");
        inf.readEoln();
        ensuref(u != v, "self-loop at edge %d", i);
        adj[u].push_back(v);
@@ -137,7 +147,7 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
    vector<bool> seen(n + 1, false);
    for (int i = 0; i < n; i++) {
        if (i > 0) inf.readSpace();
-       int p = inf.readInt(1, n, format("p[%d]", i));
+       int p = inf.readInt(1, n, "p");
        ensuref(!seen[p], "duplicate value %d at position %d", p, i);
        seen[p] = true;
    }
@@ -179,7 +189,8 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 ## Rules
 
 - Validate **every** constraint from the statement  -- ranges, sums, structure (tree/graph/permutation), string lengths, character sets.
-- Use descriptive variable names in `readInt`/`readLong` calls for clear error messages.
+- Use stable, descriptive variable names in `readInt`/`readLong` calls for boundary overview logs. Do not use `format(...)` or generated indices in read variable names.
+- For values that intentionally cannot hit one side of their range, mark that side with `~`, for example `~T` when `T` will never hit its lower bound.
 - The validator must enforce **exact whitespace**: spaces between numbers on a line, newlines between lines, EOF at the end.
 - If a constraint is ambiguous or missing, **stop and ask**  -- do not guess.
 - `testlib.h` is available at build time  -- just `#include "testlib.h"`.
@@ -191,5 +202,5 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 
 Real validators from production problems:
 
-- `examples/taxi_val.cpp`  -- multi-field input with `format()` and `~` boundary naming
+- `examples/taxi_val.cpp`  -- multi-field input with stable names and `~` boundary naming
 - `examples/multipass_val.cpp`  -- multi-pass problem validator (validates only pass 1 input; `"op~"`, `"~seed~"`)
