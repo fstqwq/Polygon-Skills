@@ -18,6 +18,12 @@ TLS behavior:
 
 ### Init
 
+If no registration URL is available, ask the user with this exact text:
+
+```text
+Please open Polygon-Replica and click the top-right Settings -> Connected Agents -> Connect to Agent. Copy the generated Registration URL and send it here.
+```
+
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py init \
   --register-url "http://polygon.example.com/agent/v1/register/reg-abc" \
