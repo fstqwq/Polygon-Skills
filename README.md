@@ -1,6 +1,6 @@
 # Polygon Skills
 
-Agent skills for competitive programming problem authoring with [Polygon-Replica](../Polygon-Replica/).
+Agent skills for competitive programming problem authoring with [Polygon-Replica](https://github.com/fstqwq/Polygon-Replica/).
 
 ## Installation
 
