@@ -150,15 +150,17 @@ Write for contestants. Assume they know how to program, understand standard inpu
 
    For pass-fail problems, do not create `interaction.tex`; delete any existing `statement-sections/<lang>/interaction.tex` files.
 
+   Put every shared statement build asset under `statement-assets/`, not `draft/` or `attachments/`. For each TikZ/LaTeX-generated figure, commit both the editable source `statement-assets/<name>.tex` and the rendered `statement-assets/<name>.pdf`.
+
 10. **Check formula consistency** across languages:
     ```
     python <skills>/polygon-statement/check_formulas.py
     ```
     Fix any mismatches  --  every formula in one language must appear in all others.
 
-11. **Commit** all languages together:
+11. **Commit** all languages and changed statement assets together. Stage only the exact files changed; do not add whole directories that may contain unrelated drafts or assets:
     ```
-    git add statement-sections/ draft/
+    git add -- statement-sections/<lang>/<changed-file>.tex draft/statement.<lang>.md statement-assets/<figure>.tex statement-assets/<figure>.pdf
     git commit -m "statement: {brief description of change}"
     ```
 
@@ -239,7 +241,16 @@ Problem statements follow a **terse, precise** style. Every sentence must carry 
 - Reduce emphasis overall  --  let the math and structure carry the meaning
 
 ### Figures
-Use the Polygon-compatible figure format:
+Store a shared figure and its editable source as:
+
+```text
+statement-assets/figure_sample.tex
+statement-assets/figure_sample.pdf
+```
+
+The `.tex` file is the version-controlled source; the `.pdf` is the compiled asset consumed by the statement builder. Keep them together with the same basename and regenerate the PDF whenever the source changes. Do not leave the source only in `draft/`, and do not put either file in contestant `attachments/`.
+
+Reference the asset by filename, without a `statement-assets/` prefix, using the Polygon-compatible figure format:
 ```latex
 \begin{center}
   \def \htmlPixelsInCm {45}
@@ -247,6 +258,8 @@ Use the Polygon-compatible figure format:
  \\ \small{caption text here}
 \end{center}
 ```
+
+Before committing, confirm that the PDF exists, the source exists, and every `\includegraphics` filename matches a file under `statement-assets/`.
 
 ### Input section
 - No `itemize` or `enumerate`  --  except for multi-operation problems where listing operations is natural

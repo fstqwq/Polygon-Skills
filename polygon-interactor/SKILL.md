@@ -45,7 +45,7 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
    git commit -m "interactor: add interactor"
    ```
 
-7. **Ask the user**: "Do you need a local testing tool for contestants? (see `testing_tool.md`)" If yes, follow `testing_tool.md`.
+7. **Ask the user**: "Do you need a local testing tool for contestants? (see `testing_tool.md`)" If yes, follow `testing_tool.md` and save it under contestant attachments, normally as `attachments/testing_tool.py`. Never place it in `statement-assets/`.
 
 8. **Update the statement.** After the testing tool is committed, append this line to the Interaction section of the statement (`statement-sections/<lang>/interaction.tex`):
 

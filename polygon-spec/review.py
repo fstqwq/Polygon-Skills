@@ -11,6 +11,8 @@ Checks:
   - tests/spec.json       (schema + file existence)
   - solutions/*.desc      (expected behavior + source existence)
   - statement-sections/   (required files and interaction layout)
+  - statement-assets/     (figure references and editable sources)
+  - attachments/          (contestant-visible files)
   - completeness warnings (missing components, no samples, etc.)
 
 Outputs a report with sections: Status, Warnings, Errors.
@@ -38,6 +40,7 @@ VALID_EXPECTED = {
 }
 TEST_ID_RE = re.compile(r"^[0-9]{3}$")
 SOURCE_PATH_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./-]{0,200}$")
+INCLUDEGRAPHICS_RE = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}")
 
 
 def _errors_problem_json(root: Path) -> list[str]:
@@ -347,6 +350,74 @@ def _warnings_completeness(root: Path) -> list[str]:
     return warnings
 
 
+def _warnings_package_assets(root: Path) -> list[str]:
+    """Warn about misplaced or incomplete statement and contestant assets."""
+    warnings: list[str] = []
+    assets_dir = root / "statement-assets"
+
+    if assets_dir.is_dir():
+        for pdf_path in sorted(assets_dir.rglob("*.pdf")):
+            source_path = pdf_path.with_suffix(".tex")
+            if not source_path.exists():
+                rel_pdf = pdf_path.relative_to(root).as_posix()
+                rel_source = source_path.relative_to(root).as_posix()
+                warnings.append(f"{rel_pdf}: missing editable source '{rel_source}'")
+
+        for source_path in sorted(assets_dir.rglob("*.tex")):
+            pdf_path = source_path.with_suffix(".pdf")
+            if not pdf_path.exists():
+                rel_source = source_path.relative_to(root).as_posix()
+                rel_pdf = pdf_path.relative_to(root).as_posix()
+                warnings.append(f"{rel_source}: missing rendered asset '{rel_pdf}'")
+
+    sections_dir = root / "statement-sections"
+    if sections_dir.is_dir():
+        for section_path in sorted(sections_dir.rglob("*.tex")):
+            try:
+                text = section_path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for match in INCLUDEGRAPHICS_RE.finditer(text):
+                asset_name = match.group(1).strip().replace("\\", "/")
+                if asset_name.startswith("statement-assets/"):
+                    rel_section = section_path.relative_to(root).as_posix()
+                    warnings.append(
+                        f"{rel_section}: reference '{asset_name}' should omit the statement-assets/ prefix"
+                    )
+                    asset_name = asset_name[len("statement-assets/"):]
+                asset_path = assets_dir / asset_name
+                candidates = [asset_path] if asset_path.suffix else [
+                    asset_path.with_suffix(ext) for ext in (".pdf", ".png", ".jpg", ".jpeg")
+                ]
+                if not any(candidate.exists() for candidate in candidates):
+                    rel_section = section_path.relative_to(root).as_posix()
+                    warnings.append(
+                        f"{rel_section}: statement asset '{match.group(1)}' is missing from statement-assets/"
+                    )
+
+    draft_dir = root / "draft"
+    if draft_dir.is_dir():
+        for source_path in sorted(draft_dir.rglob("*.tex")):
+            try:
+                text = source_path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if "\\begin{tikzpicture}" in text:
+                rel_source = source_path.relative_to(root).as_posix()
+                warnings.append(
+                    f"{rel_source}: TikZ figure source belongs under statement-assets/ beside its rendered PDF"
+                )
+
+    if _read_valid_problem_mode(root) == "interactive":
+        testing_tool = root / "attachments" / "testing_tool.py"
+        if not testing_tool.exists():
+            warnings.append(
+                "attachments/testing_tool.py: missing contestant testing tool for interactive problem"
+            )
+
+    return warnings
+
+
 def _warnings_judging_time(root: Path) -> list[str]:
     """Warn if max(1s, time_limit) * pass_limit * num_tests >= 300s."""
     problem_path = root / "config" / "problem.json"
@@ -447,8 +518,23 @@ def _component_status(root: Path) -> dict[str, str]:
         status["languages"] = "none"
 
     attach_dir = root / "attachments"
+    statement_assets_dir = root / "statement-assets"
+    if statement_assets_dir.is_dir():
+        files = [
+            f.relative_to(statement_assets_dir).as_posix()
+            for f in sorted(statement_assets_dir.rglob("*"))
+            if f.is_file() and not f.name.startswith(".")
+        ]
+        status["statement_assets"] = ", ".join(files) if files else "empty"
+    else:
+        status["statement_assets"] = "none"
+
     if attach_dir.is_dir():
-        files = [f.name for f in sorted(attach_dir.iterdir()) if f.is_file() and not f.name.startswith(".")]
+        files = [
+            f.relative_to(attach_dir).as_posix()
+            for f in sorted(attach_dir.rglob("*"))
+            if f.is_file() and not f.name.startswith(".")
+        ]
         status["attachments"] = ", ".join(files) if files else "empty"
     else:
         status["attachments"] = "none"
@@ -474,6 +560,7 @@ def validate(root: Path) -> tuple[list[str], list[str]]:
     errors.extend(_errors_statement_interaction_layout(root))
     warnings: list[str] = []
     warnings.extend(_warnings_completeness(root))
+    warnings.extend(_warnings_package_assets(root))
     warnings.extend(_warnings_judging_time(root))
     return errors, warnings
 

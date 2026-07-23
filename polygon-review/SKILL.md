@@ -17,6 +17,8 @@ Run all checks in order. Produce a report in `draft/review.md` with findings gro
 
 Run `python <skills>/polygon-spec/review.py` from the repo root. Include the output in the report.
 
+Confirm that its status lists `statement_assets` and `attachments` separately.
+
 ### Step 2: Statement review
 
 Run `python <skills>/polygon-statement/check_formulas.py` on all `.tex` files. Include any warnings in the report.
@@ -39,6 +41,7 @@ Check:
 - [ ] **Samples**: at least two distinct samples exist by default and cover every output form
 - [ ] **Sample explanations**: at least two samples have useful notes by default, and every potentially confusing sample is explained; honor explicit problem-specific user decisions
 - [ ] **Language consistency**: if multiple languages, content matches across all
+- [ ] **Statement assets**: every `\includegraphics` reference resolves to a file under `statement-assets/`; each TikZ/LaTeX-generated PDF has a same-basename `.tex` source there; no statement-only figure is stored in contestant `attachments/`
 
 Report: list each check as PASS / FAIL / N/A with a one-line note.
 
@@ -126,6 +129,8 @@ Check relationships between components:
 - [ ] If interactive: interactor exists, `problem.json` has `"mode": "interactive"`
 - [ ] If multi-pass: `pass_limit` is set correctly
 - [ ] `build.json` references only files that exist
+- [ ] `statement-assets/` contains shared statement build resources and their editable sources, not contestant downloads
+- [ ] `attachments/` contains only intentional contestant-visible files; an interactive testing tool, when provided, is stored as `attachments/testing_tool.py`
 
 **Generator determinism**: read every generator source file and flag non-deterministic patterns:
 

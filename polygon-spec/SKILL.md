@@ -17,6 +17,7 @@ validators/             # input validator sources
 interactors/            # interactor sources (interactive problems)
 generators/             # generator sources
 solutions/              # solution sources + .desc files
+statement-assets/       # shared statement build assets and their editable sources
 attachments/            # contestant-downloadable files (testing tools, templates)
 statement/
   statements.ftl        # main FTL template (do not edit)
@@ -41,7 +42,10 @@ draft/
 temp/                   # throwaway test files (not committed, gitignored)
 ```
 
-- `attachments/` is git-tracked and included in ICPC package export. Contents are distributed to contestants.
+- `statement-assets/` is git-tracked, shared by all statement languages, and available while compiling the statement. Its contents are not contestant attachments.
+- Keep an editable source beside every generated statement asset. For a TikZ/LaTeX figure, commit both `statement-assets/<name>.tex` and the rendered `statement-assets/<name>.pdf` with the same basename. Do not keep the only source copy under `draft/`.
+- `attachments/` is git-tracked, imported from and exported to ICPC packages, and distributed to contestants. Put contestant testing tools here, normally as `attachments/testing_tool.py`.
+- Never place a statement-only figure in `attachments/`, and never place a contestant-downloadable tool in `statement-assets/`.
 - `temp/` is the only allowed place for local scratch, compile outputs, downloaded artifacts, generated diagnostics, and throwaway test programs. It must be gitignored and never committed.
 - `draft/` is git-tracked but excluded from the zip package.
 - Pass-fail problems start with no checker selected. Once configured, `config/build.json` `checker_source` points to a file under `checkers/`.

@@ -2,7 +2,7 @@
 
 > **Important**: The judge system cannot verify testing tools. This artifact ships to contestants unvalidated. You MUST test it manually before committing.
 
-A Python script in `attachments/` that simulates the interactor locally, letting contestants debug without submitting.
+A Python script stored as `attachments/testing_tool.py` that simulates the interactor locally, letting contestants debug without submitting. The `attachments/` directory contains contestant-visible files imported from and exported to ICPC packages; do not put the tool in `statement-assets/`.
 
 ## When to create
 
@@ -105,8 +105,8 @@ The judge system will never run or validate this file. You must test it manually
 
 3. **Compile and run** the tool against both programs:
    ```
-   python3 attachments/<tool>.py temp/sample.in ./temp/test_ok
-   python3 attachments/<tool>.py temp/sample.in ./temp/test_bad
+   python3 attachments/testing_tool.py temp/sample.in ./temp/test_ok
+   python3 attachments/testing_tool.py temp/sample.in ./temp/test_bad
    ```
 
 4. **Verify the behavior matches step 1.** Check that:
@@ -126,7 +126,7 @@ The judge system will never run or validate this file. You must test it manually
 7. **Clean up `temp/`** and commit after user approval:
    ```
    rm -rf temp/
-   git add attachments/
+   git add -- attachments/testing_tool.py
    git commit -m "attachment: add local testing tool"
    ```
 
