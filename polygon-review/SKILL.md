@@ -36,7 +36,7 @@ Check:
 - [ ] **Tree guarantee**: if tree, "it is guaranteed that the input forms a tree"
 - [ ] **Degenerate cases**: are edge cases like $n=1$, empty input, answer=0 explicitly allowed or excluded?
 - [ ] **Output uniqueness**: if multiple valid outputs, "output any" is stated; if unique, checker matches
-- [ ] **Variables and TeX**: symbols are not reused for different objects, ordinary variables are lowercase, multi-letter names are upright, and formulas are punctuated as sentence parts
+- [ ] **Variables and TeX**: symbols are not reused for different objects, ordinary variables are lowercase except the conventional uppercase `$T$` for the number of test cases, multi-letter names are upright, and formulas are punctuated as sentence parts
 - [ ] **Standard wording**: applicable Input, Output, guarantee, and definition text agrees with `/polygon-statement` references
 - [ ] **Samples**: at least two distinct samples exist by default and cover every output form
 - [ ] **Sample explanations**: at least two samples have useful notes by default, and every potentially confusing sample is explained; honor explicit problem-specific user decisions
@@ -55,7 +55,7 @@ Check:
 - [ ] Multi-test: validator checks $\sum n$ if stated
 - [ ] Names passed to `read*` calls match the corresponding statement symbols
 - [ ] Array-reading functions are used when they match the input line and improve clarity
-- [ ] Cross-test sums are updated and checked immediately after each relevant test point
+- [ ] Cross-test sums are updated and checked immediately after each relevant test case
 - [ ] Newline / whitespace format matches the input specification exactly
 - [ ] `endf()` or `eof()` is called at the end
 
@@ -89,7 +89,7 @@ Check:
 - [ ] Stress tests exist at multiple sizes (small, medium, near-max, max)
 - [ ] A large-random stress mode is suitable for comparing independently implemented correct solutions
 - [ ] A small-random stress mode is suitable for comparison with the brute-force solution
-- [ ] Random/stress categories repeat the same parameter shape with multiple seeds
+- [ ] Every random/stress payload has an explicit deterministic seed; categories use distinct modes or parameter shapes, while same-shape seed repetition is optional
 - [ ] Generator modes collectively cover the full legal input space without accidental assumptions such as fixed sizes, distinct values, narrower ranges, connected graphs, or non-degenerate geometry
 - [ ] Targeted anti-hack tests, when present, are mapped to the specific rejected solutions they are intended to break
 - [ ] If multi-test: includes "increasing n" and "max T min n" patterns

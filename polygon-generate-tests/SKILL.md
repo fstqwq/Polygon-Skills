@@ -58,10 +58,10 @@ Example plan:
 - keep the exhaustive block compact
 
 ## Part 4: Stress / random (typically 15-30)
-- gen_random, small (n~10), x3 seeds
-- gen_random, medium (n~1000), x3 seeds
-- gen_random, near-max (n=N-1), x3 seeds
-- gen_random, max (n=N), x3 seeds
+- gen_random, small (n~10), one deterministic payload
+- gen_random, medium (n~1000), one deterministic payload
+- gen_random, near-max (n=N-1), one deterministic payload
+- gen_random, max (n=N), one deterministic payload
 
 ## Part 5: Anti-hack (typically 4-10)
 - gen_worstcase -- breaks greedy, x3 variants
@@ -115,8 +115,8 @@ Pick the ones relevant to the problem.
 - Medium (n ~ 100-1000): find off-by-one, overflow
 - Near-boundary (n = N-1, m = M-1, values = max-1): catches strict-inequality and allocation off-by-one bugs
 - Large (n = max): TLE / MLE detection
-- For each random size/category, use several different seeds. Default to at least 3 seeds per category; use 5-8 when the generator distribution is broad or branch coverage is uncertain.
-- Do not count one random file as coverage for a category. A random category is only covered after repeated seeds with the same parameter shape.
+- Give every random payload an explicit deterministic seed.
+- Prefer distinct modes, parameter shapes, boundary values, and targeted constructions over repeating one shape with several seeds. Repeat a shape only when the user requests it or when stochastic sampling is the only practical coverage for a specific risk.
 - Include at least one large-random stress mode suitable for comparing independently implemented correct solutions.
 - Include at least one small-random stress mode suitable for comparison with the brute-force solution.
 
@@ -132,7 +132,7 @@ Pick the ones relevant to the problem.
 
 **Part 6 -- Max-stress**: maximum constraints with adversarial structure -- worst-case for the intended algorithm, maximum output size, degenerate structures.
 - Include both exact maximum and near-maximum variants (`N-1`, `M-1`, `max_value-1`) unless the constraint makes that meaningless.
-- Repeat adversarial generators with different seeds or perturbations so a hard-coded or shape-specific wrong solution cannot pass one instance by accident.
+- Use distinct adversarial constructions or perturbations so a hard-coded or shape-specific wrong solution cannot pass one instance by accident. Multiple seeds for an otherwise identical shape are optional.
 
 **Part 7 -- Extra**: ask the user: "Do you have any specific test scenarios you want to add?" Add whatever they suggest.
 
@@ -140,10 +140,10 @@ Pick the ones relevant to the problem.
 
 Check which of these apply to the problem and incorporate into the plan:
 
-**Multiple test points (only when present in the input)**:
-- **Increasing n**: $t$ test points where $n$ grows each time (1, 2, 4, 8, ..., max). Catches solutions that leave stale state.
-- **Maximum t, minimum n**: $t$ at maximum, each test point has $n=1$ or the minimum. Catches solutions that clear a maximum-size buffer every time.
-- Do not introduce multiple test points merely to use these patterns. When multiple test points are present, include both patterns unless the problem structure makes one irrelevant.
+**Multiple test cases (only when present in the input)**:
+- **Increasing n**: $T$ test cases where $n$ grows each time (1, 2, 4, 8, ..., max). Catches solutions that leave stale state.
+- **Maximum T, minimum n**: $T$ at maximum, each test case has $n=1$ or the minimum. Catches solutions that clear a maximum-size buffer every time.
+- Do not introduce multiple test cases merely to use these patterns. When multiple test cases are present, include both patterns unless the problem structure makes one irrelevant.
 
 **Integer overflow / width bugs**:
 - If input values can be large, include values around common type boundaries: `2^31-1`, `2^31`, `10^9`, `10^18`, and the stated maximum.
@@ -246,7 +246,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
    ```
    Last argument is the seed -- vary it per test. The payload file contains the full command line (generator name + arguments).
 
-   For random/stress generators, write multiple payload files with the same parameter shape and different seeds. For boundary-sensitive dimensions, include both exact and off-by-one values such as `N-1`, `N`, `M-1`, `M`, `max_value-1`, and `max_value`.
+   Give every random/stress payload an explicit seed, but do not require repeated payloads with the same parameter shape. Prefer distinct modes and shapes. For boundary-sensitive dimensions, include both exact and off-by-one values such as `N-1`, `N`, `M-1`, `M`, `max_value-1`, and `max_value`.
 
 4. **Compile (best-effort**, see `polygon-spec/compile.md`):
    ```

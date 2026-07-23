@@ -211,7 +211,7 @@ Problem statements follow a **terse, precise** style. Every sentence must carry 
 ## LaTeX Formatting Rules
 
 ### Mathematical typesetting
-- **Inline math** `$...$`: `$n$`, `$a_i$`, `$t$`
+- **Inline math** `$...$`: `$n$`, `$a_i$`, `$T$`
 - **Display math** `$$...$$`: Use for standalone formulas that deserve their own line:
   ```latex
   $$\sum_{i=1}^{n} a_i \le 2 \times 10^5$$
@@ -226,7 +226,7 @@ Problem statements follow a **terse, precise** style. Every sentence must carry 
 - Ranges with `\le`: `$1 \le n \le 10^5$`
 - Large numbers: `$2 \times 10^5$` not `2e5`; `998\,244\,353` for large integers
 - Ordinals: `$i$-th` (hyphen outside math mode)
-- Use lowercase letters for ordinary variables. Sets and graphs may use uppercase letters when conventional.
+- Use lowercase letters for ordinary variables. Sets and graphs may use uppercase letters when conventional. Use uppercase `$T$` for the number of test cases in a multi-test input.
 - Avoid multi-letter variables. When one is necessary, typeset it upright with `\mathrm` or as a function with `\operatorname`.
 - Keep words, spaces, and punctuation outside math mode.
 - Treat formulas as parts of sentences and punctuate them normally, including display formulas.
@@ -267,13 +267,13 @@ Before committing, confirm that the PDF exists, the source exists, and every `\i
 - List all values on a line before giving their constraints, and place the constraints immediately after that list.
 - Keep the parentheses around constraints outside math mode.
 - Do not write "space-separated" unless the separation itself needs emphasis.
-- **Multiple test points are optional.** Do not introduce $t$ merely to fit a template. If the input already contains multiple test points, use the lowercase variable `$t$` and the applicable template from `references/standard-sentences.md`.
-- State a sum over all test points only when it is an actual input guarantee.
+- **Multiple test cases are optional.** Do not introduce $T$ merely to fit a template. If the input already contains multiple test cases, use the uppercase variable `$T$` and the applicable template from `references/standard-sentences.md`.
+- State a sum over all test cases only when it is an actual input guarantee.
 - **Single test case**: start directly with "The first line contains..."
 - Line descriptions: "The following $n$ lines describe..." or "The $i$-th line contains..."
 
 ### Output section
-- **Multiple test points**: use the applicable bilingual template from `references/standard-sentences.md`.
+- **Multiple test cases**: use the applicable bilingual template from `references/standard-sentences.md`.
 - Use "separated by a space" not "space-separated"
 - Use "Output" not "Print"
 

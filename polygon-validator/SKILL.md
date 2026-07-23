@@ -26,14 +26,14 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
    > From the statement, the validator will enforce:
    >
    > **Constraints:**
-   > - $1 \le t \le 10^5$ (test points)
+   > - $1 \le T \le 10^5$ (test cases)
    > - $1 \le n \le 2 \times 10^5$ (array length)
    > - $1 \le a_i \le 10^9$ (elements)
-   > - Sum of $n$ over all test points $\le 2 \times 10^5$
+   > - Sum of $n$ over all test cases $\le 2 \times 10^5$
    >
    > **Input structure:**
-   > - Line 1: $t$
-   > - For each test point:
+   > - Line 1: $T$
+   > - For each test case:
    >   - Line 1: $n$
    >   - Line 2: $a_1, a_2, \ldots, a_n$ (space-separated)
    >
@@ -112,12 +112,12 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
 
    ### Common validation patterns
 
-   **Multiple test points with sum constraint (only when present in the input):**
+   **Multiple test cases with sum constraint (only when present in the input):**
    ```cpp
-   int t = inf.readInt(1, 100000, "~t");
+   int T = inf.readInt(1, 100000, "~T");
    inf.readEoln();
    int sum_n = 0;
-   for (int test = 0; test < t; test++) {
+   for (int test = 0; test < T; test++) {
        setTestCase(test + 1);
        int n = inf.readInt(1, 200000, "n");
        inf.readEoln();
@@ -201,8 +201,8 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
 - `testlib.h` is available at build time  -- just `#include "testlib.h"`.
 - For graphs: validate vertex range, check for self-loops, check for multi-edges if the statement forbids them.
 - For trees: validate n-1 edges AND check connectivity.
-- **Multiple test points are optional**: do not add a count that is absent from the statement. When present, call `setTestCase(test + 1)` at the top of each loop iteration.
-- When the statement gives a sum bound across test points, update and check the cumulative sum immediately after reading each relevant test point.
+- **Multiple test cases are optional**: do not add a count that is absent from the statement. When present, name the count `T`, pass `"~T"` to `readInt`, and call `setTestCase(test + 1)` at the top of each loop iteration.
+- When the statement gives a sum bound across test cases, update and check the cumulative sum immediately after reading each relevant test case.
 
 ## Examples
 
