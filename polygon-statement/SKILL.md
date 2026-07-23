@@ -25,7 +25,7 @@ Write for contestants. Assume they know how to program, understand standard inpu
 
 2. **Identify what's missing and ask only the essential questions.**
 
-   For a complete statement you need: legend, input format, output format, constraints, and at least one sample. Scan what the user provided and check the list below internally. Ask ONLY about items that are genuinely ambiguous or missing -- do NOT dump the entire checklist on the user.
+   For a complete statement you need: legend, input format, output format, constraints, and samples. Prepare at least two distinct samples by default, unless the user gives a problem-specific reason to use fewer. Scan what the user provided and check the list below internally. Ask ONLY about items that are genuinely ambiguous or missing -- do NOT dump the entire checklist on the user.
 
    **Constraint checklist** (check internally, ask only gaps):
 
@@ -37,7 +37,7 @@ Write for contestants. Assume they know how to program, understand standard inpu
    | Graph guarantees | Simple/multi-edge, self-loops, connected, directed |
    | Tree guarantee | "It is guaranteed that the input forms a tree" |
    | Degenerate cases | Whether $n=1$, answer=0, etc. are possible |
-   | Output uniqueness | "If multiple answers, print any" or unique |
+   | Output uniqueness | "If multiple answers, output any" or unique |
    | Impossible branch | "output -1 if impossible" -- when applicable |
    | Value types | Integer/real, positive/negative/zero |
    | String format | Alphabet, length bounds |
@@ -109,7 +109,7 @@ Write for contestants. Assume they know how to program, understand standard inpu
    - `## Output` -> maps to `output.tex`
    - `## Sample N` -> for review only; not converted to `.tex` (samples are managed by `/polygon-generate-tests`)
    - `## Interaction` -> maps to `interaction.tex` (omit if not interactive)
-   - `## Notes` -> maps to `notes.tex`. Optional -- use for sample explanations or hints when the problem needs them. If the problem is self-explanatory, omit
+   - `## Notes` -> maps to `notes.tex`. By default, give useful explanations for at least two samples and for every sample likely to raise a question. Do not restate the problem or reveal the solution. A problem-specific user instruction may request fewer or no notes
    - `## Constraints` -> folded into `## Input` during LaTeX conversion (not a separate file)
    - Use LaTeX math (`$...$`) inline in the Markdown  --  it carries over directly to `.tex`
 
@@ -182,6 +182,12 @@ Problem statements follow a **terse, precise** style. Every sentence must carry 
 4. **No condescension.** Do not write "as you probably know", "it is easy to see that", "obviously". Trust the reader.
 5. **Input/Output sections are format-only.** Describe the format, don't re-explain the problem.
 6. **Chinese follows the same principles.** Use spoken Chinese, not textbook-formal. Keep it natural and direct.
+7. **Use American English.** Correct grammar and prefer established competitive-programming phrasing.
+8. **Use title case for English titles** unless the title intentionally contains stylized text.
+9. **Use common personal names.** Do not introduce usernames, handles, or obscure nicknames as character names.
+10. **Do not reuse a variable name for a different object.** A symbol introduced in a definition must not later be repurposed for the input object.
+11. **Prefer the standard bilingual wording.** Read `references/standard-sentences.md` when writing Input, Output, guarantees, versions, or interaction text.
+12. **Use standard definitions when needed.** Read `references/standard-definitions.md` before defining common sequence, string, arithmetic, or tree concepts.
 
 ### What to avoid
 
@@ -195,15 +201,15 @@ Problem statements follow a **terse, precise** style. Every sentence must carry 
 
 ### Length guideline
 
-- **Legend**: No hard limit. But every sentence must earn its place.
+- **Legend**: No hard limit. When the problem can be defined accurately in natural language, especially when it has a meaningful setting rather than a bare "given an array" formulation, minimize formulas in the Legend. Move formal definitions, coordinate conventions, limits, and input guarantees to Input whenever this preserves clarity and correctness.
 - **Input/Output**: Mechanical descriptions only. Keep tight.
-- **Notes**: Only include if sample cases are non-obvious. Do not restate the problem.
+- **Notes**: Explain at least two samples by default and every non-obvious sample. Do not restate the problem or reveal the solution. Honor explicit problem-specific user instructions.
 
 
 ## LaTeX Formatting Rules
 
 ### Mathematical typesetting
-- **Inline math** `$...$`: `$n$`, `$a_i$`, `$T$`
+- **Inline math** `$...$`: `$n$`, `$a_i$`, `$t$`
 - **Display math** `$$...$$`: Use for standalone formulas that deserve their own line:
   ```latex
   $$\sum_{i=1}^{n} a_i \le 2 \times 10^5$$
@@ -218,11 +224,18 @@ Problem statements follow a **terse, precise** style. Every sentence must carry 
 - Ranges with `\le`: `$1 \le n \le 10^5$`
 - Large numbers: `$2 \times 10^5$` not `2e5`; `998\,244\,353` for large integers
 - Ordinals: `$i$-th` (hyphen outside math mode)
+- Use lowercase letters for ordinary variables. Sets and graphs may use uppercase letters when conventional.
+- Avoid multi-letter variables. When one is necessary, typeset it upright with `\mathrm` or as a function with `\operatorname`.
+- Keep words, spaces, and punctuation outside math mode.
+- Treat formulas as parts of sentences and punctuate them normally, including display formulas.
+- Use `\cdot` for multiplication, `\bmod` for remainders, and `\equiv` with `\pmod` for congruences.
+- Write string constants as `$\mathtt{abacaba}$` in formulas and `\texttt{abacaba}` in prose.
+- Use square brackets for arrays and sequences, and braces for sets and unordered multisets.
 
 ### Text formatting
 - Output strings in `\texttt{}`: `\texttt{YES}`, `\texttt{NO}`, `\texttt{U}`, `\texttt{D}`
 - Use `\textit{}` sparingly for new concepts
-- Use `\textbf{}` at most once per statement for key conditions
+- Use `\textbf{}` only for a word or a short phrase that is genuinely important. Rewrite instead of bolding a sentence or paragraph.
 - Reduce emphasis overall  --  let the math and structure carry the meaning
 
 ### Figures
@@ -237,61 +250,33 @@ Use the Polygon-compatible figure format:
 
 ### Input section
 - No `itemize` or `enumerate`  --  except for multi-operation problems where listing operations is natural
-- **Multiple test cases**: "The first line of the input contains an integer $T$ ($1 \le T \le \dots$) indicating the number of test cases. For each test case:" (always capital `$T$`)
-- End with: "It is guaranteed that the sum of $n$ over all test cases does not exceed $\dots$"
+- Make the prose structure match the input structure: normally use one paragraph for one input line or repeated block.
+- List all values on a line before giving their constraints, and place the constraints immediately after that list.
+- Keep the parentheses around constraints outside math mode.
+- Do not write "space-separated" unless the separation itself needs emphasis.
+- **Multiple test points are optional.** Do not introduce $t$ merely to fit a template. If the input already contains multiple test points, use the lowercase variable `$t$` and the applicable template from `references/standard-sentences.md`.
+- State a sum over all test points only when it is an actual input guarantee.
 - **Single test case**: start directly with "The first line contains..."
 - Line descriptions: "The following $n$ lines describe..." or "The $i$-th line contains..."
 
 ### Output section
-- **Multiple test cases**: "For each test case, output ..."
+- **Multiple test points**: use the applicable bilingual template from `references/standard-sentences.md`.
 - Use "separated by a space" not "space-separated"
 - Use "Output" not "Print"
 
 ### Interactive / multi-pass problems
-- **Interactive**: Start legend with `\textit{This is an interactive problem.}`
+- **Interactive**: Use the mandatory introduction and flush block from `references/standard-sentences.md`.
 - **Multi-pass**: Start legend with `\textit{This is a multi-pass problem.}`
 - **Both**: Start legend with `\textit{This is a multi-pass, interactive problem.}`
-- **Mandatory flush block**  --  always include, even if not mentioned in the source:
-  ```latex
-  To flush your output, you can use:
-  \begin{itemize}
-      \item \texttt{fflush(stdout)} or \texttt{cout.flush()} in C/C++;
-      \item \texttt{System.out.flush()} in Java;
-      \item \texttt{sys.stdout.flush()} in Python.
-  \end{itemize}
-  ```
+- **Mandatory flush block**: always include the exact language-appropriate block from `references/standard-sentences.md`, even if it is not mentioned in the source.
 
 ---
 
 ## Standard Phrasing
 
-Always correct awkward phrasing to the standard form:
+Read `references/standard-sentences.md` whenever a standard Input, Output, guarantee, version, or interaction sentence applies. Use its English/Chinese pairs directly when the semantics match; do not introduce a condition merely to use a template.
 
-| ✗ Avoid | ✓ Use |
-|---------|-------|
-| "The input starts with T." | "The first line of the input contains an integer $T$..." |
-| "n lines follow." | "The following $n$ lines..." |
-| "Print 'YES' if..." | "Output \texttt{YES} if..." |
-| "Output space separated integers." | "Output $n$ integers separated by a space." |
-| "The sum of N is < 2e5." | "The sum of $n$ over all test cases does not exceed $2 \times 10^5$." |
-| "You can ask 10 queries." | "You can ask at most 10 queries." |
-| "10^9" (in running text) | "$10^9$" |
-| "Wait for the judge." (multi-pass) | "The program should exit immediately..." |
-
-### Chinese phrasing conventions
-
-When writing the Chinese version, use standard competitive programming Chinese:
-
-| English | Chinese |
-|---------|---------|
-| "The first line contains an integer $T$..." | "第一行包含一个整数 $T$..." |
-| "For each test case, output..." | "对于每组测试数据，输出..." |
-| "It is guaranteed that..." | "保证..." |
-| "separated by a space" | "用空格隔开" |
-| "$i$-th" | "第 $i$ 个" |
-| "Output \texttt{YES} if..." | "如果...，输出 \texttt{YES}..." |
-| "at most" | "至多" |
-| "does not exceed" | "不超过" |
+Read `references/standard-definitions.md` when the statement needs a standard sequence, string, lexicographical, arithmetic, modular, or tree definition.
 
 ---
 

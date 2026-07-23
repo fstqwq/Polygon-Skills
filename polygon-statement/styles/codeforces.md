@@ -20,8 +20,8 @@ Reference examples: `<skills>/polygon-statement/styles/codeforces_excerpts.md`
 - Introduce the legal move early with forms like "In one operation, ...", "You can perform the following operation ...", or "You have to perform exactly $k$ operations."
 - State the goal in one short imperative sentence. Typical verbs: "Find", "Determine", "Calculate", "Construct", "Output".
 - Use highly standardized output conventions when they fit:
-  - "If there are multiple answers, print any of them."
-  - "If no such answer exists, print $-1$."
+  - "If there are multiple answers, output any of them."
+  - "If no such answer exists, output $-1$."
   - "You do not need to minimize the number of operations."
 - Use bullets only when the condition or operation is easier to scan as a short list. Otherwise, keep the statement in prose.
 - Define custom operations, structures, and terms before using them.
@@ -52,7 +52,7 @@ Reference examples: `<skills>/polygon-statement/styles/codeforces_excerpts.md`
 >
 > Construct [object] such that [conditions].
 >
-> If there are multiple answers, print any of them. If no such answer exists, print $-1$.
+> If there are multiple answers, output any of them. If no such answer exists, output $-1$.
 
 ### Exact number of operations
 

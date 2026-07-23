@@ -9,11 +9,13 @@ description: "Write the interactor and local testing tool for an interactive pro
 
 The problem must have `"mode": "interactive"` in `config/problem.json`. If multi-pass, `"pass_limit"` must be ≥ 2.
 
+Before writing code, read `../polygon-spec/references/codeforces-testlib-style.md` and apply its shared component rules. Read the interactive templates in `../polygon-statement/references/standard-sentences.md` when checking statement wording.
+
 **If no interaction protocol exists, STOP.** Check `statement-sections/<lang>/interaction.tex` or `draft/statement.*.md` (`## Interaction` section). If empty, tell the user: "No interaction protocol found. Please define one with `/polygon-statement` first."
 
 ## Procedure
 
-1. **Read the interaction protocol** from the draft (`## Interaction`) or `interaction.tex`.
+1. **Read the interaction protocol** from the draft (`## Interaction`) or `interaction.tex`. Check that it specifies query and response formats, ranges, query limits, required flushing, and immediate termination after reading $-1$.
 
 2. **Determine the interactor type**:
    - **Single-pass interactive** -> section A
@@ -153,6 +155,10 @@ int main(int argc, char* argv[]) {
 - Verdicts: only `_ok`, `_wa`, `_fail`. Do not use `_pe`.
 - **`quitf(_ok, ...)` message must start with `"ok"`** (e.g. `quitf(_ok, "ok, correct")`, `quitf(_ok, "ok, pass %d done", pass)`). This makes logs immediately scannable.
 - The interactor reads test data from `inf`, contestant output from `ouf`.
+- Make every query, response, range, and query-count rule match the statement exactly.
+- Use only testlib random facilities when the interactor needs randomness.
+- Do not reveal hidden data, answers, or solution ideas in verdict messages.
+- Keep the local testing tool protocol identical to the official interactor protocol.
 
 ## Examples
 

@@ -9,6 +9,8 @@ description: "Write a testlib input validator."
 
 This skill reads from the statement draft produced by `/polygon-statement`. The draft's `## Input` and `## Constraints` sections define what the validator must enforce.
 
+Before writing code, read `../polygon-spec/references/codeforces-testlib-style.md` and apply its shared component rules.
+
 ## Procedure
 
 1. **Read the problem's input spec.** Look for sources in this order:
@@ -24,14 +26,14 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
    > From the statement, the validator will enforce:
    >
    > **Constraints:**
-   > - $1 \le T \le 10^5$ (test cases)
+   > - $1 \le t \le 10^5$ (test points)
    > - $1 \le n \le 2 \times 10^5$ (array length)
    > - $1 \le a_i \le 10^9$ (elements)
-   > - Sum of $n$ over all test cases $\le 2 \times 10^5$
+   > - Sum of $n$ over all test points $\le 2 \times 10^5$
    >
    > **Input structure:**
-   > - Line 1: $T$
-   > - For each test case:
+   > - Line 1: $t$
+   > - For each test point:
    >   - Line 1: $n$
    >   - Line 2: $a_1, a_2, \ldots, a_n$ (space-separated)
    >
@@ -65,6 +67,8 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
    | `inf.readDouble(lo, hi, "name")` | Read double in [lo, hi] |
    | `inf.readWord("[a-z]{1,}", "name")` | Read whitespace-delimited token matching regex |
    | `inf.readString("[a-z]{1,}", "name")` | Read full line matching regex |
+   | `inf.readInts(n, lo, hi, "name")` | Read an array of `n` integers in range |
+   | `inf.readLongs(n, lo, hi, "name")` | Read an array of `n` long integers in range |
    | `inf.readEoln()` | Expect newline |
    | `inf.readEof()` | Expect end of file (must be last) |
    | `inf.readSpace()` | Expect single space |
@@ -72,6 +76,8 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
    | `ensuref(cond, "msg", ...)` | Assert a condition with printf-style message |
 
    ### Polygon conventions
+
+   **Statement-aligned names:** The variable name passed to a `read*` function must be the same symbol used for that value in the statement. Use `"a"` for elements of $a$, `"u"` and `"v"` for edge endpoints $u$ and $v$, and so on.
 
    **Stable boundary variable names:** Polygon-Replica validator logs aggregate boundary hits by the variable name passed to `readInt`/`readLong`/`readReal`/etc. Use stable, analyzable names. Do not generate names with indices.
 
@@ -106,21 +112,18 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 
    ### Common validation patterns
 
-   **Multiple test cases with sum constraint:**
+   **Multiple test points with sum constraint (only when present in the input):**
    ```cpp
-   int T = inf.readInt(1, 100000, "~T");
+   int t = inf.readInt(1, 100000, "~t");
    inf.readEoln();
    int sum_n = 0;
-   for (int t = 0; t < T; t++) {
-       setTestCase(t + 1);
+   for (int test = 0; test < t; test++) {
+       setTestCase(test + 1);
        int n = inf.readInt(1, 200000, "n");
        inf.readEoln();
        sum_n += n;
        ensuref(sum_n <= 200000, "sum of n exceeds 200000");
-       for (int i = 0; i < n; i++) {
-           if (i > 0) inf.readSpace();
-           inf.readInt(1, 1000000000, "a");
-       }
+       vector<int> a = inf.readInts(n, 1, 1000000000, "a");
        inf.readEoln();
    }
    ```
@@ -189,6 +192,8 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 ## Rules
 
 - Validate **every** constraint from the statement  -- ranges, sums, structure (tree/graph/permutation), string lengths, character sets.
+- Use the exact statement symbol as the name passed to every `read*` call.
+- Prefer array-reading functions such as `readInts` and `readLongs` when they match one input line and keep the validator clear.
 - Use stable, descriptive variable names in `readInt`/`readLong` calls for boundary overview logs. Do not use `format(...)` or generated indices in read variable names.
 - For values that intentionally cannot hit one side of their range, mark that side with `~`, for example `~T` when `T` will never hit its lower bound.
 - The validator must enforce **exact whitespace**: spaces between numbers on a line, newlines between lines, EOF at the end.
@@ -196,7 +201,8 @@ This skill reads from the statement draft produced by `/polygon-statement`. The 
 - `testlib.h` is available at build time  -- just `#include "testlib.h"`.
 - For graphs: validate vertex range, check for self-loops, check for multi-edges if the statement forbids them.
 - For trees: validate n-1 edges AND check connectivity.
-- **Multi-test**: call `setTestCase(t + 1)` at the top of each test case loop  -- mandatory for per-testcase error messages and boundary checking.
+- **Multiple test points are optional**: do not add a count that is absent from the statement. When present, call `setTestCase(test + 1)` at the top of each loop iteration.
+- When the statement gives a sum bound across test points, update and check the cumulative sum immediately after reading each relevant test point.
 
 ## Examples
 

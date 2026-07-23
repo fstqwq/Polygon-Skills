@@ -7,7 +7,7 @@ description: "Generate adversarial wrong solutions and tests that hack them. Use
 
 ## Purpose
 
-Use this skill after the statement, checker, validator, and at least one intended solution direction exist. The goal is to find solutions that should not pass, then add tests that reject them.
+Use this skill after the statement, checker, validator, and at least one intended solution direction exist. The goal is to find solutions that should not pass and produce legal counterexamples that demonstrate the failure. Add counterexamples to the formal test suite only when the user explicitly asks.
 
 This skill combines two tracks:
 - **Public-artifact attacks**: assume a contestant sees the statement, checker, and generator source, but not tests, `std.cpp`, accepted solutions, or private reasoning.
@@ -76,6 +76,8 @@ This skill combines two tracks:
    - algorithm that is correct on samples/randoms but not general
    - too-slow near-correct implementation
 
+   For overflow candidates, identify the exact variable, array size, accumulator, product, square, index expression, or sentinel that fails. For casework candidates, identify the exact omitted branch.
+
 5. **Show `draft/hacks.md` and get user approval before writing files.**
    Do not create wrong solutions or tests until the user approves the selected candidates.
 
@@ -85,11 +87,14 @@ This skill combines two tracks:
    - Follow `/polygon-solution` style rules.
    - Do not add these as accepted solutions in `config/build.json`.
 
-7. **Implement hack tests.**
-   - Use manual tests for minimal counterexamples.
-   - Add or extend generators only when several related counterexamples or stress shapes are needed.
-   - Follow `/polygon-generate-tests` rules for `tests/spec.json`, test IDs, generator payloads, and sample handling.
-   - In `draft/hacks.md`, map each new test idea to the `rej_hack_*` solution(s) it should reject.
+7. **Implement and verify counterexamples.**
+   - Prefer a minimal manual counterexample.
+   - Keep exploratory counterexamples under `temp/`.
+   - Validate every counterexample with `validators/validator.cpp`.
+   - Run the configured accepted solution to establish the expected behavior.
+   - Run the targeted rejected solution and confirm that it fails for the predicted reason.
+   - In `draft/hacks.md`, map each counterexample to the targeted `rej_hack_*` solution and its failure mechanism.
+   - If the user explicitly asks to add the counterexample to the formal suite, follow `/polygon-generate-tests` for `tests/spec.json`, IDs, payloads, and sample handling. Add or extend a generator only when several related counterexamples or stress shapes are needed.
 
 8. **Validate best-effort.**
    - Compile new C++ solutions and generators using `/polygon-spec/compile.md`.
@@ -231,5 +236,7 @@ Do not use or assume hidden tests, std solution, accepted solutions, or private 
 - If the checker accepts invalid contestant output, record a checker issue instead of hiding it with tests.
 - If `std.cpp` fails a proposed hack test, investigate `std.cpp`, the validator, and the statement before weakening the test.
 - Prefer a few high-value hacks with clear counterexamples over many vague wrong solutions.
+- A hack request needs to defeat the selected target, not every rejected solution in repository history.
+- Do not add exploratory counterexamples to the formal test suite without explicit user direction.
 - Keep all temporary files under `temp/`.
-- Commit wrong solutions and tests only after showing the user the code/test plan.
+- Add approved wrong solutions only after showing the user the code/test plan. Add counterexamples to the formal test suite only when the user explicitly requests it.

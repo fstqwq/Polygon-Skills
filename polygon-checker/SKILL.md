@@ -7,15 +7,17 @@ description: "Write or select a checker (wcmp, ncmp, rcmp, or custom)."
 
 The only runtime checker is the repository source named by `config/build.json` `checker_source`. Standard checker selection means copying a standard source into `checkers/` and pointing `checker_source` at that copy; do not store `std::...` as configuration.
 
+Before writing code, read `../polygon-spec/references/codeforces-testlib-style.md` and apply its shared component rules.
+
 ## Procedure
 
 ### Option A: Standard Checker (preferred when applicable)
 
-1. **Determine which standard checker fits**. Refer to `polygon-spec/checkers.md` for the full catalog. Common choices:
-   - `wcmp`  -- token-by-token comparison (default, most problems)
+1. **Determine which standard checker fits**. Refer to `polygon-spec/checkers.md` for the full catalog. When applicable, prefer `ncmp`, then `nyesno`, then `wcmp`; otherwise choose the standard checker that matches the output semantics:
    - `ncmp`  -- ordered sequence of integers
-   - `yesno` / `nyesno`  -- YES/NO (single or multi-test)
-   - `rcmp4` / `rcmp6` / `rcmp9`  -- floating point with tolerance
+   - `nyesno`  -- case-insensitive YES/NO
+   - `wcmp`  -- token-by-token comparison
+   - `rcmp4` / `rcmp6` / `rcmp9`  -- floating point with tolerance; prefer the matching `rcmp` variant when `dcmp` would also fit a single value
    - `uncmp`  -- unordered sequence of integers
 
 2. **Copy the standard checker into the repo** and update `config/build.json`:
@@ -36,14 +38,15 @@ The only runtime checker is the repository source named by `config/build.json` `
 
 1. **Understand what to check**. Read the output format from the statement. Identify what makes an answer valid.
 
-2. **Write the checker.** When the problem has multiple valid answers or the checker validates answers independently (not comparing two files), use the `readAndCheckAnswer` pattern:
+2. **Write the checker.** When the problem has multiple valid answers or the checker validates answers independently (not comparing two files), use the `readAns` pattern:
 
    ```cpp
    #include "testlib.h"
    using namespace std;
 
    // Returns true if the answer is valid. Quits with _wa/_fail on invalid.
-   bool readAndCheckAnswer(/* input data */ int n, InStream& in) {
+   bool readAns(/* input data */ int n, InStream& in) {
+       // Initialize any global state used while reading one answer here.
        // Read and validate the answer from `in`
        // Use in.readInt(), in.readToken(), etc.
        // Use in.quitf(_wa, ...) for invalid answers
@@ -60,10 +63,10 @@ The only runtime checker is the repository source named by `config/build.json` `
        int n = inf.readInt();
 
        // Validate jury answer first  -- catch judge bugs
-       bool jury_ok = readAndCheckAnswer(n, ans);
+       bool jury_ok = readAns(n, ans);
 
        // Then validate contestant answer
-       bool contestant_ok = readAndCheckAnswer(n, ouf);
+       bool contestant_ok = readAns(n, ouf);
 
        if (contestant_ok && !jury_ok)
            quitf(_fail, "contestant has valid answer but jury doesn't");
@@ -74,14 +77,18 @@ The only runtime checker is the repository source named by `config/build.json` `
    }
    ```
 
-   **Why this pattern matters:** If the main correct solution has a bug, a naive checker that only compares `ouf` against `ans` will accept wrong answers. The `readAndCheckAnswer` pattern catches this by validating `ans` independently  -- an invalid jury answer triggers `_fail`, which is immediately visible in testing.
+   **Why this pattern matters:** If the main correct solution has a bug, a naive checker that only compares `ouf` against `ans` will accept wrong answers. The `readAns` pattern catches this by validating `ans` independently  -- an invalid jury answer triggers `_fail`, which is immediately visible in testing.
 
    Key points:
-   - `readAndCheckAnswer(input_data, in)` reads from `in` (either `ouf` or `ans`)
+   - The function must be named `readAns`.
+   - Initialize every global variable used for one answer at the beginning of `readAns`.
+   - `readAns(input_data, in)` reads from `in` (either `ouf` or `ans`)
    - `in.quitf(_wa, ...)` on invalid answers  -- testlib maps this to `_fail` automatically when called on `ans`
    - Three streams: `inf` (input), `ouf` (contestant output), `ans` (jury answer)
    - Checkers should validate answer semantics, not validator-style whitespace. Prefer token-based reads like `readInt()`, `readToken()`, and `readWord()`.
+   - Use `readToken()` instead of `readLine()` unless line boundaries are part of the answer semantics.
    - Lexical restrictions for a semantic token are still part of answer validation. Keep bounded reads like `readToken("[A-Za-z]{2,3}", "verdict")`, `readInt(l, r, "x")`, or explicit enum checks for `YES`/`NO`; do not replace them with unconstrained `readToken("verdict")`.
+   - Always give explicit bounds or a bounded pattern when reading values from `ouf` and `ans`.
    - **Do not check input or output format in a checker.** Do not use `readSpace()`, `readEoln()`, or `readEof()`.
    - `testlib.h` itself will take care of extra dirt in participant's output.
    - Verdicts: `_ok`, `_wa`, `_fail` only. Do not use `_pe`
@@ -171,17 +178,22 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 ## Rules
 
 - **Prefer standard checkers** unless the problem genuinely needs a custom one.
+- When applicable, prefer `ncmp`, then `nyesno`, then `wcmp`. Otherwise use the matching standard checker, such as an `rcmp` variant for floating-point output.
 - Ask the user: "Does this problem have a unique answer, or can there be multiple valid answers?" This determines whether a standard checker suffices.
 - Custom checkers must handle malformed contestant output gracefully (use `ouf.readInt()` etc., which auto-quit with WA on parse failure).
 - Lexical restrictions for answer tokens are semantic validation. Keep regex/range/enum checks that define valid tokens, for example `readToken("[A-Za-z]{2,3}", "verdict")` followed by a `YES`/`NO` check.
+- Custom answer readers must be named `readAns`; reset all per-answer global state at the beginning of that function.
+- Prefer `readToken()` over `readLine()`.
+- Always bound values read from `ouf` and `ans`.
 - **Do not check input or output format in a checker.** Do not use `readSpace()`, `readEoln()`, or `readEof()`.
 - `testlib.h` itself will take care of extra dirt in participant's output.
 - Exact whitespace belongs to validators. A checker should validate answer semantics only.
 - Do not re-validate `inf` formatting in a checker. If input whitespace/line structure must be enforced, that belongs in `validators/validator.cpp`.
 - Verdicts: use only `_ok` (accepted), `_wa` (wrong answer), `_fail` (judge error). Do not use `_pe`.
 - **`quitf(_ok, ...)` message must start with `"ok"`** (e.g. `quitf(_ok, "ok, correct")`, `quitf(_ok, "ok, n=%d", n)`). This makes logs immediately scannable.
+- Treat checker messages as contestant-visible: keep them clear and do not reveal hidden answers or solution ideas.
 - **Multi-pass checkers**: always use the `start_next_pass()` lambda. Set `pass_limit` in `config/problem.json`.
 
 ## Examples
 
-- `examples/constructive_checker.cpp`  -- constructive problem checker: validates contestant's matrix construction against constraints, uses `readAndCheckAnswer(n, in)` pattern to share logic between `ouf` and `ans`
+- `examples/constructive_checker.cpp`  -- constructive problem checker: validates contestant's matrix construction against constraints and shares `readAns(n, in)` logic between `ouf` and `ans`

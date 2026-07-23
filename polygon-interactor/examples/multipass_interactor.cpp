@@ -2,99 +2,100 @@
 #include "testlib.h"
 using namespace std;
 
-const int MIN=0;
-const int MAX=100;
+const int minimumValue = 0;
+const int maximumValue = 100;
 
-string read(int q,int& x,string& s)
-{
-    string opt=ouf.readToken();
-    if(opt!="?" && opt!="!")
-        quitf(_wa, "Unexpected option: %s", opt.c_str());
-    if(opt=="?" && q>MAX-MIN)
-        quitf(_wa, "Number of queries exceeds the limit: %d", MAX-MIN);
-    if(opt=="?")x=ouf.readInt(MIN, MAX, "x");
-    else s=ouf.readToken("[01]{8}");
-    return opt;
+string readOperation(int queryCount, int& x, string& answer) {
+    string operation = ouf.readToken("[?!]", "operation");
+    if (operation == "?" && queryCount > maximumValue - minimumValue)
+        quitf(_wa, "number of queries exceeds %d", maximumValue - minimumValue);
+    if (operation == "?")
+        x = ouf.readInt(minimumValue, maximumValue, "x");
+    else
+        answer = ouf.readToken("[01]{8}", "answer");
+    return operation;
 }
-pair<int,string> guess(int t)
-{
-    vector<int> vis(MAX-MIN+1);
-    int ans=-1,cnt=0;
-    if(t<0)ans=rnd.next(MIN,MAX);
-    for(int q=1;; q++)
-    {
+
+pair<int, string> runRound(int target) {
+    vector<bool> seen(maximumValue - minimumValue + 1);
+    int hidden = -1;
+    int distinct = 0;
+    if (target < 0)
+        hidden = rnd.next(minimumValue, maximumValue);
+
+    for (int query = 1;; ++query) {
         int x;
-        string s;
-        string opt=read(q,x,s);
-        if(opt=="?")
-        {
-            if(!vis[x-MIN])
-            {
-                vis[x-MIN]=1;
-                if((++cnt)==t)ans=x;
+        string answer;
+        string operation = readOperation(query, x, answer);
+        if (operation == "?") {
+            if (!seen[x - minimumValue]) {
+                seen[x - minimumValue] = true;
+                ++distinct;
+                if (distinct == target)
+                    hidden = x;
             }
-            printf("%d\n",x==ans);
-            fflush(stdout);
+            cout << (x == hidden) << endl;
+            continue;
         }
-        else
-        {
-            if(ans==-1)
-            {
-                if(cnt<MAX-MIN)
-                    quitf(_wa, "The answer is not determined yet");
-                for(int i=0; i<=MAX-MIN; i++)
-                    if(!vis[i])ans=MIN+i;
+
+        if (hidden == -1) {
+            if (distinct < maximumValue - minimumValue)
+                quitf(_wa, "answer is not determined yet");
+            for (int value = minimumValue; value <= maximumValue; ++value) {
+                if (!seen[value - minimumValue])
+                    hidden = value;
             }
-            return make_pair(ans, s);
         }
+        return {hidden, answer};
     }
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     registerInteraction(argc, argv);
-    // setTestCase();
-    int op = inf.readInt();
-    int T = inf.readInt();
-    printf("%d %d\n", op, T);
-    fflush(stdout);
-    if (op == 1)
-    {
+
+    auto startNextPass = [&]() {
 #ifdef DOMJUDGE
-        // write input to nextpass.in for the second run
-        tout.open(make_new_file_in_a_dir(argv[3], "nextpass.in"), ios_base::out);
+        tout.open(make_new_file_in_a_dir(argv[3], "nextpass.in"),
+                  ios_base::out);
 #endif
+    };
+
+    int pass = inf.readInt();
+    int count = inf.readInt();
+    cout << pass << " " << count << endl;
+
+    if (pass == 1) {
         int seed = inf.readInt();
         rnd.setSeed(seed);
-        vector<pair<int,string>> val(T);
-        for(int i=0; i<T; i++)
-            val[i]=guess(seed<123456789 ? -1 : i+1);
-        shuffle(val.begin(),val.end());
-        tout << 2 << " " << T << "\n";
-        for(auto& [v,s] : val)
-        {
-            if(rnd.next(0,1))reverse(s.begin(),s.end());
-            tout << v << " " << s << "\n";
+        vector<pair<int, string>> values(count);
+        for (int i = 0; i < count; ++i)
+            values[i] = runRound(seed < 123456789 ? -1 : i + 1);
+        shuffle(values.begin(), values.end());
+
+        startNextPass();
+        tout << 2 << " " << count << "\n";
+        for (auto& [value, answer] : values) {
+            if (rnd.next(0, 1))
+                reverse(answer.begin(), answer.end());
+            tout << value << " " << answer << "\n";
         }
-        quitf(_ok, "First pass OK");
+        quitf(_ok, "ok, first pass complete");
     }
-    else if (op == 2)
-    {
-        vector<int> ans(T);
-        for(int i=0; i<T; i++)
-        {
-            ans[i] = inf.readInt();
-            string s = inf.readToken();
-            printf("%s\n", s.c_str());
-            fflush(stdout);
-            int y = ouf.readInt(MIN, MAX, "y");
-            if (y != ans[i])
-                quitf(_wa, "Wrong answer, expected: %d, find: %d", ans[i], y);
+
+    if (pass == 2) {
+        for (int i = 0; i < count; ++i) {
+            int expected = inf.readInt();
+            string answer = inf.readToken();
+            cout << answer << endl;
+            int received = ouf.readInt(minimumValue, maximumValue, "answer");
+            if (received != expected)
+                quitf(_wa, "expected %d, found %d", expected, received);
 #ifndef DOMJUDGE
-            tout << ans[i] << "\n";
+            tout << expected << "\n";
 #endif
         }
-        quitf(_ok, "Second pass OK");
+        quitf(_ok, "ok, second pass complete");
     }
-    else quitf(_fail, "Invalid op");
+
+    quitf(_fail, "invalid pass %d", pass);
 }

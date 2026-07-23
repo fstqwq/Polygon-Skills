@@ -39,7 +39,7 @@ Example plan:
 ```markdown
 # Test Plan
 
-## Part 1: Samples (typically 1-3)
+## Part 1: Samples (at least 2 by default)
 - sample 1 from statement
 - sample 2 from statement
 
@@ -79,6 +79,11 @@ IDs are assigned sequentially when implementing (001, 002, ...), no gaps.
 ### Category guidance
 
 **Part 1 -- Samples**: extracted from the problem statement. `"sample": true`.
+- Prepare at least two distinct samples by default.
+- Cover every possible output form across the samples, such as positive/negative branches, a construction/impossible branch, or different output shapes.
+- By default, at least two samples should have useful notes. Add a note for every sample whose result or interpretation is likely to raise a question.
+- Coordinate the note text with `/polygon-statement`; do not duplicate the problem statement or reveal the solution.
+- A problem-specific user instruction may override the default number of notes.
 
 **Part 2 -- Edge cases**: walk the constraint boundaries systematically.
 
@@ -112,8 +117,10 @@ Pick the ones relevant to the problem.
 - Large (n = max): TLE / MLE detection
 - For each random size/category, use several different seeds. Default to at least 3 seeds per category; use 5-8 when the generator distribution is broad or branch coverage is uncertain.
 - Do not count one random file as coverage for a category. A random category is only covered after repeated seeds with the same parameter shape.
+- Include at least one large-random stress mode suitable for comparing independently implemented correct solutions.
+- Include at least one small-random stress mode suitable for comparison with the brute-force solution.
 
-**Part 5 -- Anti-hack**: tests designed to break specific wrong solutions. For each `rej_*` solution, analyze what input would expose it.
+**Part 5 -- Anti-hack**: tests designed to break selected high-value wrong solutions. Analyze the concrete assumption of each targeted `rej_*` solution, but do not impose a blanket requirement to target every rejected file.
 
 | Wrong approach | Anti-hack strategy |
 |---------------|-------------------|
@@ -133,10 +140,10 @@ Pick the ones relevant to the problem.
 
 Check which of these apply to the problem and incorporate into the plan:
 
-**Multi-test (T test cases)**:
-- **Increasing n**: T tests where n grows each case (1, 2, 4, 8, ..., max). Catches solutions that clear arrays to `n+1` but leave stale data from earlier larger cases.
-- **Maximum T, minimum n**: T at maximum, each case has n=1 or minimum. Catches solutions that memset `MAXN` every test case (TLE on large T).
-- Both patterns are mandatory when multi-test is present.
+**Multiple test points (only when present in the input)**:
+- **Increasing n**: $t$ test points where $n$ grows each time (1, 2, 4, 8, ..., max). Catches solutions that leave stale state.
+- **Maximum t, minimum n**: $t$ at maximum, each test point has $n=1$ or the minimum. Catches solutions that clear a maximum-size buffer every time.
+- Do not introduce multiple test points merely to use these patterns. When multiple test points are present, include both patterns unless the problem structure makes one irrelevant.
 
 **Integer overflow / width bugs**:
 - If input values can be large, include values around common type boundaries: `2^31-1`, `2^31`, `10^9`, `10^18`, and the stated maximum.
@@ -176,7 +183,6 @@ Check which of these apply to the problem and incorporate into the plan:
 
 **Geometry**:
 - Convex hull point count matters -- ensure generated point sets have large convex hulls (many points on the hull), not just random points in a square (which gives O(log n) hull points).
-- For simple polygon problems: ask the user to reference ICPC 2017 "Airport Construction" test data for high-quality polygon generation patterns.
 - Include degenerate cases: collinear points, coincident points, very small/large coordinates.
 
 Show the draft plan to the user and iterate before implementing. If small exhaustive coverage is planned, include the estimated file count and chosen cutoff.
@@ -315,6 +321,7 @@ Always shuffle node labels -- otherwise node 1 is always the root and low-number
 - Sample tests must come first.
 - Input files must end with exactly one trailing newline, no trailing spaces on lines.
 - Generator output must match the exact format the validator expects.
+- Ensure the union of generator modes can cover the full legal input space. Do not accidentally require fixed sizes, distinct values, narrower value ranges, connected graphs, non-degenerate geometry, or any other unstated property.
 - Always write the test plan to `draft/tests.md` and get user approval before implementing.
 - If you plan small exhaustive coverage, estimate the required number of files first and keep that block within 20 files by default.
 - Most finished problems should have roughly 20-70 tests. Fewer than 20 tests needs an explicit reason, such as tiny exhaustive coverage, very expensive tests, or an interactive format with limited meaningful cases.

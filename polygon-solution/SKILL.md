@@ -24,6 +24,14 @@ description: "Write solutions -- brute force, wrong-answer traps, main correct, 
 
    Mark already-completed items as `[x]`. Show the plan to the user. Update this file as you complete each step.
 
+   Extend the checklist when the problem needs:
+   - an independently implemented second correct solution,
+   - a Java solution because C++ already uses more than one quarter of TL or about 50 MB,
+   - a Python solution as an overflow-safe reference,
+   - overflow-prone rejected variants,
+   - casework variants that omit one important branch,
+   - an optimized slow solution that should not pass.
+
 3. **Write auxiliary solutions first** (before the main correct solution). Go through each category below in order. For each one, propose the approach, write it, show to user, commit.
 
 ### Step A: Brute force
@@ -33,6 +41,7 @@ Suggest the most naive, direct approach -- exhaustive enumeration, full search, 
 - Filename: `solutions/brute_force.cpp`
 - Expected: `time_limit_exceeded` (or `accepted` if the problem is small enough)
 - Purpose: serves as a reference oracle for stress-testing the main solution
+- Implement exactly the direct process described by the statement. It should produce only correct results or time out; avoid undefined behavior and accidental wrong answers. If a finite direct implementation can terminate early for irrelevant reasons, use an explicit non-terminating fallback so the expected failure remains TLE.
 
 ### Step B: Greedy / simple heuristic
 
@@ -79,6 +88,7 @@ Wait for the user to approve or redirect before writing code.
 - Filename: `solutions/std.cpp`
 - Expected: `accepted`
 - Update `config/build.json`: `"accepted_solution_source": "solutions/std.cpp"`
+- Keep the main solution clear and asymptotically appropriate without relying on unusual constant-factor tricks. Target at most half of TL and half of ML under authoritative Verification.
 
 ### Step E: Language translations
 
@@ -87,12 +97,29 @@ After the main correct solution is committed, translate it to Python first, then
 - Filename: `solutions/ac_python.py` (priority), `solutions/ac_java.java` (if requested)
 - Expected: `accepted`, or `tle_or_correct` if the faithful translation is algorithmically correct but may time out under the configured limits even after reasonable constant-factor optimization
 - Purpose: verifies that time/memory limits are achievable in other languages
+- Always consider a Python reference when C++ arithmetic has meaningful overflow risk.
+- Prepare a Java correct solution when C++ already uses more than one quarter of TL or about 50 MB and Java performance could therefore be marginal. Base the decision on measurements, not on a mechanical translation requirement.
 
 ### Step F: Additional approaches
 
 Ask the user: "Do you want to test any other approaches (e.g. a different algorithm that should also pass, or a specific wrong approach you want to make sure fails)?"
 
 If yes, write the solution with the user's specified expected behavior and repeat the per-solution steps below.
+
+Unless the user narrows the requested solution set, include at least one independently implemented correct solution in addition to `std.cpp`. Keep the same asymptotic target and aim for half of TL and ML.
+
+### Overflow and casework variants
+
+- Audit every input type, array size, accumulator, product, squared value, index expression, and sentinel.
+- For each important overflow risk, create a plausible rejected solution using the wrong type or intermediate expression.
+- If the correct algorithm uses casework, keep one complete correct implementation and create rejected variants that omit representative branches.
+- Store each variant as a separate source file with an appropriate `.desc`; do not hide alternatives as commented-out code.
+
+### Optimized slow solutions
+
+- Implement slow approaches that contestants might plausibly optimize with pruning, bitsets, precomputation, or compiler pragmas.
+- Optimize them enough that their rejection demonstrates the intended complexity boundary.
+- Confirm that they still do not pass the configured limits; do not weaken tests or tighten limits merely to force the verdict.
 
 ---
 
@@ -103,6 +130,8 @@ If yes, write the solution with the user's specified expected behavior and repea
 - Do not weaken tests, lower constraints, or change limits to make a solution pass.
 - For Python translations, local timing only indicates relative risk. Use `tle_or_correct` when the algorithm is correct but performance is uncertain, and rely on Verification for the final verdict.
 - Do not modify the local runtime environment to rescue a solution unless the user explicitly asks.
+- Avoid unnecessarily tight limits. For harder problems, use at least 2 seconds unless measurements and the target environment justify another choice.
+- Benchmark every accepted solution against the target of half TL and half ML, and report exceptions instead of concealing them.
 
 ## For each solution
 

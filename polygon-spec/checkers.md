@@ -15,7 +15,7 @@ Standard checkers are used by copying from `<skills>/polygon-checker/standard/` 
 | Floating point, tolerance 10⁻⁶ | `rcmp6` | Absolute or relative error. |
 | Floating point, tolerance 10⁻⁹ | `rcmp9` | Absolute or relative error. |
 | Single float, absolute error only | `acmp` / `rcmp` | Max absolute error ≤ 1.5×10⁻⁶. |
-| Single float, abs or relative err | `dcmp` | Max error ≤ 10⁻⁶. |
+| Single float, abs or relative err | `dcmp` | Max error ≤ 10⁻⁶. Compatible single-value alternative; prefer `rcmp6` when both fit. |
 | Sequence of floats, absolute only | `rncmp` | Max absolute error ≤ 1.5×10⁻⁵. |
 | Line-by-line, tokens within line | `lcmp` | Ignores extra whitespace within lines. |
 | Line-by-line, exact string match | `fcmp` | Entire line must match exactly. |
