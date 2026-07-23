@@ -1,6 +1,6 @@
 # Standard Statement Sentences
 
-Use these templates when their semantics match the problem. Keep the English and Chinese versions equivalent. Do not introduce multiple test cases, guarantees, output branches, or interaction rules merely to use a template.
+Use these templates when their semantics match the problem. Reuse the sentence structure verbatim, substituting only problem-specific symbols, bounds, types, counts, object names, or tolerances. Keep the English and Chinese versions equivalent. Do not introduce multiple test cases, guarantees, output branches, or interaction rules merely to use a template.
 
 ## Terminology
 

@@ -37,7 +37,7 @@ Check:
 - [ ] **Degenerate cases**: are edge cases like $n=1$, empty input, answer=0 explicitly allowed or excluded?
 - [ ] **Output uniqueness**: if multiple valid outputs, "output any" is stated; if unique, checker matches
 - [ ] **Variables and TeX**: symbols are not reused for different objects, ordinary variables are lowercase except the conventional uppercase `$T$` for the number of test cases, multi-letter names are upright, and formulas are punctuated as sentence parts
-- [ ] **Standard wording**: applicable Input, Output, guarantee, and definition text agrees with `/polygon-statement` references
+- [ ] **Standard wording**: applicable Input, Output, guarantee, and definition text uses the `/polygon-statement` templates verbatim apart from problem-specific symbols, values, types, counts, object names, or tolerances
 - [ ] **Samples**: at least two distinct samples exist by default and cover every output form
 - [ ] **Sample explanations**: at least two samples have useful notes by default, and every potentially confusing sample is explained; honor explicit problem-specific user decisions
 - [ ] **Language consistency**: if multiple languages, content matches across all

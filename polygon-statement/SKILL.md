@@ -48,6 +48,8 @@ Write for contestants. Assume they know how to program, understand standard inpu
 
 3. **Write the draft immediately.** Do not ask about style, tone, or theme before writing.
 
+   Before drafting the Input and Output sections, read `references/standard-sentences.md`. When a template has the same semantics, copy its bilingual sentence structure and substitute only the problem-specific symbols, values, types, counts, object names, or tolerances. Do not paraphrase a matching standard sentence.
+
    **Choose the primary draft language before writing**:
    - If only Chinese is configured, write only the Chinese draft.
    - If English is configured, default to an English draft even if the user wrote the prompt in Chinese.
@@ -188,7 +190,7 @@ Problem statements follow a **terse, precise** style. Every sentence must carry 
 8. **Use title case for English titles** unless the title intentionally contains stylized text.
 9. **Use common personal names.** Do not introduce usernames, handles, or obscure nicknames as character names.
 10. **Do not reuse a variable name for a different object.** A symbol introduced in a definition must not later be repurposed for the input object.
-11. **Prefer the standard bilingual wording.** Read `references/standard-sentences.md` when writing Input, Output, guarantees, versions, or interaction text.
+11. **Use standard bilingual wording whenever it applies.** Read `references/standard-sentences.md` when writing Input, Output, guarantees, versions, or interaction text. A matching template is mandatory, not a stylistic suggestion; substitute only problem-specific symbols, values, types, counts, object names, or tolerances.
 12. **Use standard definitions when needed.** Read `references/standard-definitions.md` before defining common sequence, string, arithmetic, or tree concepts.
 
 ### What to avoid
@@ -274,6 +276,7 @@ Before committing, confirm that the PDF exists, the source exists, and every `\i
 
 ### Output section
 - **Multiple test cases**: use the applicable bilingual template from `references/standard-sentences.md`.
+- **Floating-point tolerance**: use the standard acceptance sentence from `references/standard-sentences.md` and substitute only the promised tolerance.
 - Use "separated by a space" not "space-separated"
 - Use "Output" not "Print"
 
@@ -287,7 +290,7 @@ Before committing, confirm that the PDF exists, the source exists, and every `\i
 
 ## Standard Phrasing
 
-Read `references/standard-sentences.md` whenever a standard Input, Output, guarantee, version, or interaction sentence applies. Use its English/Chinese pairs directly when the semantics match; do not introduce a condition merely to use a template.
+Read `references/standard-sentences.md` whenever a standard Input, Output, guarantee, version, or interaction sentence applies. Use its English/Chinese pairs verbatim when the semantics match, changing only problem-specific symbols, values, types, counts, object names, or tolerances. Do not introduce a condition merely to use a template.
 
 Read `references/standard-definitions.md` when the statement needs a standard sequence, string, lexicographical, arithmetic, modular, or tree definition.
 
