@@ -1,6 +1,6 @@
 ---
 name: polygon-solution
-description: "Write solutions -- brute force, wrong-answer traps, main correct, and translations."
+description: "Write solutions -- brute force, wrong-answer traps, main correct, and translations, optionally imitating user-provided code style."
 ---
 
 # Write Solution
@@ -9,10 +9,18 @@ description: "Write solutions -- brute force, wrong-answer traps, main correct, 
 
 1. **Understand the problem**. Read `statement-sections/english/legend.tex`, `input.tex`, `output.tex`, and `config/problem.json`.
 
-2. **Plan the task list upfront.** Before writing any code, scan `solutions/` for existing files and determine which steps are already done. Then write a checklist to `draft/solutions.md`:
+2. **Create the task plan before asking about style.** Before writing any code, scan `solutions/` for existing files and determine which steps are already done. Then write a checklist to `draft/solutions.md`:
 
    ```markdown
    # Solutions Plan
+
+   ## Code Style Reference
+
+   - Reference: pending
+   - Applies to: pending
+   - Overrides: none
+
+   ## Tasks
 
    - [ ] A. Brute force -- `solutions/brute_force.cpp`
    - [ ] B. Wrong-answer trap -- `solutions/rej_greedy.cpp`
@@ -32,7 +40,21 @@ description: "Write solutions -- brute force, wrong-answer traps, main correct, 
    - casework variants that omit one important branch,
    - an optimized slow solution that should not pass.
 
-3. **Write auxiliary solutions first** (before the main correct solution). Go through each category below in order. For each one, propose the approach, write it, show to user, commit.
+3. **Resolve the code style reference once.** After creating and showing `draft/solutions.md`, ask one bundled question unless the user already supplied a reference or the draft records a resolved choice:
+
+   > Do you want me to imitate code you provide? If yes, paste the reference code or give its repository path, and say which languages or solutions it applies to. If no, I will use the minimal defaults in this skill.
+
+   Do not offer named style profiles and do not ask separate questions about formatting, templates, or I/O.
+
+   - If the user declines, replace `pending` with `none` and record the applicable scope.
+   - If the user provides code, save an exact snapshot as `draft/solution-style.cpp`, `draft/solution-style.py`, or `draft/solution-style.java`. Use one file per provided language.
+   - Record each saved reference, its scope, and any explicit style overrides in `draft/solutions.md`.
+   - On a resumed task, reuse the resolved choice in `draft/solutions.md`; do not ask again.
+   - Explicit instructions in the current request override the saved reference. Correctness, required I/O, and compilation requirements override style.
+   - Imitate formatting, naming, includes/imports, aliases, macros, function layout, container choices, and other recurring idioms. Do not copy problem-specific algorithms, constants, debug code, or unused helpers.
+   - Do not silently clean up the user's style. If following it would cause a correctness, compilation, or portability problem, explain the conflict before deviating.
+
+4. **Write auxiliary solutions first** (before the main correct solution). Go through each category below in order. For each one, propose the approach, write it, show to user, commit.
 
 ### Step A: Brute force
 
@@ -135,7 +157,7 @@ Unless the user narrows the requested solution set, include at least one indepen
 
 ## For each solution
 
-4. **Write the code**. Use C++ by default. For Step E translations, use the target language.
+5. **Write the code**. Use C++ by default. For Step E translations, use the target language. Before writing, read the saved style reference for that language when one applies.
 
 ### C++
 
@@ -151,9 +173,10 @@ Unless the user narrows the requested solution set, include at least one indepen
    }
    ```
 
-   - Use `bits/stdc++.h`.
-   - Use plain `cin` / `cout`. Do NOT use `ios::sync_with_stdio(false)` or `cin.tie(nullptr)`.
-   - Do NOT write `return 0;` in `main`.
+   - Without a saved reference, use `bits/stdc++.h`.
+   - Use plain `cin` / `cout`.
+   - By default, write no I/O setup at all. Do NOT add `ios::sync_with_stdio(false)`, `cin.tie(nullptr)`, a custom scanner, or other I/O boilerplate unless the user explicitly requests it or the saved style reference contains it.
+   - Without a saved reference, do NOT write `return 0;` in `main`.
    - The judge runs with unlimited stack. Deep recursion (DFS, divide-and-conquer) is safe -- do not avoid it or rewrite as iterative out of stack concerns.
    - For interactive problems: `cout << endl` or `cout.flush()` after each output.
 
@@ -199,21 +222,17 @@ Unless the user narrows the requested solution set, include at least one indepen
 
 ### Common rules (all languages)
 
+   There is no named default style or built-in style menu. When no saved reference applies, use only the minimal language defaults in this section.
+
    **Prefer simplicity and readability.** Code should be short, clear, and direct.
 
-   - Do NOT write comments. Structure and naming carry all meaning.
+   - Without a saved reference, do NOT write comments. Structure and naming carry all meaning.
    - Self-contained: single file, no external dependencies.
    - Match the input/output format from the statement exactly.
    - Short variable names are fine when conventional (`n`, `m`, `u`, `v`, `ans`, `dp`, `adj`).
    - Trust the input format. Do not write defensive I/O checks (e.g. `if (!(cin >> n))` is unnecessary -- just `cin >> n`).
 
-   **C++ specific:**
-   - Prefer `vector` over C arrays. Pass and return `vector` by value.
-   - Globals are fine when many functions share context and passing arguments would add clutter (e.g. graph adjacency list, network flow). Otherwise prefer local variables and function arguments.
-   - Use `auto` when the type is obvious from context (e.g. `auto it = mp.find(x)`).
-   - Structured bindings are encouraged (e.g. `auto [u, v, w] = edges[i]`).
-
-5. **Write the .desc file** alongside:
+6. **Write the .desc file** alongside:
    ```
    expected: accepted
    ```
@@ -226,17 +245,22 @@ Unless the user narrows the requested solution set, include at least one indepen
    - `run_time_error` -- expected to fail with RE
    - `rejected` -- generic negative solution; any non-AC failure is acceptable
 
-6. **Show the code to the user** and wait for feedback before committing.
+7. **Show the code to the user** and wait for feedback before committing.
 
-7. **Update `draft/solutions.md`** (mark the step as `[x]`) and **commit**:
+8. **Update `draft/solutions.md`** (mark the step as `[x]`) and **commit**:
    ```
-   git add solutions/{name}.cpp solutions/{name}.cpp.desc config/build.json
+   git add solutions/{name}.cpp solutions/{name}.cpp.desc config/build.json draft/solutions.md
    git commit -m "solution: add {name} ({expected behavior})"
    ```
+
+   When a saved style reference was added or changed, stage its exact
+   `draft/solution-style.<ext>` path in the same commit.
 
 ## Rules
 
 - Always show code to the user before committing.
+- Create `draft/solutions.md` before asking the one-time code style question.
+- Ask about a user-provided style reference only once per solution task; persist and reuse the answer.
 - Write auxiliary solutions (brute, wa, dummy) BEFORE asking about the main correct solution.
 - If the statement is incomplete or ambiguous, ask for clarification rather than guessing.
 - The agent CAN write the solution code (unlike statement content, where the agent must not invent).

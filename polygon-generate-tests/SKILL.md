@@ -223,7 +223,8 @@ After the user approves the plan, implement each part sequentially. IDs are cont
        // ...
    }
    ```
-   Code style (same as `/polygon-solution`): no comments, no `return 0;`.
+   Generator style is independent of solution style: follow the testlib component conventions,
+   with no comments and no `return 0;`. Do not copy `draft/solution-style.<ext>` into generators.
 
 2. **Register in config/build.json**:
    ```json

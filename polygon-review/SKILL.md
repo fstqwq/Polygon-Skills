@@ -114,7 +114,7 @@ Check:
 - [ ] Important overflow risks have been audited and representative rejected variants exist where useful
 - [ ] If the intended algorithm uses casework, the complete implementation and representative omitted-branch variants exist
 - [ ] Optimized slow solutions remain unable to pass the configured limits
-- [ ] Solution code style follows `/polygon-solution` conventions (no comments, no return 0, etc.)
+- [ ] Solution code style follows the reference, scope, and overrides recorded in `draft/solutions.md`; when none apply, it follows `/polygon-solution` minimal defaults (including no comments, no `return 0`, and no default I/O setup)
 - [ ] A Python reference exists when C++ arithmetic has meaningful overflow risk
 - [ ] A Java correct solution exists when measured C++ time above one quarter of TL or memory above about 50 MB makes Java performance a concern
 - [ ] Timing-sensitive accepted/TLE expectations are backed by online Verification or clearly marked as local-only uncertainty

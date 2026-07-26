@@ -84,7 +84,9 @@ This skill combines two tracks:
 6. **Implement approved wrong solutions.**
    - Name files `solutions/rej_hack_<slug>.cpp`.
    - Write matching `.desc` files, usually `expected: rejected`.
-   - Follow `/polygon-solution` style rules.
+   - Follow `/polygon-solution` style rules. Read `draft/solutions.md` and any applicable
+     `draft/solution-style.<ext>` first; imitate the saved reference for rejected solutions
+     within its recorded scope.
    - Do not add these as accepted solutions in `config/build.json`.
 
 7. **Implement and verify counterexamples.**
