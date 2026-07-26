@@ -11,6 +11,8 @@ Checks:
   - tests/spec.json       (schema + file existence)
   - solutions/*.desc      (expected behavior + source existence)
   - statement-sections/   (required files and interaction layout)
+  - standard sentences   (high-confidence English/Chinese wording checks)
+  - validator/checker     (lightweight testlib API sanity checks)
   - statement-assets/     (figure references and editable sources)
   - attachments/          (contestant-visible files)
   - completeness warnings (missing components, no samples, etc.)
@@ -41,6 +43,156 @@ VALID_EXPECTED = {
 TEST_ID_RE = re.compile(r"^[0-9]{3}$")
 SOURCE_PATH_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./-]{0,200}$")
 INCLUDEGRAPHICS_RE = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}")
+CPP_TOKEN_RE = re.compile(
+    r'"(?:\\.|[^"\\])*"|'
+    r"'(?:\\.|[^'\\])*'|"
+    r"//[^\n]*|"
+    r"/\*.*?\*/",
+    re.DOTALL,
+)
+LONG_DECIMAL_RE = re.compile(r"(?<![A-Za-z0-9_'.])([1-9][0-9]{6,})(?:ULL|LLU|UL|LU|LL|L|U)?\b")
+
+STANDARD_SENTENCE_RULES = [
+    {
+        "languages": {"english"},
+        "sections": {"input.tex"},
+        "candidate": re.compile(
+            r"\b(?:The\s+)?first\s+line\s+(?:contains|has|gives|consists\s+of)\b[^.!?。！？]*[.!?]"
+        ),
+        "accepted": re.compile(r"The first line contains .+\.$"),
+        "expected": "The first line contains an integer $n$ ($1 \\le n \\le 10^5$).",
+    },
+    {
+        "languages": {"english"},
+        "sections": {"input.tex"},
+        "candidate": re.compile(
+            r"\b(?:The\s+)?first\s+line\s+of\s+(?:each|every)\s+test\s+case\s+"
+            r"(?:contains|has|gives|consists\s+of)\b[^.!?。！？]*[.!?]"
+        ),
+        "accepted": re.compile(r"The first line of each test case contains .+\.$"),
+        "expected": (
+            "The first line of each test case contains an integer $n$ "
+            "($1 \\le n \\le 10^5$)."
+        ),
+    },
+    {
+        "languages": {"english"},
+        "sections": {"output.tex"},
+        "candidate": re.compile(
+            r"\b(?:For\s+(?:each|every)|In\s+each)\s+test\s+case\s*,?\s*"
+            r"(?:output|print)\b[^.!?。！？]*[.!?]",
+            re.IGNORECASE,
+        ),
+        "accepted": re.compile(r"For each test case, output .+\.$"),
+        "expected": (
+            "For each test case, output an integer ~--- the answer to the problem."
+        ),
+    },
+    {
+        "languages": {"english"},
+        "sections": {"input.tex"},
+        "candidate": re.compile(
+            r"\b(?:It\s+is\s+guaranteed\s+that\s+the\s+sum|"
+            r"The\s+sum\b[^.!?。！？]*\b(?:is\s+guaranteed|does\s+not\s+exceed))"
+            r"[^.!?。！？]*[.!?]",
+            re.IGNORECASE,
+        ),
+        "accepted": re.compile(
+            r"It is guaranteed that the sum of .+ over all test cases does not exceed .+\.$"
+        ),
+        "expected": (
+            "It is guaranteed that the sum of $n$ over all test cases "
+            "does not exceed $10^5$."
+        ),
+    },
+    {
+        "languages": {"english"},
+        "sections": {"input.tex", "legend.tex"},
+        "candidate": re.compile(
+            r"\b(?:It\s+is\s+guaranteed\s+that\s+)?(?:the\s+)?"
+            r"(?:given|input)\s+edges\s+(?:form|constitute|are)\s+a\s+tree[.!?]",
+            re.IGNORECASE,
+        ),
+        "accepted": re.compile(r"It is guaranteed that the given edges form a tree\.$"),
+        "expected": "It is guaranteed that the given edges form a tree.",
+    },
+    {
+        "languages": {"english"},
+        "sections": {"output.tex"},
+        "candidate": re.compile(
+            r"\bIf\s+there\s+(?:are|is)\s+multiple\b[^.!?。！？]*"
+            r"\b(?:output|print)\b[^.!?。！？]*[.!?]",
+            re.IGNORECASE,
+        ),
+        "accepted": re.compile(r"If there are multiple solutions, output any of them\.$"),
+        "expected": "If there are multiple solutions, output any of them.",
+    },
+    {
+        "languages": {"english"},
+        "sections": {"output.tex"},
+        "candidate": re.compile(
+            r"\bIf\s+there\s+(?:is|are)\s+no\b[^.!?。！？]*"
+            r"\b(?:output|print)\b[^.!?。！？]*-1[^.!?。！？]*[.!?]",
+            re.IGNORECASE,
+        ),
+        "accepted": re.compile(r"If there is no solution, output \$-1\$\.$"),
+        "expected": "If there is no solution, output $-1$.",
+    },
+    {
+        "languages": {"english"},
+        "sections": {"legend.tex", "input.tex", "output.tex", "interaction.tex"},
+        "candidate": re.compile(r"\bas\s+follows?\b", re.IGNORECASE),
+        "accepted": re.compile(r"as follows$"),
+        "expected": "as follows",
+    },
+    {
+        "languages": {"chinese"},
+        "sections": {"input.tex"},
+        "candidate": re.compile(r"(?<!的)第一行(?:包含|给出|有|为)[^。！？]*[。！？]"),
+        "accepted": re.compile(r"第一行包含.+。$"),
+        "expected": "第一行包含……。",
+    },
+    {
+        "languages": {"chinese"},
+        "sections": {"input.tex"},
+        "candidate": re.compile(r"每组测试数据的第一行(?:包含|给出|有|为)[^。！？]*[。！？]"),
+        "accepted": re.compile(r"每组测试数据的第一行包含.+。$"),
+        "expected": "每组测试数据的第一行包含……。",
+    },
+    {
+        "languages": {"chinese"},
+        "sections": {"output.tex"},
+        "candidate": re.compile(
+            r"(?:对于)?每组测试数据[，,]?[^。！？]*?(?:输出|打印)[^。！？]*[。！？]"
+        ),
+        "accepted": re.compile(r"对于每组测试数据，输出.+。$"),
+        "expected": "对于每组测试数据，输出……。",
+    },
+    {
+        "languages": {"chinese"},
+        "sections": {"input.tex"},
+        "candidate": re.compile(
+            r"(?:保证所有测试数据中[^。！？]*总和|"
+            r"所有测试数据中[^。！？]*总和[^。！？]*(?:保证|不超过))[^。！？]*[。！？]"
+        ),
+        "accepted": re.compile(r"保证所有测试数据中.+的总和不超过.+。$"),
+        "expected": "保证所有测试数据中……的总和不超过……。",
+    },
+    {
+        "languages": {"chinese"},
+        "sections": {"output.tex"},
+        "candidate": re.compile(r"如果有多个[^。！？]*，?(?:输出|打印)[^。！？]*[。！？]"),
+        "accepted": re.compile(r"如果有多个解，输出任意一个即可。$"),
+        "expected": "如果有多个解，输出任意一个即可。",
+    },
+    {
+        "languages": {"chinese"},
+        "sections": {"output.tex"},
+        "candidate": re.compile(r"如果无解[^。！？]*(?:输出|打印)[^。！？]*-1[^。！？]*[。！？]"),
+        "accepted": re.compile(r"如果无解，输出 \$-1\$。$"),
+        "expected": "如果无解，输出 $-1$。",
+    },
+]
 
 
 def _errors_problem_json(root: Path) -> list[str]:
@@ -418,6 +570,300 @@ def _warnings_package_assets(root: Path) -> list[str]:
     return warnings
 
 
+def _collapse_statement_whitespace(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _warnings_standard_sentences(root: Path) -> list[str]:
+    """Warn about high-confidence deviations from the standard sentence templates."""
+    sections_dir = root / "statement-sections"
+    if not sections_dir.is_dir():
+        return []
+
+    warnings: list[str] = []
+    for language_dir in sorted(sections_dir.iterdir()):
+        if not language_dir.is_dir() or language_dir.is_symlink():
+            continue
+        language = language_dir.name.lower()
+        for section_path in sorted(language_dir.glob("*.tex")):
+            applicable_rules = [
+                rule
+                for rule in STANDARD_SENTENCE_RULES
+                if language in rule["languages"] and section_path.name in rule["sections"]
+            ]
+            if not applicable_rules:
+                continue
+            try:
+                raw_text = section_path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            text = re.sub(r"(?<!\\)%[^\n]*", "", raw_text)
+            rel_path = section_path.relative_to(root).as_posix()
+            seen: set[tuple[int, str]] = set()
+            for rule in applicable_rules:
+                for match in rule["candidate"].finditer(text):
+                    candidate = _collapse_statement_whitespace(match.group(0))
+                    if rule["accepted"].fullmatch(candidate):
+                        continue
+                    line = text.count("\n", 0, match.start()) + 1
+                    key = (line, rule["expected"])
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    display = candidate if len(candidate) <= 100 else candidate[:97] + "..."
+                    warnings.append(
+                        f"{rel_path}:{line}: non-standard sentence {display!r}; "
+                        f"use '{rule['expected']}'"
+                    )
+    return warnings
+
+
+def _mask_cpp_comments(text: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        token = match.group(0)
+        if token.startswith("//") or token.startswith("/*"):
+            return "".join("\n" if char == "\n" else " " for char in token)
+        return token
+
+    return CPP_TOKEN_RE.sub(replace, text)
+
+
+def _mask_cpp_strings(text: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        token = match.group(0)
+        if token.startswith('"') or token.startswith("'"):
+            return "".join("\n" if char == "\n" else " " for char in token)
+        return token
+
+    return CPP_TOKEN_RE.sub(replace, text)
+
+
+def _configured_component_sources(root: Path) -> list[tuple[str, Path]]:
+    build_path = root / "config" / "build.json"
+    try:
+        build = json.loads(build_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+    if not isinstance(build, dict):
+        return []
+
+    sources: list[tuple[str, Path]] = []
+    for component, field in [
+        ("validator", "validator_source"),
+        ("checker", "checker_source"),
+    ]:
+        value = build.get(field)
+        if not isinstance(value, str) or not value:
+            continue
+        source_path = root / value
+        if source_path.is_file():
+            sources.append((component, source_path))
+    return sources
+
+
+def _is_standard_checker_copy(source_text: str) -> bool:
+    standard_dir = Path(__file__).resolve().parent.parent / "polygon-checker" / "standard"
+    normalized_source = source_text.replace("\r\n", "\n").strip()
+    if not standard_dir.is_dir():
+        return False
+    for standard_path in standard_dir.glob("*.cpp"):
+        try:
+            standard_text = standard_path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if normalized_source == standard_text.replace("\r\n", "\n").strip():
+            return True
+    return False
+
+
+def _line_number(text: str, offset: int) -> int:
+    return text.count("\n", 0, offset) + 1
+
+
+def _scientific_notation(digits: str) -> str:
+    tail = digits[1:].rstrip("0")
+    coefficient = digits[0] + (f".{tail}" if tail else "")
+    return f"{coefficient}e{len(digits) - 1}"
+
+
+def _warnings_long_decimal_literals(root: Path, source_path: Path, text: str) -> list[str]:
+    code = _mask_cpp_strings(_mask_cpp_comments(text))
+    rel_path = source_path.relative_to(root).as_posix()
+    warnings: list[str] = []
+    seen: set[tuple[int, str]] = set()
+    for match in LONG_DECIMAL_RE.finditer(code):
+        digits = match.group(1)
+        if not re.search(r"0{5,}$", digits):
+            continue
+        line = _line_number(code, match.start())
+        key = (line, digits)
+        if key in seen:
+            continue
+        seen.add(key)
+        notation = _scientific_notation(digits)
+        warnings.append(
+            f"{rel_path}:{line}: decimal literal {digits} is {notation}; "
+            "consider a named constant or digit separators"
+        )
+    return warnings
+
+
+def _warnings_testlib_patterns(root: Path, source_path: Path, text: str) -> list[str]:
+    code = _mask_cpp_comments(text)
+    rel_path = source_path.relative_to(root).as_posix()
+    warnings: list[str] = []
+    call_re = re.compile(
+        r"\b(?:inf|ouf|ans|in)\s*\.\s*(readToken|readWord|readString)\s*"
+        r'\(\s*"((?:\\.|[^"\\])*)"'
+    )
+    for match in call_re.finditer(code):
+        method = match.group(1)
+        pattern = match.group(2)
+        line = _line_number(code, match.start())
+        if re.search(r"(?<!\\)\+", pattern):
+            warnings.append(
+                f"{rel_path}:{line}: {method}() pattern {pattern!r} uses unsupported '+'; "
+                "use a testlib quantifier such as {1,}"
+            )
+        if any(token in pattern for token in ("(?=", "(?!", "(?<=", "(?<!")):
+            warnings.append(
+                f"{rel_path}:{line}: {method}() pattern {pattern!r} uses unsupported lookaround"
+            )
+        if re.search(r"(?<!\\) ", pattern):
+            warnings.append(
+                f"{rel_path}:{line}: {method}() pattern {pattern!r} contains an unescaped "
+                r"space, which testlib ignores; use \\ "
+            )
+    return warnings
+
+
+def _warnings_validator_source(root: Path, source_path: Path, text: str) -> list[str]:
+    code = _mask_cpp_comments(text)
+    rel_path = source_path.relative_to(root).as_posix()
+    warnings: list[str] = []
+
+    if not re.search(r'#\s*include\s*[<"]testlib\.h[>"]', code):
+        warnings.append(f"{rel_path}: validator does not include testlib.h")
+    if not re.search(r"\bregisterValidation\s*\(", code):
+        warnings.append(f"{rel_path}: validator does not call registerValidation(argc, argv)")
+    if not re.search(r"\binf\s*\.\s*readEof\s*\(\s*\)", code):
+        warnings.append(f"{rel_path}: validator does not call inf.readEof()")
+
+    for match in re.finditer(
+        r"\binf\s*\.\s*(readToken|readWord|readString)\s*\(\s*\)", code
+    ):
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: {match.group(1)}() is unbounded in a validator; "
+            "pass a lightweight testlib pattern and a stable variable name"
+        )
+
+    for match in re.finditer(
+        r"\binf\s*\.\s*(readInt|readLong|readDouble|readReal)\s*\(\s*\)", code
+    ):
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: {match.group(1)}() is unbounded in a validator; "
+            "pass explicit minimum and maximum values"
+        )
+
+    for match in re.finditer(
+        r"\binf\s*\.\s*read(?:Int|Long|Double|Real|Token|Word|String)s?\s*"
+        r"\([^;]*?\bformat\s*\(",
+        code,
+    ):
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: generated read variable name fragments boundary logs; "
+            "use a stable literal name"
+        )
+
+    for match in re.finditer(
+        r"\binf\s*\.\s*readLong\s*\(\s*(-?[0-9]+)\s*,\s*(-?[0-9]+)", code
+    ):
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: readLong bounds should use the LL suffix"
+        )
+
+    return warnings
+
+
+def _warnings_checker_source(root: Path, source_path: Path, text: str) -> list[str]:
+    if _is_standard_checker_copy(text):
+        return []
+
+    code = _mask_cpp_comments(text)
+    rel_path = source_path.relative_to(root).as_posix()
+    warnings: list[str] = []
+
+    if not re.search(r'#\s*include\s*[<"]testlib\.h[>"]', code):
+        warnings.append(f"{rel_path}: checker does not include testlib.h")
+    if not re.search(r"\bregisterTestlibCmd\s*\(", code):
+        warnings.append(f"{rel_path}: checker does not call registerTestlibCmd(argc, argv)")
+
+    for match in re.finditer(
+        r"\b(?:ouf|ans|in)\s*\.\s*(readSpace|readEoln|readEof)\s*\(", code
+    ):
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: checker uses {match.group(1)}(); "
+            "validate answer semantics with token-based reads instead of exact whitespace"
+        )
+
+    for match in re.finditer(r"\b(?:ouf|ans|in)\s*\.\s*(readLine|readString)\s*\(", code):
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: checker uses {match.group(1)}(); prefer readToken() "
+            "unless line boundaries are part of the answer semantics; if intentional, "
+            "pass a bounded testlib pattern"
+        )
+
+    for match in re.finditer(
+        r"\b(?:ouf|ans|in)\s*\.\s*"
+        r"(readToken|readWord|readInt|readLong|readDouble|readReal)\s*\(\s*\)",
+        code,
+    ):
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: {match.group(1)}() is unbounded for an answer stream; "
+            "pass explicit bounds or a lightweight testlib pattern"
+        )
+
+    for match in re.finditer(r"\bquitf\s*\(\s*_pe\b", code):
+        line = _line_number(code, match.start())
+        warnings.append(f"{rel_path}:{line}: checker must not use the _pe verdict")
+
+    for match in re.finditer(
+        r'\bquitf\s*\(\s*_ok\s*,\s*"((?:\\.|[^"\\])*)"', code
+    ):
+        if match.group(1).lower().startswith("ok"):
+            continue
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: quitf(_ok, ...) message should start with 'ok'"
+        )
+
+    return warnings
+
+
+def _warnings_testlib_components(root: Path) -> list[str]:
+    warnings: list[str] = []
+    for component, source_path in _configured_component_sources(root):
+        try:
+            text = source_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if component == "validator":
+            warnings.extend(_warnings_validator_source(root, source_path, text))
+        else:
+            warnings.extend(_warnings_checker_source(root, source_path, text))
+        if component != "checker" or not _is_standard_checker_copy(text):
+            warnings.extend(_warnings_testlib_patterns(root, source_path, text))
+            warnings.extend(_warnings_long_decimal_literals(root, source_path, text))
+    return warnings
+
+
 def _warnings_judging_time(root: Path) -> list[str]:
     """Warn if max(1s, time_limit) * pass_limit * num_tests >= 300s."""
     problem_path = root / "config" / "problem.json"
@@ -561,6 +1007,8 @@ def validate(root: Path) -> tuple[list[str], list[str]]:
     warnings: list[str] = []
     warnings.extend(_warnings_completeness(root))
     warnings.extend(_warnings_package_assets(root))
+    warnings.extend(_warnings_standard_sentences(root))
+    warnings.extend(_warnings_testlib_components(root))
     warnings.extend(_warnings_judging_time(root))
     return errors, warnings
 
