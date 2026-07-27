@@ -21,8 +21,8 @@ statement-assets/       # shared statement build assets and their editable sourc
 attachments/            # contestant-downloadable files (testing tools, templates)
 statement/
   statements.ftl        # main FTL template (do not edit)
-  problem.tex           # problem FTL template (do not edit)
-  olymp.sty             # LaTeX style (do not edit)
+  problem.tex           # per-problem FTL template; customize only for special sample layouts
+  olymp.sty             # canonical LaTeX style macros
 statement-sections/
   <language>/           # one directory per language (see Language Model below)
     name.tex            # problem title (single line)
@@ -126,7 +126,7 @@ The default template includes `fontspec` + `xeCJK`, so new problems use XeLaTeX.
 **Western fonts** (set in `olymp.sty`):
 - Serif: TeX Gyre Termes (`\setmainfont`)
 - Sans: TeX Gyre Heros (`\setsansfont`)
-- Mono: TeX Gyre Cursor (`\setmonofont`)
+- Mono: TeX Gyre Cursor with common ligatures disabled (`\setmonofont{TeX Gyre Cursor}[Ligatures=NoCommon]`)
 
 ## Git Conventions
 

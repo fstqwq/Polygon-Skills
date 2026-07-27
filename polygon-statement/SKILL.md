@@ -285,6 +285,8 @@ Before committing, confirm that the PDF exists, the source exists, and every `\i
 - **Multi-pass**: Start legend with `\textit{This is a multi-pass problem.}`
 - **Both**: Start legend with `\textit{This is a multi-pass, interactive problem.}`
 - **Mandatory flush block**: always include the exact language-appropriate block from `references/standard-sentences.md`, even if it is not mentioned in the source.
+- **Single-pass interactive samples**: hard-code the alternating transcript in `statement/problem.tex` with `interactzigzag`, using `\interactread{...}` and `\interactwrite{...}` blocks in chronological order.
+- **Multi-pass interactive samples**: wrap the paired transcripts in `exampletwice`, and use one `interactzigzagtwice` block per pass. Keep the two passes of each sample adjacent.
 
 ---
 
