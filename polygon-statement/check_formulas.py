@@ -5,9 +5,8 @@ Run from the problem repo root:
 
     python <skills>/polygon-statement/check_formulas.py
 
-Compares the set of LaTeX math expressions across all languages in
-statement-sections/. Reports formulas that appear in one language but
-not another, per section file.
+Compares LaTeX math expression occurrence counts across all languages
+in statement-sections/. Reports missing occurrences per section file.
 
 Also checks draft/statement.*.md files if present.
 
@@ -18,6 +17,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 # Match $...$ (non-greedy, single-line) but skip \$ escapes
@@ -31,9 +31,9 @@ MATH_ENV_RE = re.compile(
 )
 
 
-def _extract_formulas(text: str) -> set[str]:
-    """Extract all math expressions from text, normalized."""
-    formulas: set[str] = set()
+def _extract_formulas(text: str) -> Counter[str]:
+    """Extract all normalized math expressions while preserving occurrences."""
+    formulas: Counter[str] = Counter()
     # Extract math environments (align*, equation*, gather*)
     for m in MATH_ENV_RE.finditer(text):
         body = m.group(2)
@@ -41,16 +41,16 @@ def _extract_formulas(text: str) -> set[str]:
         for row in re.split(r"\\\\", body):
             row = row.strip()
             if row:
-                formulas.add(_normalize(row))
+                formulas[_normalize(row)] += 1
     # Remove math environments to avoid double-matching
     cleaned = MATH_ENV_RE.sub("", text)
     # Extract display math (before inline, since $$ contains $)
     for m in DISPLAY_MATH_RE.finditer(cleaned):
-        formulas.add(_normalize(m.group(1)))
+        formulas[_normalize(m.group(1))] += 1
     cleaned = DISPLAY_MATH_RE.sub("", cleaned)
     # Extract inline math
     for m in INLINE_MATH_RE.finditer(cleaned):
-        formulas.add(_normalize(m.group(1)))
+        formulas[_normalize(m.group(1))] += 1
     return formulas
 
 
@@ -77,33 +77,36 @@ def _check_sections(root: Path) -> list[str]:
     # Collect formulas per (language, section)
     section_names = {"legend.tex", "input.tex", "output.tex", "notes.tex", "interaction.tex"}
     for section in sorted(section_names):
-        lang_formulas: dict[str, set[str]] = {}
+        lang_formulas: dict[str, Counter[str]] = {}
         for lang in languages:
             path = sections_dir / lang / section
             if not path.exists():
                 continue
             text = path.read_text(encoding="utf-8", errors="replace")
-            formulas = _extract_formulas(text)
-            if formulas:
-                lang_formulas[lang] = formulas
+            lang_formulas[lang] = _extract_formulas(text)
 
         if len(lang_formulas) < 2:
             continue
 
         # Compute the union and find per-language differences
-        all_formulas = set()
+        all_formulas: Counter[str] = Counter()
         for f in lang_formulas.values():
             all_formulas |= f
 
         for lang, formulas in lang_formulas.items():
             missing = all_formulas - formulas
             if missing:
-                others = [l for l in lang_formulas if l != lang and missing & lang_formulas[l]]
-                for formula in sorted(missing):
-                    present_in = [l for l in others if formula in lang_formulas[l]]
+                for formula, count in sorted(missing.items()):
+                    counts = ", ".join(
+                        f"{other}={lang_formulas[other][formula]}"
+                        for other in languages
+                        if other in lang_formulas
+                    )
+                    occurrence = "occurrence" if count == 1 else "occurrences"
                     warnings.append(
                         f"statement-sections/{lang}/{section}: "
-                        f"missing formula ${formula}$ (present in {', '.join(present_in)})"
+                        f"missing {count} {occurrence} of formula ${formula}$ "
+                        f"(counts: {counts})"
                     )
     return warnings
 
@@ -122,27 +125,30 @@ def _check_drafts(root: Path) -> list[str]:
         return []
 
     warnings: list[str] = []
-    draft_formulas: dict[str, set[str]] = {}
+    draft_formulas: dict[str, Counter[str]] = {}
     for draft in drafts:
         text = draft.read_text(encoding="utf-8", errors="replace")
-        formulas = _extract_formulas(text)
-        if formulas:
-            draft_formulas[draft.name] = formulas
+        draft_formulas[draft.name] = _extract_formulas(text)
 
     if len(draft_formulas) < 2:
         return []
 
-    all_formulas = set()
+    all_formulas: Counter[str] = Counter()
     for f in draft_formulas.values():
         all_formulas |= f
 
     for name, formulas in draft_formulas.items():
         missing = all_formulas - formulas
         if missing:
-            for formula in sorted(missing):
-                present_in = [n for n, f in draft_formulas.items() if n != name and formula in f]
+            for formula, count in sorted(missing.items()):
+                counts = ", ".join(
+                    f"{draft_name}={draft_formulas[draft_name][formula]}"
+                    for draft_name in sorted(draft_formulas)
+                )
+                occurrence = "occurrence" if count == 1 else "occurrences"
                 warnings.append(
-                    f"draft/{name}: missing formula ${formula}$ (present in {', '.join(present_in)})"
+                    f"draft/{name}: missing {count} {occurrence} of formula "
+                    f"${formula}$ (counts: {counts})"
                 )
     return warnings
 

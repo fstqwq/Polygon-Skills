@@ -158,7 +158,8 @@ Write for contestants. Assume they know how to program, understand standard inpu
     ```
     python <skills>/polygon-statement/check_formulas.py
     ```
-    Fix any mismatches  --  every formula in one language must appear in all others.
+    Fix any mismatches  --  every formula must appear the same number of times
+    in the corresponding section of every language.
 
 11. **Commit** all languages and changed statement assets together. Stage only the exact files changed; do not add whole directories that may contain unrelated drafts or assets:
     ```
