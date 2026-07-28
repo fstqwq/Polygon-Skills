@@ -13,6 +13,8 @@ Checks:
   - statement-sections/   (required files and interaction layout)
   - standard sentences   (high-confidence English/Chinese wording checks)
   - validator/checker     (lightweight testlib API sanity checks)
+  - generators            (high-confidence random evaluation-order checks)
+  - statement typography (Polygon-style monospace/bold cautions)
   - statement-assets/     (figure references and editable sources)
   - attachments/          (contestant-visible files)
   - completeness warnings (missing components, no samples, etc.)
@@ -984,6 +986,14 @@ def _scientific_notation(digits: str) -> str:
     return f"{coefficient}e{len(digits) - 1}"
 
 
+def _digit_separated_literal(digits: str) -> str:
+    groups: list[str] = []
+    while digits:
+        groups.append(digits[-3:])
+        digits = digits[:-3]
+    return "'".join(reversed(groups))
+
+
 def _warnings_long_decimal_literals(root: Path, source_path: Path, text: str) -> list[str]:
     code = _mask_cpp_strings(_mask_cpp_comments(text))
     rel_path = source_path.relative_to(root).as_posix()
@@ -1001,9 +1011,43 @@ def _warnings_long_decimal_literals(root: Path, source_path: Path, text: str) ->
         notation = _scientific_notation(digits)
         warnings.append(
             f"{rel_path}:{line}: decimal literal {digits} is {notation}; "
-            "consider a named constant or digit separators"
+            f"use digit separators such as {_digit_separated_literal(digits)} "
+            "or a named constant"
         )
     return warnings
+
+
+def _matching_cpp_delimiter(
+    code: str,
+    open_position: int,
+    opening: str,
+    closing: str,
+) -> int | None:
+    depth = 0
+    for position in range(open_position, len(code)):
+        char = code[position]
+        if char == opening:
+            depth += 1
+        elif char == closing:
+            depth -= 1
+            if depth == 0:
+                return position
+    return None
+
+
+def _cpp_argument_count(arguments: str) -> int:
+    if not arguments.strip():
+        return 0
+    depth = 0
+    count = 1
+    for char in arguments:
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        elif char == "," and depth == 0:
+            count += 1
+    return count
 
 
 def _warnings_testlib_patterns(root: Path, source_path: Path, text: str) -> list[str]:
@@ -1128,6 +1172,31 @@ def _warnings_checker_source(root: Path, source_path: Path, text: str) -> list[s
             "pass explicit bounds or a lightweight testlib pattern"
         )
 
+    argument_code = _mask_cpp_strings(code)
+    bounded_read_re = re.compile(
+        r"\b(?:ouf|ans|in)\s*\.\s*"
+        r"(readInt|readLong|readDouble|readReal)\s*\("
+    )
+    for match in bounded_read_re.finditer(argument_code):
+        open_position = match.end() - 1
+        close_position = _matching_cpp_delimiter(
+            argument_code,
+            open_position,
+            "(",
+            ")",
+        )
+        if close_position is None:
+            continue
+        arguments = argument_code[open_position + 1 : close_position]
+        if _cpp_argument_count(arguments) != 2:
+            continue
+        line = _line_number(code, match.start())
+        warnings.append(
+            f"{rel_path}:{line}: {match.group(1)}(minValue, maxValue) on an "
+            "answer stream lacks a variable name; use "
+            f"{match.group(1)}(minValue, maxValue, variableName)"
+        )
+
     for match in re.finditer(r"\bquitf\s*\(\s*_pe\b", code):
         line = _line_number(code, match.start())
         warnings.append(f"{rel_path}:{line}: checker must not use the _pe verdict")
@@ -1142,6 +1211,103 @@ def _warnings_checker_source(root: Path, source_path: Path, text: str) -> list[s
             f"{rel_path}:{line}: quitf(_ok, ...) message should start with 'ok'"
         )
 
+    function_code = _mask_cpp_strings(code)
+    stream_function_re = re.compile(
+        r"(?m)^[ \t]*(?:[A-Za-z_][A-Za-z0-9_:<>,*&]*[ \t]+)+"
+        r"[A-Za-z_][A-Za-z0-9_]*[ \t]*\("
+        r"(?:(?![;{}]).)*?\bInStream\s*&\s*([A-Za-z_][A-Za-z0-9_]*)"
+        r"(?:(?![;{}]).)*?\)[ \t\r\n]*(?:const[ \t\r\n]*)?\{",
+        re.DOTALL,
+    )
+    seen_unqualified_quitf: set[int] = set()
+    for function_match in stream_function_re.finditer(function_code):
+        stream_name = function_match.group(1)
+        open_position = function_match.end() - 1
+        close_position = _matching_cpp_delimiter(
+            function_code,
+            open_position,
+            "{",
+            "}",
+        )
+        if close_position is None:
+            continue
+        body_start = open_position + 1
+        body = function_code[body_start:close_position]
+        for quit_match in re.finditer(r"(?<![.A-Za-z0-9_])quitf\s*\(", body):
+            offset = body_start + quit_match.start()
+            line = _line_number(code, offset)
+            if line in seen_unqualified_quitf:
+                continue
+            seen_unqualified_quitf.add(line)
+            warnings.append(
+                f"{rel_path}:{line}: suspicious unqualified quitf() inside an "
+                f"InStream reader; use {stream_name}.quitf()"
+            )
+
+    return warnings
+
+
+def _warnings_generator_sources(root: Path) -> list[str]:
+    warnings: list[str] = []
+    for source in _configured_generator_sources(root):
+        source_path = root / source
+        if not source_path.is_file():
+            continue
+        if source_path.suffix.lower() not in CPP_EXTENSIONS:
+            continue
+        try:
+            text = source_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        code = _mask_cpp_strings(_mask_cpp_comments(text))
+        rel_path = source
+        for match in re.finditer(
+            r"\b(?:(?:std\s*::\s*)?cout)\b[^;]*;",
+            code,
+            re.DOTALL,
+        ):
+            if len(re.findall(r"\brnd\s*\.\s*next\s*\(", match.group(0))) < 2:
+                continue
+            line = _line_number(code, match.start())
+            warnings.append(
+                f"{rel_path}:{line}: multiple rnd.next() calls in one output "
+                "expression have unspecified evaluation order; store each value "
+                "before writing it"
+            )
+    return warnings
+
+
+def _warnings_statement_typography(root: Path) -> list[str]:
+    warnings: list[str] = []
+    checks = [
+        (
+            root / "statement-sections" / "english" / "input.tex",
+            re.compile(r"\\(?:t|texttt)\s*\{"),
+            "monospaced",
+            "input",
+            "english",
+        ),
+        (
+            root / "statement-sections" / "chinese" / "legend.tex",
+            re.compile(r"\\(?:bf|textbf)\s*\{"),
+            "bold",
+            "legend",
+            "chinese",
+        ),
+    ]
+    for path, pattern, font_name, section, language in checks:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        text = re.sub(r"(?<!\\)%[^\n]*", "", text)
+        if not text.strip() or pattern.search(text):
+            continue
+        rel_path = path.relative_to(root).as_posix()
+        warnings.append(
+            f"{rel_path}: lack {font_name} font substrings in section "
+            f"'{section}' of {language} statement"
+        )
     return warnings
 
 
@@ -1305,7 +1471,9 @@ def validate(root: Path) -> tuple[list[str], list[str]]:
     warnings.extend(_warnings_completeness(root))
     warnings.extend(_warnings_package_assets(root))
     warnings.extend(_warnings_standard_sentences(root))
+    warnings.extend(_warnings_statement_typography(root))
     warnings.extend(_warnings_testlib_components(root))
+    warnings.extend(_warnings_generator_sources(root))
     warnings.extend(_warnings_judging_time(root))
     return errors, warnings
 

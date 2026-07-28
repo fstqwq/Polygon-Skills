@@ -57,6 +57,7 @@ class ComponentSanityTests(unittest.TestCase):
         self.assertIn("uses unsupported '+'", joined)
         self.assertIn("does not call inf.readEof()", joined)
         self.assertIn("decimal literal 1000000000 is 1e9", joined)
+        self.assertIn("1'000'000'000", joined)
 
     def test_warns_for_checker_format_reads_and_unbounded_tokens(self) -> None:
         warnings = self._component_warnings(
@@ -73,6 +74,27 @@ class ComponentSanityTests(unittest.TestCase):
         self.assertIn("checker uses readEoln()", joined)
         self.assertIn("readToken() is unbounded", joined)
         self.assertIn("message should start with 'ok'", joined)
+
+    def test_warns_for_checker_read_name_and_unqualified_stream_quitf(self) -> None:
+        warnings = self._component_warnings(
+            "checker",
+            '#include "testlib.h"\n'
+            "void readAns(InStream& stream) {\n"
+            '  int x = ouf.readInt(1, 100);\n'
+            '  quitf(_wa, "bad value");\n'
+            "}\n"
+            "int main(int argc, char* argv[]) {\n"
+            "  registerTestlibCmd(argc, argv);\n"
+            '  quitf(_ok, "ok");\n'
+            "}\n",
+        )
+        joined = "\n".join(warnings)
+        self.assertIn(
+            "readInt(minValue, maxValue, variableName)",
+            joined,
+        )
+        self.assertIn("use stream.quitf()", joined)
+        self.assertEqual(joined.count("suspicious unqualified quitf()"), 1)
 
     def test_skips_standard_checker_copy(self) -> None:
         standard_path = REVIEW_PATH.parent.parent / "polygon-checker" / "standard" / "wcmp.cpp"
