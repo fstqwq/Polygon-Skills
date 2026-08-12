@@ -17,18 +17,18 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
   --export-type "native"
 ```
 
-Use `--export-type "icpc"` for ICPC packages. Read `export_id` from the JSON result.
+Use `--export-type "icpc"` for ICPC packages. Read `job_id` from the JSON result.
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
   --problem "alice/aplusb" \
-  --export-id "exp-api-abc123"
+  --job-id "exp-api-abc123"
 ```
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-download \
   --problem "alice/aplusb" \
-  --export-id "exp-api-abc123" \
+  --job-id "exp-api-abc123" \
   --output "./alice/aplusb/temp/aplusb.zip"
 ```
 

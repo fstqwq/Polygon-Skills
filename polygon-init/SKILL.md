@@ -65,29 +65,27 @@ description: "Initialize a new problem repository from scratch."
 
 5. **Write config/problem.json** with the confirmed parameters. Refer to polygon-spec for the schema.
 
-6. **Write config/build.json** with no checker selected yet.
+6. **Write canonical config/build.json** with no optional component selected
+   yet:
 
-   For pass-fail problems:
    ```json
    {
-     "accepted_solution_source": "",
-     "validator_source": "",
-     "checker_source": "",
-     "generator_sources": []
+     "generator_sources": [],
+     "generator_runs": 3,
+     "generator_args": [],
+     "validator_args": [],
+     "checker_args": [],
+     "compile_jobs": 0,
+     "validate_jobs": 0,
+     "solve_jobs": 0,
+     "run_jobs": 0,
+     "run_timeout_sec": 30
    }
    ```
 
-   For interactive problems, do not create a checker and write:
-   ```json
-   {
-     "accepted_solution_source": "",
-     "validator_source": "",
-     "interactor_source": "",
-     "generator_sources": []
-   }
-   ```
-
-   Do not copy any standard checker during init. The checker remains empty until the user chooses one with `/polygon-checker`.
+   Do not write empty-string selection keys. Add `accepted_solution_source`,
+   `validator_source`, `checker_source`, or `interactor_source` only when the
+   referenced source exists. Do not copy any standard checker during init.
 
 7. **Write statement template files** (these are fixed boilerplate -- do not customize):
    - `statement/statements.ftl` -- copy from `<skills>/polygon-init/templates/statements.ftl`

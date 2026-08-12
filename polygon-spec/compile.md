@@ -24,9 +24,9 @@ Local compile/run results are sanity checks only. Timing-sensitive results depen
 
 Do not tune time limits, weaken tests, or modify the runtime environment based only on local timing. Final correctness and performance are determined by Polygon-Replica Verification on judgehost.
 
-## Best-effort policy
+## Environment policy
 
-Compilation is best-effort:
-- If `g++` is not found, try `wsl g++` (Windows with WSL)
-- If neither is available, **report to the user that local compilation was skipped** and proceed with the commit. The server will compile it later.
-- Do not block the workflow on compilation failure.
+Use only the execution environment the user selected. Do not silently switch
+to WSL, another compiler, another interpreter, or another host. If the selected
+environment lacks `g++`, report that local compilation was skipped; online
+Polygon-Replica Verification remains authoritative.

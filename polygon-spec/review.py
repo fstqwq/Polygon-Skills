@@ -26,8 +26,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import shlex
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 VALID_MODES = {"pass-fail", "interactive"}
 VALID_KINDS = {"manual", "gen"}
@@ -39,9 +40,42 @@ VALID_EXPECTED = {
     "time_limit_exceeded",
     "run_time_error",
     "rejected",
+    "unknown",
 }
-TEST_ID_RE = re.compile(r"^[0-9]{3}$")
-SOURCE_PATH_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./-]{0,200}$")
+TEST_ID_RE = re.compile(r"^[0-9]{3,12}$")
+SOLUTION_EXTENSIONS = {".cpp", ".cc", ".cxx", ".c++", ".py", ".java"}
+CPP_EXTENSIONS = {".cpp", ".cc", ".cxx", ".c++"}
+PROBLEM_KEYS = {
+    "time_limit_ms",
+    "memory_limit_mb",
+    "mode",
+    "pass_limit",
+}
+BUILD_SELECTIONS = {
+    "accepted_solution_source": ("solutions", SOLUTION_EXTENSIONS, True),
+    "validator_source": ("validators", CPP_EXTENSIONS, False),
+    "checker_source": ("checkers", CPP_EXTENSIONS, False),
+    "interactor_source": ("interactors", CPP_EXTENSIONS, False),
+}
+BUILD_REQUIRED_KEYS = {
+    "generator_sources",
+    "generator_runs",
+    "generator_args",
+    "validator_args",
+    "checker_args",
+    "compile_jobs",
+    "validate_jobs",
+    "solve_jobs",
+    "run_jobs",
+    "run_timeout_sec",
+}
+BUILD_KEYS = BUILD_REQUIRED_KEYS | set(BUILD_SELECTIONS)
+SPEC_ENTRY_REQUIRED_KEYS = {"id", "kind", "sample"}
+SPEC_ENTRY_KEYS = SPEC_ENTRY_REQUIRED_KEYS | {
+    "sample_input",
+    "sample_output",
+    "sample_output_validate",
+}
 INCLUDEGRAPHICS_RE = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}")
 CPP_TOKEN_RE = re.compile(
     r'"(?:\\.|[^"\\])*"|'
@@ -51,6 +85,43 @@ CPP_TOKEN_RE = re.compile(
     re.DOTALL,
 )
 LONG_DECIMAL_RE = re.compile(r"(?<![A-Za-z0-9_'.])([1-9][0-9]{6,})(?:ULL|LLU|UL|LU|LL|L|U)?\b")
+
+
+class _DuplicateJsonKey(ValueError):
+    pass
+
+
+def _json_object_pairs(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    payload: dict[str, object] = {}
+    for key, value in pairs:
+        if key in payload:
+            raise _DuplicateJsonKey(key)
+        payload[key] = value
+    return payload
+
+
+def _read_json_object(path: Path, label: str) -> tuple[dict[str, object] | None, list[str]]:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return None, [f"{label}: must be UTF-8"]
+    except OSError as exc:
+        return None, [f"{label}: cannot read file -- {exc}"]
+    if not text.strip():
+        return None, [f"{label}: file is empty"]
+    try:
+        payload = json.loads(text, object_pairs_hook=_json_object_pairs)
+    except _DuplicateJsonKey as exc:
+        return None, [f"{label}: duplicate key '{exc.args[0]}'"]
+    except json.JSONDecodeError as exc:
+        return None, [
+            f"{label}: invalid JSON at line {exc.lineno} column {exc.colno}"
+        ]
+    if not isinstance(payload, dict):
+        return None, [f"{label}: must be a JSON object"]
+    return payload, []
 
 STANDARD_SENTENCE_RULES = [
     {
@@ -199,44 +270,73 @@ def _errors_problem_json(root: Path) -> list[str]:
     path = root / "config" / "problem.json"
     if not path.exists():
         return ["config/problem.json: file missing"]
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        return [f"config/problem.json: invalid JSON -- {exc}"]
-    if not isinstance(data, dict):
-        return ["config/problem.json: must be a JSON object"]
+    data, read_errors = _read_json_object(path, "config/problem.json")
+    if data is None:
+        return read_errors
     errors: list[str] = []
+    unknown = sorted(set(data) - PROBLEM_KEYS)
+    missing = sorted(PROBLEM_KEYS - set(data))
+    for key in unknown:
+        errors.append(f"config/problem.json: unsupported field '{key}'")
+    for key in missing:
+        errors.append(f"config/problem.json: missing required field '{key}'")
     mode = data.get("mode")
-    if mode is None:
-        errors.append("config/problem.json: missing required field 'mode'")
-    elif mode not in VALID_MODES:
+    if mode is not None and mode not in VALID_MODES:
         errors.append(f"config/problem.json: invalid mode '{mode}' (expected {VALID_MODES})")
     pass_limit = data.get("pass_limit")
-    if pass_limit is None:
-        errors.append("config/problem.json: missing required field 'pass_limit'")
-    elif not isinstance(pass_limit, int) or pass_limit < 1:
-        errors.append(f"config/problem.json: pass_limit must be int >= 1, got {pass_limit!r}")
+    if pass_limit is not None and (
+        isinstance(pass_limit, bool)
+        or not isinstance(pass_limit, int)
+        or not 1 <= pass_limit <= 64
+    ):
+        errors.append(f"config/problem.json: pass_limit must be int 1..64, got {pass_limit!r}")
     tl = data.get("time_limit_ms")
-    if tl is not None and (not isinstance(tl, int) or tl <= 0):
-        errors.append(f"config/problem.json: time_limit_ms must be int > 0, got {tl!r}")
+    if tl is not None and (
+        isinstance(tl, bool) or not isinstance(tl, int) or not 100 <= tl <= 30000
+    ):
+        errors.append(f"config/problem.json: time_limit_ms must be int 100..30000, got {tl!r}")
     ml = data.get("memory_limit_mb")
-    if ml is not None and (not isinstance(ml, int) or ml <= 0):
-        errors.append(f"config/problem.json: memory_limit_mb must be int > 0, got {ml!r}")
+    if ml is not None and (
+        isinstance(ml, bool) or not isinstance(ml, int) or not 1 <= ml <= 2048
+    ):
+        errors.append(f"config/problem.json: memory_limit_mb must be int 1..2048, got {ml!r}")
     return errors
 
 
-def _check_source_path(root: Path, path_value: str, field: str, config_file: str) -> list[str]:
+def _check_source_path(
+    root: Path,
+    path_value: str,
+    field: str,
+    config_file: str,
+    *,
+    expected_root: str,
+    extensions: set[str],
+    direct_child: bool = False,
+) -> list[str]:
     """Validate a repo-relative source path: format + existence."""
-    if not path_value:
-        return []
     errors: list[str] = []
-    if not SOURCE_PATH_RE.fullmatch(path_value):
-        errors.append(f"{config_file}: {field} has invalid path format '{path_value}'")
+    if not path_value or path_value != path_value.strip() or "\\" in path_value:
+        errors.append(f"{config_file}: {field} must be a non-empty normalized path")
         return errors
-    if ".." in path_value or path_value.startswith("/"):
-        errors.append(f"{config_file}: {field} must be repo-relative, got '{path_value}'")
+    parts = path_value.split("/")
+    path = PurePosixPath(path_value)
+    if (
+        path.is_absolute()
+        or path.as_posix() != path_value
+        or any(part in {"", ".", ".."} for part in parts)
+        or parts[0] != expected_root
+        or len(parts) < 2
+    ):
+        errors.append(f"{config_file}: {field} must be below {expected_root}/")
         return errors
-    if not (root / path_value).exists():
+    if direct_child and len(parts) != 2:
+        errors.append(f"{config_file}: {field} must be directly below {expected_root}/")
+        return errors
+    if path.suffix.lower() not in extensions:
+        errors.append(f"{config_file}: {field} has unsupported source extension")
+        return errors
+    source = root / path_value
+    if source.is_symlink() or not source.is_file():
         errors.append(f"{config_file}: {field} references missing file '{path_value}'")
     return errors
 
@@ -244,57 +344,101 @@ def _check_source_path(root: Path, path_value: str, field: str, config_file: str
 def _errors_build_json(root: Path) -> list[str]:
     path = root / "config" / "build.json"
     if not path.exists():
-        return []
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        return [f"config/build.json: invalid JSON -- {exc}"]
-    if not isinstance(data, dict):
-        return ["config/build.json: must be a JSON object"]
+        return ["config/build.json: file missing"]
+    data, read_errors = _read_json_object(path, "config/build.json")
+    if data is None:
+        return read_errors
     errors: list[str] = []
-    source_fields = ["accepted_solution_source", "validator_source", "checker_source", "interactor_source"]
-    for field in source_fields:
-        value = data.get(field)
-        if value is not None:
-            if not isinstance(value, str):
-                errors.append(f"config/build.json: {field} must be a string")
-            else:
-                errors.extend(_check_source_path(root, value, field, "config/build.json"))
+    for key in sorted(set(data) - BUILD_KEYS):
+        errors.append(f"config/build.json: unsupported field '{key}'")
+    for key in sorted(BUILD_REQUIRED_KEYS - set(data)):
+        errors.append(f"config/build.json: missing required field '{key}'")
+    for field, (expected_root, extensions, direct_child) in BUILD_SELECTIONS.items():
+        if field not in data:
+            continue
+        value = data[field]
+        if not isinstance(value, str):
+            errors.append(f"config/build.json: {field} must be a string")
+            continue
+        errors.extend(
+            _check_source_path(
+                root,
+                value,
+                field,
+                "config/build.json",
+                expected_root=expected_root,
+                extensions=extensions,
+                direct_child=direct_child,
+            )
+        )
     gen = data.get("generator_sources")
-    if gen is not None:
-        if not isinstance(gen, list):
-            errors.append("config/build.json: generator_sources must be an array")
-        else:
-            for i, item in enumerate(gen):
-                if not isinstance(item, str):
-                    errors.append(f"config/build.json: generator_sources[{i}] must be a string")
-                else:
-                    errors.extend(_check_source_path(root, item, f"generator_sources[{i}]", "config/build.json"))
+    if gen is not None and not isinstance(gen, list):
+        errors.append("config/build.json: generator_sources must be an array")
+    elif isinstance(gen, list):
+        seen_generators: set[str] = set()
+        for i, item in enumerate(gen):
+            if not isinstance(item, str):
+                errors.append(f"config/build.json: generator_sources[{i}] must be a string")
+                continue
+            errors.extend(
+                _check_source_path(
+                    root,
+                    item,
+                    f"generator_sources[{i}]",
+                    "config/build.json",
+                    expected_root="generators",
+                    extensions=SOLUTION_EXTENSIONS,
+                )
+            )
+            if item in seen_generators:
+                errors.append(f"config/build.json: duplicate generator source '{item}'")
+            seen_generators.add(item)
+    for field in ("generator_args", "validator_args", "checker_args"):
+        value = data.get(field)
+        if value is not None and (
+            not isinstance(value, list)
+            or any(not isinstance(item, str) for item in value)
+        ):
+            errors.append(f"config/build.json: {field} must be an array of strings")
+    for field, minimum, maximum in (
+        ("generator_runs", 0, 4096),
+        ("compile_jobs", 0, 16),
+        ("validate_jobs", 0, 16),
+        ("solve_jobs", 0, 16),
+        ("run_jobs", 0, 16),
+        ("run_timeout_sec", 1, 300),
+    ):
+        value = data.get(field)
+        if value is not None and (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or not minimum <= value <= maximum
+        ):
+            errors.append(
+                f"config/build.json: {field} must be int {minimum}..{maximum}"
+            )
     mode = _read_valid_problem_mode(root)
-    checker_source = data.get("checker_source", "")
-    interactor_source = data.get("interactor_source", "")
+    checker_source = data.get("checker_source")
+    interactor_source = data.get("interactor_source")
     if mode == "pass-fail":
-        if isinstance(checker_source, str) and checker_source != "" and not checker_source.startswith("checkers/"):
-            errors.append("config/build.json: checker_source must be under checkers/ for pass-fail problems")
-        if isinstance(interactor_source, str) and interactor_source != "":
-            errors.append("config/build.json: interactor_source must be empty for pass-fail problems")
+        if interactor_source is not None:
+            errors.append("config/build.json: interactor_source is invalid for pass-fail problems")
     elif mode == "interactive":
-        if isinstance(checker_source, str) and checker_source != "":
-            errors.append("config/build.json: checker_source must be empty for interactive problems")
+        if checker_source is not None:
+            errors.append("config/build.json: checker_source is invalid for interactive problems")
     return errors
 
 
 def _errors_spec_json(root: Path) -> list[str]:
     path = root / "tests" / "spec.json"
     if not path.exists():
-        return []
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        return [f"tests/spec.json: invalid JSON -- {exc}"]
-    if not isinstance(data, dict):
-        return ["tests/spec.json: must be a JSON object"]
+        return ["tests/spec.json: file missing"]
+    data, read_errors = _read_json_object(path, "tests/spec.json")
+    if data is None:
+        return read_errors
     errors: list[str] = []
+    for key in sorted(set(data) - {"tests"}):
+        errors.append(f"tests/spec.json: unsupported field '{key}'")
     tests = data.get("tests")
     if tests is None:
         errors.append("tests/spec.json: missing 'tests' array")
@@ -308,37 +452,94 @@ def _errors_spec_json(root: Path) -> list[str]:
         if not isinstance(entry, dict):
             errors.append(f"{prefix}: must be an object")
             continue
+        for key in sorted(set(entry) - SPEC_ENTRY_KEYS):
+            errors.append(f"{prefix}: unsupported field '{key}'")
+        for key in sorted(SPEC_ENTRY_REQUIRED_KEYS - set(entry)):
+            errors.append(f"{prefix}: missing '{key}'")
         tid = entry.get("id")
-        if tid is None:
-            errors.append(f"{prefix}: missing 'id'")
-        elif not isinstance(tid, str) or not TEST_ID_RE.fullmatch(tid):
-            errors.append(f"{prefix}: id must be 3-digit string, got {tid!r}")
-        else:
+        if tid is not None and (
+            not isinstance(tid, str) or not TEST_ID_RE.fullmatch(tid)
+        ):
+            errors.append(f"{prefix}: id must be a 3-12 digit string, got {tid!r}")
+        elif isinstance(tid, str):
             if tid in seen_ids:
                 errors.append(f"{prefix}: duplicate id '{tid}'")
             seen_ids.add(tid)
         kind = entry.get("kind")
-        if kind is None:
-            errors.append(f"{prefix}: missing 'kind'")
-        elif kind not in VALID_KINDS:
+        if kind is not None and kind not in VALID_KINDS:
             errors.append(f"{prefix}: invalid kind '{kind}' (expected {VALID_KINDS})")
         sample = entry.get("sample")
-        if sample is not None and not isinstance(sample, bool):
+        if "sample" in entry and not isinstance(sample, bool):
             errors.append(f"{prefix}: 'sample' must be a boolean")
+        for field in ("sample_input", "sample_output"):
+            if field in entry and not isinstance(entry[field], str):
+                errors.append(f"{prefix}: '{field}' must be a string")
+        if "sample_output_validate" in entry and not isinstance(
+            entry["sample_output_validate"], bool
+        ):
+            errors.append(f"{prefix}: 'sample_output_validate' must be a boolean")
         if kind == "manual" and isinstance(tid, str) and TEST_ID_RE.fullmatch(tid):
             manual_path = root / "tests" / "manual" / f"{tid}.in"
-            if not manual_path.exists():
+            if manual_path.is_symlink() or not manual_path.is_file():
                 errors.append(f"{prefix}: manual test file 'tests/manual/{tid}.in' missing")
+            else:
+                try:
+                    manual_text = manual_path.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    errors.append(f"{prefix}: manual test input must be UTF-8")
+                except OSError as exc:
+                    errors.append(f"{prefix}: cannot read manual test input -- {exc}")
+                else:
+                    if "\r" in manual_text:
+                        errors.append(f"{prefix}: manual test input must use LF newlines")
+                    if not manual_text.endswith("\n") or manual_text.endswith("\n\n"):
+                        errors.append(
+                            f"{prefix}: manual test input must end with exactly one newline"
+                        )
+                    if any(line.endswith((" ", "\t")) for line in manual_text.splitlines()):
+                        errors.append(
+                            f"{prefix}: manual test input lines must not have trailing whitespace"
+                        )
         if kind == "gen" and isinstance(tid, str) and TEST_ID_RE.fullmatch(tid):
             gen_path = root / "tests" / "generator" / f"{tid}.in"
-            if not gen_path.exists():
+            if gen_path.is_symlink() or not gen_path.is_file():
                 errors.append(f"{prefix}: generator payload file 'tests/generator/{tid}.in' missing")
-    id_list = sorted(seen_ids)
-    for j, tid in enumerate(id_list):
-        expected = f"{j + 1:03d}"
-        if tid != expected:
-            errors.append(f"tests/spec.json: ids not sequential -- expected '{expected}', got '{tid}'")
-            break
+            else:
+                try:
+                    command = gen_path.read_text(encoding="utf-8").strip()
+                    tokens = shlex.split(command, posix=True)
+                except UnicodeDecodeError:
+                    errors.append(f"{prefix}: generator payload must be UTF-8")
+                    tokens = []
+                except (OSError, ValueError) as exc:
+                    errors.append(f"{prefix}: invalid generator command -- {exc}")
+                    tokens = []
+                if not tokens:
+                    errors.append(f"{prefix}: generator command is required")
+                else:
+                    build_path = root / "config" / "build.json"
+                    try:
+                        build = json.loads(build_path.read_text(encoding="utf-8"))
+                    except (json.JSONDecodeError, OSError):
+                        build = {}
+                    configured = (
+                        build.get("generator_sources", [])
+                        if isinstance(build, dict)
+                        else []
+                    )
+                    if isinstance(configured, list):
+                        matches = _generator_source_matches(
+                            tokens[0],
+                            [item for item in configured if isinstance(item, str)],
+                        )
+                        if not matches:
+                            errors.append(
+                                f"{prefix}: generator source is not selected: {tokens[0]}"
+                            )
+                        elif len(matches) > 1:
+                            errors.append(
+                                f"{prefix}: generator source is ambiguous: {tokens[0]}"
+                            )
     answers_dir = root / "tests" / "answers"
     if answers_dir.exists():
         errors.append("tests/answers/: committed answer files are not allowed")
@@ -350,13 +551,49 @@ def _errors_spec_json(root: Path) -> list[str]:
     return errors
 
 
+def _generator_source_matches(token: str, configured: list[str]) -> list[str]:
+    raw = token.replace("\\", "/")
+    while raw.startswith("./"):
+        raw = raw[2:]
+    if not raw or any(part in {"", ".", ".."} for part in raw.split("/")):
+        return []
+    token_path = PurePosixPath(raw)
+    matches: list[str] = []
+    for source in configured:
+        source_path = PurePosixPath(source)
+        without_root = source.removeprefix("generators/")
+        suffix_length = len(source_path.suffix)
+        source_without_suffix = source[:-suffix_length] if suffix_length else source
+        without_root_suffix = (
+            without_root[:-suffix_length] if suffix_length else without_root
+        )
+        if raw in {source, without_root, source_without_suffix, without_root_suffix}:
+            matches.append(source)
+        elif "/" not in raw and (
+            token_path.name == source_path.name
+            or (not token_path.suffix and token_path.name == source_path.stem)
+        ):
+            matches.append(source)
+    return list(dict.fromkeys(matches))
+
+
 def _errors_solution_descs(root: Path) -> list[str]:
     solutions_dir = root / "solutions"
     if not solutions_dir.is_dir():
         return []
     errors: list[str] = []
+    source_names = {
+        entry.name
+        for entry in solutions_dir.iterdir()
+        if entry.is_file() and not entry.is_symlink()
+        and entry.suffix.lower() in SOLUTION_EXTENSIONS
+    }
+    for source_name in sorted(source_names):
+        descriptor = solutions_dir / f"{source_name}.desc"
+        if not descriptor.is_file() or descriptor.is_symlink():
+            errors.append(f"solutions/{source_name}.desc: required descriptor is missing")
     for entry in sorted(solutions_dir.iterdir()):
-        if not entry.name.endswith(".desc") or not entry.is_file():
+        if not entry.name.endswith(".desc") or not entry.is_file() or entry.is_symlink():
             continue
         rel = f"solutions/{entry.name}"
         try:
@@ -364,20 +601,53 @@ def _errors_solution_descs(root: Path) -> list[str]:
         except OSError:
             errors.append(f"{rel}: unreadable")
             continue
-        expected_value = ""
-        for line in text.splitlines():
-            line = line.strip()
-            if line.startswith("expected:"):
-                expected_value = line.split(":", 1)[1].strip()
-                break
-        if not expected_value:
+        expected_value: str | None = None
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            if not line:
+                continue
+            if ":" not in line:
+                errors.append(f"{rel}:{line_number}: expected 'key: value'")
+                continue
+            key, value = line.split(":", 1)
+            key = key.strip()
+            value = value.strip()
+            if key == "expected":
+                if expected_value is not None:
+                    errors.append(f"{rel}:{line_number}: duplicate expected field")
+                elif value not in VALID_EXPECTED:
+                    errors.append(f"{rel}: invalid expected value '{value}' (valid: {VALID_EXPECTED})")
+                else:
+                    expected_value = value
+            elif key == "note":
+                if not value:
+                    errors.append(f"{rel}:{line_number}: note must not be empty")
+            else:
+                errors.append(f"{rel}:{line_number}: unsupported key '{key}'")
+        if expected_value is None:
             errors.append(f"{rel}: missing 'expected:' line")
-        elif expected_value not in VALID_EXPECTED:
-            errors.append(f"{rel}: invalid expected value '{expected_value}' (valid: {VALID_EXPECTED})")
         source_name = entry.name[: -len(".desc")]
         source_path = solutions_dir / source_name
         if not source_path.exists():
             errors.append(f"{rel}: source file 'solutions/{source_name}' missing")
+    build_path = root / "config" / "build.json"
+    try:
+        build = json.loads(build_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        build = {}
+    accepted = build.get("accepted_solution_source") if isinstance(build, dict) else None
+    if isinstance(accepted, str):
+        descriptor = solutions_dir / f"{Path(accepted).name}.desc"
+        try:
+            descriptor_text = descriptor.read_text(encoding="utf-8")
+        except OSError:
+            descriptor_text = ""
+        if not any(
+            line.strip() == "expected: accepted"
+            for line in descriptor_text.splitlines()
+        ):
+            errors.append(
+                "config/build.json: accepted_solution_source descriptor must use expected: accepted"
+            )
     return errors
 
 

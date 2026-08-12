@@ -16,6 +16,9 @@ This skill provides the shared command-line entrypoint used by:
 - `polygon-agent-export`
 - `polygon-agent-commit`
 
+It also creates canonical empty remote problems before those per-problem
+workflows begin.
+
 Use the CLI instead of writing ad hoc Python, curl, or shell code for `/agent/v1/*`.
 For full local mirrors, prefer `clone` and `pull` over one-file-at-a-time reads.
 

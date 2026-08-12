@@ -6,6 +6,26 @@ user-invocable: false
 
 # Problem Repository Schemas
 
+## Canonical Source Rule
+
+Authoring and import are the only boundaries allowed to construct or normalize
+problem source. They must write the complete canonical files described by this
+skill. After that boundary, preview, verification, export, and contest build
+consume the same strict source model.
+
+- Never rely on a missing configuration file or field receiving a default at
+  read time.
+- Never write an unused source selection as an empty string; omit the optional
+  key.
+- Never rely on a conventional filename, directory scan, or list order to
+  select the accepted solution, checker, validator, interactor, or generator.
+- Never rely on a solution filename or directory name to infer expected
+  behavior. Every solution source has a canonical adjacent `.desc` file.
+- External Polygon/ICPC inputs may require best-effort inference, but the
+  importer must materialize its choices into canonical `problem.json`,
+  `build.json`, `tests/spec.json`, and `.desc` files before returning a
+  workspace.
+
 ## Repository Layout
 
 ```
@@ -50,7 +70,8 @@ temp/                   # throwaway test files (not committed, gitignored)
 - `draft/` is git-tracked but excluded from the zip package.
 - Pass-fail problems start with no checker selected. Once configured, `config/build.json` `checker_source` points to a file under `checkers/`.
 - Interactive problems use `interactor_source` instead and must not set `checker_source`.
-- Keep `config/build.json` keys in canonical schema order: `accepted_solution_source`, `validator_source`, `checker_source`, `interactor_source`, `generator_sources`.
+- Keep `config/build.json` keys in the canonical order documented in
+  `config.md`.
 - Write JSON and source files with LF line endings, not CRLF.
 - Do not store official answers in the source repository or package. There is no `tests/answers/` directory in the canonical layout; answers are produced by the verification/package pipeline from the accepted solution.
 

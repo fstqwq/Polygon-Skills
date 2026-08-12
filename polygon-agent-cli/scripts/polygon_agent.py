@@ -505,6 +505,29 @@ def _command_status(args: argparse.Namespace) -> JsonObject:
     }
 
 
+def _command_create(args: argparse.Namespace) -> JsonObject:
+    state_path = _resolve_state_file(args.state_file)
+    state = _load_json_file(state_path)
+    base_url = _state_string(state, "base_url")
+    session_id = _state_string(state, "agent_session_id")
+    identity_hash = _state_string(state, "identity_hash")
+    problem = str(args.problem or "").strip()
+    response = _http_json(
+        url=f"{base_url}/agent/v1/problems",
+        method="POST",
+        headers={"Content-Type": "application/json"},
+        body=_json_body(
+            {
+                "agent_session_id": session_id,
+                "identity_hash": identity_hash,
+                "problem": problem,
+            }
+        ),
+        verify_tls=bool(args.secure),
+    )
+    return {"problem": response.get("problem")}
+
+
 def _request_access(
     *,
     state_path: Path,
@@ -890,8 +913,6 @@ def _command_verify_detail(args: argparse.Namespace) -> JsonObject:
 def _command_export_start(args: argparse.Namespace) -> JsonObject:
     def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
         payload: JsonObject = {"export_type": str(args.export_type)}
-        if args.verification_id:
-            payload["verification_id"] = str(args.verification_id)
         response = _http_json(
             url=f"{base_url}/agent/v1/export/start",
             method="POST",
@@ -900,7 +921,7 @@ def _command_export_start(args: argparse.Namespace) -> JsonObject:
             verify_tls=bool(args.secure),
         )
         return {
-            "export_id": response.get("export_id"),
+            "job_id": response.get("job_id"),
             "status": response.get("status"),
         }
 
@@ -909,11 +930,11 @@ def _command_export_start(args: argparse.Namespace) -> JsonObject:
 
 def _command_export_wait(args: argparse.Namespace) -> JsonObject:
     def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
-        export_id = str(args.export_id or "").strip()
+        job_id = str(args.job_id or "").strip()
 
         def fetcher() -> JsonObject:
             return _http_json(
-                url=f"{base_url}/agent/v1/export/{export_id}/status",
+                url=f"{base_url}/agent/v1/export/{job_id}/status",
                 method="GET",
                 headers=_auth_headers(token),
                 verify_tls=bool(args.secure),
@@ -921,12 +942,12 @@ def _command_export_wait(args: argparse.Namespace) -> JsonObject:
 
         response = _wait_for_status(
             fetcher=fetcher,
-            done_statuses={"ok", "failed"},
+            done_statuses={"succeeded", "failed"},
             interval_sec=float(args.interval_sec),
             timeout_sec=args.timeout_sec,
         )
         result: JsonObject = {
-            "export_id": response.get("export_id"),
+            "job_id": response.get("job_id"),
             "status": response.get("status"),
         }
         filename = response.get("filename")
@@ -941,16 +962,16 @@ def _command_export_download(args: argparse.Namespace) -> JsonObject:
     output = Path(str(args.output or "")).expanduser().resolve()
 
     def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
-        export_id = str(args.export_id or "").strip()
+        job_id = str(args.job_id or "").strip()
         payload = _http_binary(
-            url=f"{base_url}/agent/v1/export/{export_id}/download",
+            url=f"{base_url}/agent/v1/export/{job_id}/download",
             method="GET",
             headers=_auth_headers(token),
             verify_tls=bool(args.secure),
         )
         _atomic_write_bytes(output, payload)
         return {
-            "export_id": export_id,
+            "job_id": job_id,
             "output": str(output),
             "bytes_written": len(payload),
         }
@@ -1634,6 +1655,12 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_tls_flags(status_parser)
     status_parser.set_defaults(func=_command_status)
 
+    create_parser = subparsers.add_parser("create")
+    _add_state_file(create_parser)
+    _add_problem(create_parser)
+    _add_tls_flags(create_parser)
+    create_parser.set_defaults(func=_command_create)
+
     connect_parser = subparsers.add_parser("connect")
     _add_state_file(connect_parser)
     _add_problem(connect_parser)
@@ -1724,14 +1751,13 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_state_file(export_start_parser)
     _add_problem(export_start_parser)
     export_start_parser.add_argument("--export-type", required=True, choices=["native", "icpc"])
-    export_start_parser.add_argument("--verification-id")
     _add_tls_flags(export_start_parser)
     export_start_parser.set_defaults(func=_command_export_start)
 
     export_wait_parser = subparsers.add_parser("export-wait")
     _add_state_file(export_wait_parser)
     _add_problem(export_wait_parser)
-    export_wait_parser.add_argument("--export-id", required=True)
+    export_wait_parser.add_argument("--job-id", required=True)
     _add_wait_flags(export_wait_parser)
     _add_tls_flags(export_wait_parser)
     export_wait_parser.set_defaults(func=_command_export_wait)
@@ -1739,7 +1765,7 @@ def _build_parser() -> argparse.ArgumentParser:
     export_download_parser = subparsers.add_parser("export-download")
     _add_state_file(export_download_parser)
     _add_problem(export_download_parser)
-    export_download_parser.add_argument("--export-id", required=True)
+    export_download_parser.add_argument("--job-id", required=True)
     export_download_parser.add_argument("--output", required=True)
     _add_tls_flags(export_download_parser)
     export_download_parser.set_defaults(func=_command_export_download)

@@ -40,6 +40,17 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py status
 
 Checks the cached session with `/agent/v1/auth/status`.
 
+### Create Problem
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py create \
+  --problem "alice/aplusb"
+```
+
+Creates a canonical empty remote problem owned by the registered Agent user.
+The owner prefix must match that user. Creating the problem does not grant an
+Agent token; run `connect`, have the user approve access, then run `poll`.
+
 ### Connect
 
 ```bash
@@ -200,12 +211,14 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
   --export-type "native"
 ```
 
+Read `job_id` from the JSON result.
+
 ### Export Wait
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
   --problem "alice/aplusb" \
-  --export-id "exp-api-abc123"
+  --job-id "exp-api-abc123"
 ```
 
 ### Export Download
@@ -213,7 +226,7 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-download \
   --problem "alice/aplusb" \
-  --export-id "exp-api-abc123" \
+  --job-id "exp-api-abc123" \
   --output "./alice/aplusb/temp/aplusb.zip"
 ```
 
@@ -256,7 +269,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
 - `clone` and `pull` manage local Git commits as recovery boundaries.
 - `push` sends one full ZIP and uses server-side atomic apply.
 - Agent-managed UTF-8 text files are LF-canonical; binary files are preserved byte-for-byte.
-- `export-download` always requires `--output`.
+- Export commands use the server's `job_id` consistently. `export-download`
+  always requires `--output`.
 - Save one-off downloads, verification details, and exported ZIPs under the problem repo's `temp/` unless the file is intentionally becoming tracked workspace content.
 - Stateful commands use `--state-file` if provided; otherwise they use `./.polygon-agent/state.json` under the current working directory.
 - When saving a remote problem locally, use `./<owner>/<problem>/` as the default repo path.
