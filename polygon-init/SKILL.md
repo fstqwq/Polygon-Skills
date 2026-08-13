@@ -69,18 +69,7 @@ description: "Initialize a new problem repository from scratch."
    yet:
 
    ```json
-   {
-     "generator_sources": [],
-     "generator_runs": 3,
-     "generator_args": [],
-     "validator_args": [],
-     "checker_args": [],
-     "compile_jobs": 0,
-     "validate_jobs": 0,
-     "solve_jobs": 0,
-     "run_jobs": 0,
-     "run_timeout_sec": 30
-   }
+   {}
    ```
 
    Do not write empty-string selection keys. Add `accepted_solution_source`,

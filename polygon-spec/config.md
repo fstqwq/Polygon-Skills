@@ -28,17 +28,7 @@ new problem is created; readers never manufacture them.
 {
   "accepted_solution_source": "solutions/std.cpp",
   "validator_source": "validators/validator.cpp",
-  "checker_source": "checkers/wcmp.cpp",
-  "generator_sources": ["generators/gen.cpp"],
-  "generator_runs": 3,
-  "generator_args": [],
-  "validator_args": [],
-  "checker_args": [],
-  "compile_jobs": 0,
-  "validate_jobs": 0,
-  "solve_jobs": 0,
-  "run_jobs": 0,
-  "run_timeout_sec": 30
+  "checker_source": "checkers/wcmp.cpp"
 }
 ```
 
@@ -48,16 +38,6 @@ new problem is created; readers never manufacture them.
 | `validator_source` | string | optional path below `validators/` |
 | `checker_source` | string | optional path below `checkers/`; pass-fail only |
 | `interactor_source` | string | optional path below `interactors/`; interactive only |
-| `generator_sources` | array | required ordered paths below `generators/`; duplicates invalid |
-| `generator_runs` | int | required, 0..4096 |
-| `generator_args` | string array | required common generator arguments |
-| `validator_args` | string array | required validator arguments |
-| `checker_args` | string array | required checker arguments |
-| `compile_jobs` | int | required, 0..16; 0 selects the service default |
-| `validate_jobs` | int | required, 0..16; 0 selects the service default |
-| `solve_jobs` | int | required, 0..16; 0 selects the service default |
-| `run_jobs` | int | required, 0..16; 0 selects the service default |
-| `run_timeout_sec` | int | required, 1..300 |
 
 Rules:
 - All paths are repo-relative (e.g., `"solutions/std.cpp"`).
@@ -70,8 +50,8 @@ Rules:
   checker, and always omit `interactor_source`.
 - For interactive problems: set `interactor_source` and omit
   `checker_source`.
-- `accepted_solution_source` is the only accepted-solution selection. Its
-  adjacent descriptor must contain `expected: accepted`.
-- Runtime consumers never scan component directories or infer selections from
-  filenames. Importers may infer external intent once, then must write the
-  selected paths here.
+- `accepted_solution_source` is the only accepted-solution selection. It does
+  not require or rewrite an adjacent descriptor.
+- Runtime consumers never infer these four selections from component
+  directories or filenames. Generator resolution is separate: each generated
+  test command directly names one unambiguous source below `generators/`.

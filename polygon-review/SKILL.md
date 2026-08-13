@@ -100,7 +100,8 @@ Report: test count breakdown and coverage gaps.
 
 ### Step 6: Solution review
 
-Read `solutions/` and their `.desc` files.
+Read `solutions/` and the `.desc` files that exist. Treat missing descriptors as
+`unknown`, except that `accepted_solution_source` is always accepted.
 
 Check:
 - [ ] At least one `accepted` solution exists (`std.cpp`)

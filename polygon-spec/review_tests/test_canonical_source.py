@@ -34,20 +34,7 @@ class CanonicalSourceTests(unittest.TestCase):
             encoding="utf-8",
         )
         (root / "config/build.json").write_text(
-            json.dumps(
-                {
-                    "generator_sources": [],
-                    "generator_runs": 3,
-                    "generator_args": [],
-                    "validator_args": [],
-                    "checker_args": [],
-                    "compile_jobs": 0,
-                    "validate_jobs": 0,
-                    "solve_jobs": 0,
-                    "run_jobs": 0,
-                    "run_timeout_sec": 30,
-                }
-            ),
+            "{}\n",
             encoding="utf-8",
         )
         (root / "tests/spec.json").write_text(
@@ -71,36 +58,22 @@ class CanonicalSourceTests(unittest.TestCase):
                 '{"mode": "pass-fail", "pass_limit": 1}\n',
                 encoding="utf-8",
             )
-            (root / "config/build.json").write_text(
-                '{"generator_sources": []}\n',
-                encoding="utf-8",
-            )
             (root / "tests/spec.json").unlink()
 
             errors, _warnings = review.validate(root)
 
         joined = "\n".join(errors)
         self.assertIn("missing required field 'time_limit_ms'", joined)
-        self.assertIn("missing required field 'run_timeout_sec'", joined)
         self.assertIn("tests/spec.json: file missing", joined)
 
-    def test_solution_selection_and_behavior_are_explicit(self) -> None:
+    def test_solution_selection_is_explicit_and_descriptor_is_optional(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = self._root(directory)
             solution = root / "solutions/std.cpp"
             solution.write_text("int main(){}\n", encoding="utf-8")
 
-            errors = review._errors_solution_descs(root)
+            self.assertEqual(review._errors_solution_descs(root), [])
 
-            self.assertIn(
-                "solutions/std.cpp.desc: required descriptor is missing",
-                errors,
-            )
-
-            (root / "solutions/std.cpp.desc").write_text(
-                "expected: accepted\n",
-                encoding="utf-8",
-            )
             build = json.loads(
                 (root / "config/build.json").read_text(encoding="utf-8")
             )
@@ -115,6 +88,27 @@ class CanonicalSourceTests(unittest.TestCase):
         self.assertTrue(
             any("accepted_solution_source must be" in item for item in build_errors)
         )
+
+    def test_generator_command_resolves_source_without_build_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = self._root(directory)
+            (root / "generators").mkdir()
+            (root / "generators/gen.cpp").write_text(
+                "int main(){}\n",
+                encoding="utf-8",
+            )
+            (root / "tests/generator/001.in").write_text(
+                "gen 1\n",
+                encoding="utf-8",
+            )
+            (root / "tests/spec.json").write_text(
+                '{"tests":[{"id":"001","kind":"gen"}]}\n',
+                encoding="utf-8",
+            )
+
+            errors = review._errors_spec_json(root)
+
+        self.assertEqual(errors, [])
 
     def test_test_entries_require_canonical_types_and_payloads(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

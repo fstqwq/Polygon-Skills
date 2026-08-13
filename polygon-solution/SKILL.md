@@ -108,8 +108,10 @@ After auxiliary solutions are committed, ask the user which mode they prefer:
 Wait for the user to approve or redirect before writing code.
 
 - Filename: `solutions/std.cpp`
-- Expected: `accepted`
+- Expected: `accepted`, established by the build selection below
 - Update `config/build.json`: `"accepted_solution_source": "solutions/std.cpp"`
+- Do not create or rewrite `solutions/std.cpp.desc`; the explicit build
+  selection is authoritative.
 - Keep the main solution clear and asymptotically appropriate without relying on unusual constant-factor tricks. Target at most half of TL and half of ML under authoritative Verification.
 
 ### Step E: Language translations
@@ -232,7 +234,8 @@ Unless the user narrows the requested solution set, include at least one indepen
    - Short variable names are fine when conventional (`n`, `m`, `u`, `v`, `ans`, `dp`, `adj`).
    - Trust the input format. Do not write defensive I/O checks (e.g. `if (!(cin >> n))` is unnecessary -- just `cin >> n`).
 
-6. **Write the .desc file** alongside:
+6. **Record expected behavior.** For every non-main solution whose expected
+   behavior is known, write the adjacent `.desc` file:
    ```
    expected: accepted
    ```
@@ -245,13 +248,20 @@ Unless the user narrows the requested solution set, include at least one indepen
    - `run_time_error` -- expected to fail with RE
    - `rejected` -- generic negative solution; any non-AC failure is acceptable
 
+   Do not write a descriptor for an explicitly unclassified solution. Missing
+   means `unknown`. For the selected main correct solution, do not write a
+   descriptor: `accepted_solution_source` is the sole authority.
+
 7. **Show the code to the user** and wait for feedback before committing.
 
 8. **Update `draft/solutions.md`** (mark the step as `[x]`) and **commit**:
    ```
-   git add solutions/{name}.cpp solutions/{name}.cpp.desc config/build.json draft/solutions.md
+   git add solutions/{name}.cpp config/build.json draft/solutions.md
    git commit -m "solution: add {name} ({expected behavior})"
    ```
+
+   Add `solutions/{name}.cpp.desc` to the staging command when this procedure
+   created one.
 
    When a saved style reference was added or changed, stage its exact
    `draft/solution-style.<ext>` path in the same commit.

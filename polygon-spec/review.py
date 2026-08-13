@@ -9,7 +9,7 @@ Checks:
   - config/problem.json   (schema validation)
   - config/build.json     (schema + file references)
   - tests/spec.json       (schema + file existence)
-  - solutions/*.desc      (expected behavior + source existence)
+  - solutions/*.desc      (optional expected behavior + source existence)
   - statement-sections/   (required files and interaction layout)
   - standard sentences   (high-confidence English/Chinese wording checks)
   - validator/checker     (lightweight testlib API sanity checks)
@@ -57,20 +57,8 @@ BUILD_SELECTIONS = {
     "checker_source": ("checkers", CPP_EXTENSIONS, False),
     "interactor_source": ("interactors", CPP_EXTENSIONS, False),
 }
-BUILD_REQUIRED_KEYS = {
-    "generator_sources",
-    "generator_runs",
-    "generator_args",
-    "validator_args",
-    "checker_args",
-    "compile_jobs",
-    "validate_jobs",
-    "solve_jobs",
-    "run_jobs",
-    "run_timeout_sec",
-}
-BUILD_KEYS = BUILD_REQUIRED_KEYS | set(BUILD_SELECTIONS)
-SPEC_ENTRY_REQUIRED_KEYS = {"id", "kind", "sample"}
+BUILD_KEYS = set(BUILD_SELECTIONS)
+SPEC_ENTRY_REQUIRED_KEYS = {"id", "kind"}
 SPEC_ENTRY_KEYS = SPEC_ENTRY_REQUIRED_KEYS | {
     "sample_input",
     "sample_output",
@@ -351,8 +339,6 @@ def _errors_build_json(root: Path) -> list[str]:
     errors: list[str] = []
     for key in sorted(set(data) - BUILD_KEYS):
         errors.append(f"config/build.json: unsupported field '{key}'")
-    for key in sorted(BUILD_REQUIRED_KEYS - set(data)):
-        errors.append(f"config/build.json: missing required field '{key}'")
     for field, (expected_root, extensions, direct_child) in BUILD_SELECTIONS.items():
         if field not in data:
             continue
@@ -371,52 +357,6 @@ def _errors_build_json(root: Path) -> list[str]:
                 direct_child=direct_child,
             )
         )
-    gen = data.get("generator_sources")
-    if gen is not None and not isinstance(gen, list):
-        errors.append("config/build.json: generator_sources must be an array")
-    elif isinstance(gen, list):
-        seen_generators: set[str] = set()
-        for i, item in enumerate(gen):
-            if not isinstance(item, str):
-                errors.append(f"config/build.json: generator_sources[{i}] must be a string")
-                continue
-            errors.extend(
-                _check_source_path(
-                    root,
-                    item,
-                    f"generator_sources[{i}]",
-                    "config/build.json",
-                    expected_root="generators",
-                    extensions=SOLUTION_EXTENSIONS,
-                )
-            )
-            if item in seen_generators:
-                errors.append(f"config/build.json: duplicate generator source '{item}'")
-            seen_generators.add(item)
-    for field in ("generator_args", "validator_args", "checker_args"):
-        value = data.get(field)
-        if value is not None and (
-            not isinstance(value, list)
-            or any(not isinstance(item, str) for item in value)
-        ):
-            errors.append(f"config/build.json: {field} must be an array of strings")
-    for field, minimum, maximum in (
-        ("generator_runs", 0, 4096),
-        ("compile_jobs", 0, 16),
-        ("validate_jobs", 0, 16),
-        ("solve_jobs", 0, 16),
-        ("run_jobs", 0, 16),
-        ("run_timeout_sec", 1, 300),
-    ):
-        value = data.get(field)
-        if value is not None and (
-            isinstance(value, bool)
-            or not isinstance(value, int)
-            or not minimum <= value <= maximum
-        ):
-            errors.append(
-                f"config/build.json: {field} must be int {minimum}..{maximum}"
-            )
     mode = _read_valid_problem_mode(root)
     checker_source = data.get("checker_source")
     interactor_source = data.get("interactor_source")
@@ -517,29 +457,18 @@ def _errors_spec_json(root: Path) -> list[str]:
                 if not tokens:
                     errors.append(f"{prefix}: generator command is required")
                 else:
-                    build_path = root / "config" / "build.json"
-                    try:
-                        build = json.loads(build_path.read_text(encoding="utf-8"))
-                    except (json.JSONDecodeError, OSError):
-                        build = {}
-                    configured = (
-                        build.get("generator_sources", [])
-                        if isinstance(build, dict)
-                        else []
+                    matches = _generator_source_matches(
+                        tokens[0],
+                        _generator_source_paths(root),
                     )
-                    if isinstance(configured, list):
-                        matches = _generator_source_matches(
-                            tokens[0],
-                            [item for item in configured if isinstance(item, str)],
+                    if not matches:
+                        errors.append(
+                            f"{prefix}: generator source is missing: {tokens[0]}"
                         )
-                        if not matches:
-                            errors.append(
-                                f"{prefix}: generator source is not selected: {tokens[0]}"
-                            )
-                        elif len(matches) > 1:
-                            errors.append(
-                                f"{prefix}: generator source is ambiguous: {tokens[0]}"
-                            )
+                    elif len(matches) > 1:
+                        errors.append(
+                            f"{prefix}: generator source is ambiguous: {tokens[0]}"
+                        )
     answers_dir = root / "tests" / "answers"
     if answers_dir.exists():
         errors.append("tests/answers/: committed answer files are not allowed")
@@ -551,7 +480,20 @@ def _errors_spec_json(root: Path) -> list[str]:
     return errors
 
 
-def _generator_source_matches(token: str, configured: list[str]) -> list[str]:
+def _generator_source_paths(root: Path) -> list[str]:
+    generators_dir = root / "generators"
+    if not generators_dir.is_dir() or generators_dir.is_symlink():
+        return []
+    return [
+        path.relative_to(root).as_posix()
+        for path in sorted(generators_dir.rglob("*"))
+        if path.is_file()
+        and not path.is_symlink()
+        and path.suffix.lower() in SOLUTION_EXTENSIONS
+    ]
+
+
+def _generator_source_matches(token: str, sources: list[str]) -> list[str]:
     raw = token.replace("\\", "/")
     while raw.startswith("./"):
         raw = raw[2:]
@@ -559,7 +501,7 @@ def _generator_source_matches(token: str, configured: list[str]) -> list[str]:
         return []
     token_path = PurePosixPath(raw)
     matches: list[str] = []
-    for source in configured:
+    for source in sources:
         source_path = PurePosixPath(source)
         without_root = source.removeprefix("generators/")
         suffix_length = len(source_path.suffix)
@@ -582,16 +524,6 @@ def _errors_solution_descs(root: Path) -> list[str]:
     if not solutions_dir.is_dir():
         return []
     errors: list[str] = []
-    source_names = {
-        entry.name
-        for entry in solutions_dir.iterdir()
-        if entry.is_file() and not entry.is_symlink()
-        and entry.suffix.lower() in SOLUTION_EXTENSIONS
-    }
-    for source_name in sorted(source_names):
-        descriptor = solutions_dir / f"{source_name}.desc"
-        if not descriptor.is_file() or descriptor.is_symlink():
-            errors.append(f"solutions/{source_name}.desc: required descriptor is missing")
     for entry in sorted(solutions_dir.iterdir()):
         if not entry.name.endswith(".desc") or not entry.is_file() or entry.is_symlink():
             continue
@@ -629,25 +561,6 @@ def _errors_solution_descs(root: Path) -> list[str]:
         source_path = solutions_dir / source_name
         if not source_path.exists():
             errors.append(f"{rel}: source file 'solutions/{source_name}' missing")
-    build_path = root / "config" / "build.json"
-    try:
-        build = json.loads(build_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        build = {}
-    accepted = build.get("accepted_solution_source") if isinstance(build, dict) else None
-    if isinstance(accepted, str):
-        descriptor = solutions_dir / f"{Path(accepted).name}.desc"
-        try:
-            descriptor_text = descriptor.read_text(encoding="utf-8")
-        except OSError:
-            descriptor_text = ""
-        if not any(
-            line.strip() == "expected: accepted"
-            for line in descriptor_text.splitlines()
-        ):
-            errors.append(
-                "config/build.json: accepted_solution_source descriptor must use expected: accepted"
-            )
     return errors
 
 
@@ -1202,11 +1115,10 @@ def _component_status(root: Path) -> dict[str, str]:
         else:
             status[label] = "not configured"
 
-    gen_sources = build.get("generator_sources", [])
-    if isinstance(gen_sources, list) and gen_sources:
-        status["generators"] = ", ".join(str(g) for g in gen_sources)
-    else:
-        status["generators"] = "none"
+    generator_sources = _generator_source_paths(root)
+    status["generators"] = (
+        ", ".join(generator_sources) if generator_sources else "none"
+    )
 
     spec_path = root / "tests" / "spec.json"
     if spec_path.exists():

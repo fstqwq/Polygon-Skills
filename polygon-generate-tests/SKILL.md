@@ -207,7 +207,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
    ```
    Ordinary non-interactive sample tests: `"sample": true`, omit `sample_input`/`sample_output`. The statement uses the real `tests/manual/{id}.in`, and displayed output comes from generated official answers.
    Only add `sample_input`/`sample_output` when the statement must override the displayed sample text, such as interactive problems, spoiler-sensitive samples, or cleaner fixed-format presentation.
-   Non-sample manual tests: `"sample": false`, omit `sample_input`/`sample_output`.
+   Non-sample manual tests: omit `sample`, `sample_input`, and `sample_output`.
 
 ### Generated tests
 
@@ -226,12 +226,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
    Generator style is independent of solution style: follow the testlib component conventions,
    with no comments and no `return 0;`. Do not copy `draft/solution-style.<ext>` into generators.
 
-2. **Register in config/build.json**:
-   ```json
-   "generator_sources": ["generators/gen_random.cpp"]
-   ```
-
-3. **Wire into spec.json** and **create the generator payload file**:
+2. **Wire into spec.json** and **create the generator payload file**:
 
    Add the entry to `tests/spec.json`:
    ```json
@@ -249,7 +244,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
 
    Give every random/stress payload an explicit seed, but do not require repeated payloads with the same parameter shape. Prefer distinct modes and shapes. For boundary-sensitive dimensions, include both exact and off-by-one values such as `N-1`, `N`, `M-1`, `M`, `max_value-1`, and `max_value`.
 
-4. **Compile (best-effort**, see `polygon-spec/compile.md`):
+3. **Compile (best-effort**, see `polygon-spec/compile.md`):
    ```
    mkdir -p temp
    g++ -std=c++20 -O2 -o temp/gen generators/{name}.cpp -I <skills>/polygon-spec
@@ -258,7 +253,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
 ### Commit
 
 ```
-git add tests/ generators/ config/build.json draft/tests.md
+git add tests/ generators/ draft/tests.md
 git commit -m "tests: add {description}"
 ```
 
@@ -267,7 +262,8 @@ git commit -m "tests: add {description}"
 ## Section D: Reviewing tests
 
 If the user asks to see current tests:
-1. Read `tests/spec.json` and list all tests with their IDs, kind, and sample flag.
+1. Read `tests/spec.json` and list all tests with their IDs, kind, and effective
+   sample flag; absence means `false`.
 2. For manual tests, show `tests/manual/{id}.in` and any `sample_output` override from `tests/spec.json`.
 3. For gen tests, show the gen command.
 4. Report coverage: how many samples, edge cases, stress, anti-hack, max-stress.

@@ -17,14 +17,16 @@ consume the same strict source model.
   read time.
 - Never write an unused source selection as an empty string; omit the optional
   key.
-- Never rely on a conventional filename, directory scan, or list order to
-  select the accepted solution, checker, validator, interactor, or generator.
+- Select the accepted solution, checker, validator, and interactor explicitly
+  in `build.json`. Generator commands instead resolve their first token
+  directly against source files below `generators/`.
 - Never rely on a solution filename or directory name to infer expected
-  behavior. Every solution source has a canonical adjacent `.desc` file.
+  behavior. A solution without an adjacent `.desc` is explicitly unclassified;
+  the selected accepted solution is accepted regardless of its descriptor.
 - External Polygon/ICPC inputs may require best-effort inference, but the
   importer must materialize its choices into canonical `problem.json`,
-  `build.json`, `tests/spec.json`, and `.desc` files before returning a
-  workspace.
+  `build.json` and `tests/spec.json` before returning a workspace, and write
+  `.desc` files only for expected behavior that is known and useful.
 
 ## Repository Layout
 
@@ -36,7 +38,7 @@ checkers/               # pass-fail checker sources after configured
 validators/             # input validator sources
 interactors/            # interactor sources (interactive problems)
 generators/             # generator sources
-solutions/              # solution sources + .desc files
+solutions/              # solution sources + optional .desc files
 statement-assets/       # shared statement build assets and their editable sources
 attachments/            # contestant-downloadable files (testing tools, templates)
 statement/
