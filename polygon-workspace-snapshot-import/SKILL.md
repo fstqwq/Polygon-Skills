@@ -1,9 +1,9 @@
 ---
-name: polygon-local-import
-description: "Import a local native zip file into a problem repository."
+name: polygon-workspace-snapshot-import
+description: "Restore a Workspace snapshot ZIP into a local problem repository."
 ---
 
-# Import Local Problem Zip
+# Restore a Workspace Snapshot
 
 ## Procedure
 
@@ -54,4 +54,4 @@ description: "Import a local native zip file into a problem repository."
 - Always confirm before overwriting an existing repo.
 - Preserve `.git/`, `temp/`, and `draft/` on overwrite -- they are local-only.
 - After import, all zip contents must be committed.
-- The zip file must contain `config/problem.json` to be recognized as native.
+- The snapshot must contain `config/problem.json` to identify its authored problem source.

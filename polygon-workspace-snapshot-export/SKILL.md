@@ -1,9 +1,9 @@
 ---
-name: polygon-local-export
-description: "Create a local native zip file from the current problem repository."
+name: polygon-workspace-snapshot-export
+description: "Create a Workspace snapshot ZIP from the current problem repository."
 ---
 
-# Export Local Problem Zip
+# Export a Workspace Snapshot
 
 ## Procedure
 
@@ -20,13 +20,13 @@ description: "Create a local native zip file from the current problem repository
    zip -r temp/{slug}.zip . -x ".git/*" -x "temp/*" -x "draft/*" -x ".*" -x "*/.*"
    ```
    - The zip root must directly contain `config/`, `tests/`, `solutions/`, etc. -- no wrapper directory.
-   - `config/problem.json` at the zip root is how the import system detects this as a native zip file.
+   - `config/problem.json` at the zip root identifies an authored problem Workspace snapshot.
    - `.git/`, `temp/`, `draft/`, and hidden dot-paths are excluded.
 
 3. **Report to the user**:
    - Path to the zip file
    - Summary from the review (number of tests, solutions, components present)
-   - "You can import this zip file into Polygon-Replica via the Import page."
+   - "You can restore this Workspace snapshot through Polygon-Replica's Import page."
 
 ## Rules
 

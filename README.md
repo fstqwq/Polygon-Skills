@@ -53,9 +53,9 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-solution` | "write solutions" | Brute force -> WA traps -> std -> translations |
 | `polygon-hack` | "hack the problem" | Generate targeted wrong solutions and tests that reject them |
 | `polygon-generate-tests` | "create tests" | Design test plan -> implement test suite |
-| `polygon-review` | "review the problem" | End-to-end audit before local zip creation |
-| `polygon-local-export` | "create a local zip file" | Zip the working tree as a native zip file |
-| `polygon-local-import` | "import a local zip file" | Unzip a native zip file into a local repo |
+| `polygon-review` | "review the problem" | End-to-end audit before sharing a Workspace snapshot |
+| `polygon-workspace-snapshot-export` | "create a Workspace snapshot" | Zip authored working-tree source for transfer |
+| `polygon-workspace-snapshot-import` | "restore a Workspace snapshot" | Restore authored source into a local repo |
 
 ## Agent Skills
 
@@ -79,8 +79,8 @@ polygon-checker        -> pick or write the checker
 polygon-solution       -> write solutions (brute, WA, std)
 polygon-hack           -> generate targeted wrong solutions and hack tests
 polygon-generate-tests -> design and create tests
-polygon-review         -> audit everything
-polygon-local-export   -> create a local zip file for upload
+polygon-review                   -> audit everything
+polygon-workspace-snapshot-export -> create a Workspace snapshot for transfer
 ```
 
 ## Shared resources
@@ -114,5 +114,5 @@ Skills are skeptical by default. Preserve the problem-setting standard instead o
 - Skills reference each other by name (e.g., "see `/polygon-solution`").
 - When materializing a remote Polygon problem locally, use `./<owner>/<problem>/` as the default repo path.
   Example: `./fstqwq/a-plus-b/`, not `./a-plus-b/`.
-- `draft/` is for working files (plans, reviews). Not exported.
-- All local scratch, compile outputs, downloaded artifacts, generated diagnostics, and throwaway test programs must live under `temp/`. `temp/` is not exported or committed.
+- `draft/` is for working files (plans, reviews). It is not included in Workspace snapshots.
+- All local scratch, compile outputs, downloaded artifacts, generated diagnostics, and throwaway test programs must live under `temp/`. `temp/` is not included in Workspace snapshots or committed.

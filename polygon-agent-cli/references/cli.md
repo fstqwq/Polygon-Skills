@@ -208,10 +208,12 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py verify-detail \
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
   --problem "alice/aplusb" \
-  --export-type "native"
+  --format "domjudge"
 ```
 
-Read `job_id` from the JSON result.
+The only accepted formats are `domjudge` and `icpc-2025-09`. The command
+always targets the latest published revision captured by the server when the
+job starts. Read `job_id` from the JSON result.
 
 ### Export Wait
 

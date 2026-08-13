@@ -1,6 +1,6 @@
 ---
 name: polygon-agent-export
-description: "Export and download Polygon problem packages through the agent CLI. Use for native or ICPC export jobs."
+description: "Build and download DOMjudge or ICPC 2025-09 problem packages through the agent CLI."
 ---
 
 # Polygon Agent -- Export
@@ -14,10 +14,11 @@ Use this skill to start an export job, wait for completion, and download the ZIP
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
   --problem "alice/aplusb" \
-  --export-type "native"
+  --format "domjudge"
 ```
 
-Use `--export-type "icpc"` for ICPC packages. Read `job_id` from the JSON result.
+Use `--format "icpc-2025-09"` for a strict ICPC Problem Package 2025-09.
+Read `job_id` from the JSON result.
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
@@ -29,15 +30,18 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-download \
   --problem "alice/aplusb" \
   --job-id "exp-api-abc123" \
-  --output "./alice/aplusb/temp/aplusb.zip"
+  --output "./alice/aplusb/temp/aplusb-domjudge.zip"
 ```
 
 `--output` is required; the CLI does not guess a filename.
 
 ## Rules
 
-- `native` export works from the current working tree.
-- `icpc` export requires a committed revision.
+- Both formats target the latest published revision captured when the export starts.
+- If that revision has not been fully verified, the export job runs Verification before
+  projecting the requested package.
+- A Workspace snapshot is a separate working-copy operation; package export never reads
+  the local or remote working tree.
 - Store downloaded ZIPs under `temp/` unless the file is intentionally becoming tracked content.
 - Use owner-qualified repo paths such as `./alice/aplusb/`.
 

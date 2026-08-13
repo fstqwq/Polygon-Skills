@@ -912,7 +912,7 @@ def _command_verify_detail(args: argparse.Namespace) -> JsonObject:
 
 def _command_export_start(args: argparse.Namespace) -> JsonObject:
     def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
-        payload: JsonObject = {"export_type": str(args.export_type)}
+        payload: JsonObject = {"format": str(args.format)}
         response = _http_json(
             url=f"{base_url}/agent/v1/export/start",
             method="POST",
@@ -920,10 +920,17 @@ def _command_export_start(args: argparse.Namespace) -> JsonObject:
             body=_json_body(payload),
             verify_tls=bool(args.secure),
         )
-        return {
-            "job_id": response.get("job_id"),
+        job_id = str(response.get("job_id") or "")
+        if not job_id:
+            raise CliError(code="bad_response", message="export response is missing job_id")
+        return _without_none({
+            "job_id": job_id,
             "status": response.get("status"),
-        }
+            "phase": response.get("phase"),
+            "format": response.get("format"),
+            "source_commit": response.get("source_commit"),
+            "verified_revision_id": response.get("verified_revision_id"),
+        })
 
     return _run_token_command(args, callback)
 
@@ -946,10 +953,18 @@ def _command_export_wait(args: argparse.Namespace) -> JsonObject:
             interval_sec=float(args.interval_sec),
             timeout_sec=args.timeout_sec,
         )
-        result: JsonObject = {
-            "job_id": response.get("job_id"),
+        response_job_id = str(response.get("job_id") or "")
+        if response_job_id != job_id:
+            raise CliError(code="bad_response", message="export status response has an invalid job_id")
+        result: JsonObject = _without_none({
+            "job_id": response_job_id,
             "status": response.get("status"),
-        }
+            "phase": response.get("phase"),
+            "format": response.get("format"),
+            "source_commit": response.get("source_commit"),
+            "verified_revision_id": response.get("verified_revision_id"),
+            "error": response.get("error"),
+        })
         filename = response.get("filename")
         if isinstance(filename, str) and filename:
             result["filename"] = filename
@@ -1750,7 +1765,7 @@ def _build_parser() -> argparse.ArgumentParser:
     export_start_parser = subparsers.add_parser("export-start")
     _add_state_file(export_start_parser)
     _add_problem(export_start_parser)
-    export_start_parser.add_argument("--export-type", required=True, choices=["native", "icpc"])
+    export_start_parser.add_argument("--format", required=True, choices=["domjudge", "icpc-2025-09"])
     _add_tls_flags(export_start_parser)
     export_start_parser.set_defaults(func=_command_export_start)
 
