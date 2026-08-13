@@ -223,6 +223,9 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
   --job-id "exp-api-abc123"
 ```
 
+A succeeded export can include a `warning` in the JSON result. The command
+still exits successfully. Failed exports expose the server message as `error`.
+
 ### Export Download
 
 ```bash

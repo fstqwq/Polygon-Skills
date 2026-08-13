@@ -956,15 +956,18 @@ def _command_export_wait(args: argparse.Namespace) -> JsonObject:
         response_job_id = str(response.get("job_id") or "")
         if response_job_id != job_id:
             raise CliError(code="bad_response", message="export status response has an invalid job_id")
+        status = str(response.get("status") or "")
         result: JsonObject = _without_none({
             "job_id": response_job_id,
-            "status": response.get("status"),
+            "status": status,
             "phase": response.get("phase"),
             "format": response.get("format"),
             "source_commit": response.get("source_commit"),
             "verified_revision_id": response.get("verified_revision_id"),
-            "error": response.get("error"),
         })
+        message = response.get("error")
+        if isinstance(message, str) and message:
+            result["warning" if status == "succeeded" else "error"] = message
         filename = response.get("filename")
         if isinstance(filename, str) and filename:
             result["filename"] = filename
