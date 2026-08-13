@@ -89,7 +89,7 @@ class CanonicalSourceTests(unittest.TestCase):
             any("accepted_solution_source must be" in item for item in build_errors)
         )
 
-    def test_generator_command_resolves_source_without_build_selection(self) -> None:
+    def test_generator_command_requires_build_selection(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = self._root(directory)
             (root / "generators").mkdir()
@@ -106,9 +106,34 @@ class CanonicalSourceTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            errors = review._errors_spec_json(root)
+            unselected_errors = review._errors_spec_json(root)
+            build_path = root / "config/build.json"
+            build_path.write_text(
+                '{"generator_sources":["generators/gen.cpp"]}\n',
+                encoding="utf-8",
+            )
+            selected_errors = review._errors_spec_json(root)
 
-        self.assertEqual(errors, [])
+        self.assertTrue(
+            any("generator source is not selected" in item for item in unselected_errors)
+        )
+        self.assertEqual(selected_errors, [])
+
+    def test_generator_sources_is_optional_and_strict_when_present(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = self._root(directory)
+            self.assertEqual(review._errors_build_json(root), [])
+            (root / "config/build.json").write_text(
+                '{"generator_sources":"generators/gen.cpp"}\n',
+                encoding="utf-8",
+            )
+
+            errors = review._errors_build_json(root)
+
+        self.assertIn(
+            "config/build.json: generator_sources must be an array",
+            errors,
+        )
 
     def test_test_entries_require_canonical_types_and_payloads(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

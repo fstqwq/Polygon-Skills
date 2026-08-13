@@ -57,9 +57,10 @@ BUILD_SELECTIONS = {
     "checker_source": ("checkers", CPP_EXTENSIONS, False),
     "interactor_source": ("interactors", CPP_EXTENSIONS, False),
 }
-BUILD_KEYS = set(BUILD_SELECTIONS)
+BUILD_KEYS = {*BUILD_SELECTIONS, "generator_sources"}
 SPEC_ENTRY_REQUIRED_KEYS = {"id", "kind"}
 SPEC_ENTRY_KEYS = SPEC_ENTRY_REQUIRED_KEYS | {
+    "sample",
     "sample_input",
     "sample_output",
     "sample_output_validate",
@@ -357,6 +358,33 @@ def _errors_build_json(root: Path) -> list[str]:
                 direct_child=direct_child,
             )
         )
+    generator_sources = data.get("generator_sources", [])
+    if not isinstance(generator_sources, list):
+        errors.append("config/build.json: generator_sources must be an array")
+    else:
+        seen_generators: set[str] = set()
+        for index, value in enumerate(generator_sources):
+            field = f"generator_sources[{index}]"
+            if not isinstance(value, str):
+                errors.append(f"config/build.json: {field} must be a string")
+                continue
+            if value in seen_generators:
+                errors.append(
+                    f"config/build.json: generator_sources contains duplicate '{value}'"
+                )
+                continue
+            seen_generators.add(value)
+            errors.extend(
+                _check_source_path(
+                    root,
+                    value,
+                    field,
+                    "config/build.json",
+                    expected_root="generators",
+                    extensions=SOLUTION_EXTENSIONS,
+                    direct_child=False,
+                )
+            )
     mode = _read_valid_problem_mode(root)
     checker_source = data.get("checker_source")
     interactor_source = data.get("interactor_source")
@@ -459,11 +487,11 @@ def _errors_spec_json(root: Path) -> list[str]:
                 else:
                     matches = _generator_source_matches(
                         tokens[0],
-                        _generator_source_paths(root),
+                        _configured_generator_sources(root),
                     )
                     if not matches:
                         errors.append(
-                            f"{prefix}: generator source is missing: {tokens[0]}"
+                            f"{prefix}: generator source is not selected: {tokens[0]}"
                         )
                     elif len(matches) > 1:
                         errors.append(
@@ -480,17 +508,17 @@ def _errors_spec_json(root: Path) -> list[str]:
     return errors
 
 
-def _generator_source_paths(root: Path) -> list[str]:
-    generators_dir = root / "generators"
-    if not generators_dir.is_dir() or generators_dir.is_symlink():
+def _configured_generator_sources(root: Path) -> list[str]:
+    data, _errors = _read_json_object(
+        root / "config" / "build.json",
+        "config/build.json",
+    )
+    if data is None:
         return []
-    return [
-        path.relative_to(root).as_posix()
-        for path in sorted(generators_dir.rglob("*"))
-        if path.is_file()
-        and not path.is_symlink()
-        and path.suffix.lower() in SOLUTION_EXTENSIONS
-    ]
+    raw = data.get("generator_sources", [])
+    if not isinstance(raw, list):
+        return []
+    return [value for value in raw if isinstance(value, str)]
 
 
 def _generator_source_matches(token: str, sources: list[str]) -> list[str]:
@@ -1115,7 +1143,7 @@ def _component_status(root: Path) -> dict[str, str]:
         else:
             status[label] = "not configured"
 
-    generator_sources = _generator_source_paths(root)
+    generator_sources = _configured_generator_sources(root)
     status["generators"] = (
         ", ".join(generator_sources) if generator_sources else "none"
     )

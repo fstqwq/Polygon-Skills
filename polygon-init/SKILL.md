@@ -74,7 +74,9 @@ description: "Initialize a new problem repository from scratch."
 
    Do not write empty-string selection keys. Add `accepted_solution_source`,
    `validator_source`, `checker_source`, or `interactor_source` only when the
-   referenced source exists. Do not copy any standard checker during init.
+   referenced source exists. Add non-empty `generator_sources` when generators
+   are authored; a missing field means an empty allowlist. Do not copy any
+   standard checker during init.
 
 7. **Write statement template files** (these are fixed boilerplate -- do not customize):
    - `statement/statements.ftl` -- copy from `<skills>/polygon-init/templates/statements.ftl`

@@ -28,7 +28,8 @@ new problem is created; readers never manufacture them.
 {
   "accepted_solution_source": "solutions/std.cpp",
   "validator_source": "validators/validator.cpp",
-  "checker_source": "checkers/wcmp.cpp"
+  "checker_source": "checkers/wcmp.cpp",
+  "generator_sources": ["generators/gen.cpp"]
 }
 ```
 
@@ -38,6 +39,7 @@ new problem is created; readers never manufacture them.
 | `validator_source` | string | optional path below `validators/` |
 | `checker_source` | string | optional path below `checkers/`; pass-fail only |
 | `interactor_source` | string | optional path below `interactors/`; interactive only |
+| `generator_sources` | string[] | optional allowlist of unique paths below `generators/`; absence means `[]` |
 
 Rules:
 - All paths are repo-relative (e.g., `"solutions/std.cpp"`).
@@ -52,6 +54,7 @@ Rules:
   `checker_source`.
 - `accepted_solution_source` is the only accepted-solution selection. It does
   not require or rewrite an adjacent descriptor.
-- Runtime consumers never infer these four selections from component
-  directories or filenames. Generator resolution is separate: each generated
-  test command directly names one unambiguous source below `generators/`.
+- Runtime consumers never infer selections from component directories or
+  filenames. Each generated test command names one unambiguous member of
+  `generator_sources`; a source merely present below `generators/` is not
+  executable until selected.
