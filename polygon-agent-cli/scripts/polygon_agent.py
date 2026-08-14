@@ -852,7 +852,19 @@ def _wait_for_status(
         if status in done_statuses:
             return response
         if deadline is not None and time.monotonic() >= deadline:
-            raise CliError(code="timeout", message="wait operation timed out")
+            last_response = json.dumps(
+                response,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+            raise CliError(
+                code="timeout",
+                message=(
+                    "wait operation timed out; "
+                    f"last response: {last_response}"
+                ),
+            )
         time.sleep(interval_sec)
 
 
