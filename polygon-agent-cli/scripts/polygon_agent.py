@@ -458,7 +458,13 @@ def _command_init(args: argparse.Namespace) -> JsonObject:
         "init_ts": init_ts,
     }
     existing_session_id = existing_state.get("agent_session_id")
-    if isinstance(existing_session_id, str) and existing_session_id.strip():
+    existing_credential = existing_state.get("credential")
+    if (
+        isinstance(existing_session_id, str)
+        and existing_session_id.strip()
+        and isinstance(existing_credential, str)
+        and AGENT_CREDENTIAL_PATTERN.fullmatch(existing_credential)
+    ):
         request["existing_session_id"] = existing_session_id
     response = _http_json(
         url=register_url,

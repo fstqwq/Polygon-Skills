@@ -158,6 +158,35 @@ class TestPolygonAgentCLI(unittest.TestCase):
 
         self.assertNotIn("existing_session_id", request_body)
 
+    def test_init_does_not_reconnect_legacy_identity_state(self) -> None:
+        legacy_state = dict(self.state)
+        legacy_state.pop("credential")
+        legacy_state["identity_hash"] = "legacy-metadata-hash"
+        self.state_file.write_text(json.dumps(legacy_state), encoding="utf-8")
+        request_body = None
+
+        def register(**kwargs):
+            nonlocal request_body
+            request_body = json.loads(kwargs["body"].decode("utf-8"))
+            return {
+                "agent_session_id": "as-replaced",
+                "credential": "polygon_agent_" + "d" * 43,
+                "user": "alice",
+                "server_name": "Polygon Replica",
+            }
+
+        with patch.object(cli, "_http_json", side_effect=register):
+            cli._command_init(
+                self._args(
+                    register_url="https://polygon.example/agent/v1/register/reg-code",
+                    agent_name=None,
+                    desktop_id="desktop",
+                    init_ts="2026-08-17T00:00:00Z",
+                )
+            )
+
+        self.assertNotIn("existing_session_id", request_body)
+
     def test_contest_layout_detects_relabel_before_download(self) -> None:
         target = self.root / "contest"
         old_path = target / "A"

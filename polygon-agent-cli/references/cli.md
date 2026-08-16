@@ -33,6 +33,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py init \
 Initializes or refreshes the local agent session state. When the state file
 already names a session, a new registration URL reconnects that same session,
 rotates its bearer credential, and preserves its server-side grants.
+Legacy state without a bearer credential creates a new session; the server does
+not retain sessions or grants from the former identity-header protocol.
 
 ### Status
 

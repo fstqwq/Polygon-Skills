@@ -71,6 +71,8 @@ If omitted, the CLI uses this default path:
 The state file contains a `polygon_agent_...` bearer credential and must be
 kept private. Running `init` again with a new registration URL rotates that
 credential while preserving grants attached to the existing session.
+State from the former identity-header protocol has no credential and starts a
+new session instead; old sessions and grants are not migrated.
 
 ## Local Repo Naming
 
