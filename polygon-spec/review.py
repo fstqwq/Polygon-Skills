@@ -64,6 +64,7 @@ SPEC_ENTRY_KEYS = SPEC_ENTRY_REQUIRED_KEYS | {
     "sample_input",
     "sample_output",
     "sample_output_validate",
+    "sample_json",
 }
 INCLUDEGRAPHICS_RE = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}")
 CPP_TOKEN_RE = re.compile(
@@ -397,6 +398,74 @@ def _errors_build_json(root: Path) -> list[str]:
     return errors
 
 
+def _errors_sample_json(raw: object, prefix: str) -> tuple[bool, list[str]]:
+    if raw is None or raw == "":
+        return False, []
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            return False, [
+                f"{prefix}: invalid JSON at line {exc.lineno} column {exc.colno}"
+            ]
+    if not isinstance(raw, dict):
+        return False, [f"{prefix}: must be an object"]
+
+    errors: list[str] = []
+    for key in sorted(set(raw) - {"presentation", "passes"}):
+        errors.append(f"{prefix}: unsupported field '{key}'")
+    presentation = raw.get("presentation")
+    if presentation not in ("pair", "interaction"):
+        errors.append(f"{prefix}.presentation: must be 'pair' or 'interaction'")
+    passes = raw.get("passes")
+    if not isinstance(passes, list) or not passes:
+        errors.append(f"{prefix}.passes: must be a non-empty array")
+        return False, errors
+
+    for index, pass_row in enumerate(passes, start=1):
+        pass_prefix = f"{prefix}.passes[{index}]"
+        if not isinstance(pass_row, dict):
+            errors.append(f"{pass_prefix}: must be an object")
+            continue
+        if presentation == "pair":
+            allowed = {"number", "input", "output"}
+        elif presentation == "interaction":
+            allowed = {"number", "events"}
+        else:
+            continue
+        for key in sorted(set(pass_row) - allowed):
+            errors.append(f"{pass_prefix}: unsupported field '{key}'")
+        number = pass_row.get("number", index)
+        if isinstance(number, bool) or not isinstance(number, int) or number != index:
+            errors.append(f"{pass_prefix}.number: must be {index}")
+        if presentation == "pair":
+            for field in ("input", "output"):
+                if field not in pass_row:
+                    errors.append(f"{pass_prefix}: {field} is required")
+                elif not isinstance(pass_row[field], str):
+                    errors.append(f"{pass_prefix}.{field}: must be a string")
+            continue
+
+        events = pass_row.get("events")
+        if not isinstance(events, list):
+            errors.append(f"{pass_prefix}.events: must be an array")
+            continue
+        for event_index, event in enumerate(events, start=1):
+            event_prefix = f"{pass_prefix}.events[{event_index}]"
+            if not isinstance(event, dict):
+                errors.append(f"{event_prefix}: must be an object")
+                continue
+            for key in sorted(set(event) - {"source", "content"}):
+                errors.append(f"{event_prefix}: unsupported field '{key}'")
+            if event.get("source") not in ("interactor", "solution"):
+                errors.append(
+                    f"{event_prefix}.source: must be 'interactor' or 'solution'"
+                )
+            if not isinstance(event.get("content"), str):
+                errors.append(f"{event_prefix}.content: must be a string")
+    return not errors, errors
+
+
 def _errors_spec_json(root: Path) -> list[str]:
     path = root / "tests" / "spec.json"
     if not path.exists():
@@ -442,10 +511,28 @@ def _errors_spec_json(root: Path) -> list[str]:
         for field in ("sample_input", "sample_output"):
             if field in entry and not isinstance(entry[field], str):
                 errors.append(f"{prefix}: '{field}' must be a string")
+            elif field in entry and "\r" in entry[field]:
+                errors.append(f"{prefix}: '{field}' must use LF newlines")
         if "sample_output_validate" in entry and not isinstance(
             entry["sample_output_validate"], bool
         ):
             errors.append(f"{prefix}: 'sample_output_validate' must be a boolean")
+        sample_json_valid = False
+        if "sample_json" in entry:
+            sample_json_valid, sample_json_errors = _errors_sample_json(
+                entry["sample_json"],
+                f"{prefix}.sample_json",
+            )
+            errors.extend(sample_json_errors)
+        if sample_json_valid and (
+            bool(entry.get("sample_input")) or bool(entry.get("sample_output"))
+        ):
+            errors.append(
+                f"{prefix}: sample_json cannot be combined with "
+                "sample_input or sample_output"
+            )
+        if sample_json_valid and not sample:
+            errors.append(f"{prefix}.sample_json: requires sample=true")
         if kind == "manual" and isinstance(tid, str) and TEST_ID_RE.fullmatch(tid):
             manual_path = root / "tests" / "manual" / f"{tid}.in"
             if manual_path.is_symlink() or not manual_path.is_file():

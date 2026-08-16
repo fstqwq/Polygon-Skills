@@ -43,7 +43,8 @@ statement-assets/       # shared statement build assets and their editable sourc
 attachments/            # contestant-downloadable files (testing tools, templates)
 statement/
   statements.ftl        # main FTL template (do not edit)
-  problem.tex           # per-problem FTL template; customize only for special sample layouts
+  problem.tex           # per-problem FTL template
+  examples.tex          # optional custom examples FTL; absent uses the built-in template
   olymp.sty             # canonical LaTeX style macros
 statement-sections/
   <language>/           # one directory per language (see Language Model below)
@@ -72,6 +73,10 @@ temp/                   # throwaway test files (not committed, gitignored)
 - `draft/` is git-tracked but excluded from the zip package.
 - Pass-fail problems start with no checker selected. Once configured, `config/build.json` `checker_source` points to a file under `checkers/`.
 - Interactive problems use `interactor_source` instead and must not set `checker_source`.
+- The built-in examples template renders ordinary Verification-backed samples
+  and both `sample_json` presentations. Add `statement/examples.tex` only when
+  the problem deliberately needs a different examples layout; do not hard-code
+  sample data into `statement/problem.tex`.
 - Keep `config/build.json` keys in the canonical order documented in
   `config.md`.
 - Write JSON and source files with LF line endings, not CRLF.

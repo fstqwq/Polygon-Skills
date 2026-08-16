@@ -205,9 +205,23 @@ After the user approves the plan, implement each part sequentially. IDs are cont
      "sample": true
    }
    ```
-   Ordinary non-interactive sample tests: `"sample": true`, omit `sample_input`/`sample_output`. The statement uses the real `tests/manual/{id}.in`, and displayed output comes from generated official answers.
-   Only add `sample_input`/`sample_output` when the statement must override the displayed sample text, such as interactive problems, spoiler-sensitive samples, or cleaner fixed-format presentation.
-   Non-sample manual tests: omit `sample`, `sample_input`, and `sample_output`.
+   Ordinary single-pass pass-fail samples: `"sample": true`, with no display
+   override. The statement uses the real `tests/manual/{id}.in`, and displayed
+   output comes from generated official answers.
+
+   Use `sample_input`/`sample_output` only for an intentional single-pair display
+   override, such as spoiler-sensitive text or cleaner fixed-format output. Use
+   `sample_output_validate: false` only when that authored output must be shown
+   without being checked.
+
+   Use `sample_json` for an explicit multi-pass pair presentation or an ordered
+   interactive transcript. It requires `"sample": true`, is a complete
+   statement-only presentation, and must not be combined with `sample_input` or
+   `sample_output`. For the exact `pair` and `interaction` shapes, read
+   `polygon-spec/tests.md` before editing the entry.
+
+   Non-sample manual tests omit `sample`, `sample_input`, `sample_output`,
+   `sample_output_validate`, and `sample_json`.
 
 ### Generated tests
 
@@ -264,7 +278,8 @@ git commit -m "tests: add {description}"
 If the user asks to see current tests:
 1. Read `tests/spec.json` and list all tests with their IDs, kind, and effective
    sample flag; absence means `false`.
-2. For manual tests, show `tests/manual/{id}.in` and any `sample_output` override from `tests/spec.json`.
+2. For manual tests, show `tests/manual/{id}.in` and describe any legacy
+   `sample_input`/`sample_output` or structured `sample_json` statement override.
 3. For gen tests, show the gen command.
 4. Report coverage: how many samples, edge cases, stress, anti-hack, max-stress.
 

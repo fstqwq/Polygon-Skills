@@ -126,7 +126,9 @@ Report: solution inventory with expected verdicts.
 
 Check relationships between components:
 - [ ] Validator input format matches generator output format
-- [ ] Sample test files match sample I/O in spec.json
+- [ ] Sample judge inputs match their test files; legacy and structured
+  statement-only overrides match the intended displayed sample without being
+  mistaken for judge data
 - [ ] If interactive: interactor exists, `problem.json` has `"mode": "interactive"`
 - [ ] If multi-pass: `pass_limit` is set correctly
 - [ ] `build.json` references only files that exist

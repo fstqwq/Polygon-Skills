@@ -155,6 +155,165 @@ class CanonicalSourceTests(unittest.TestCase):
         self.assertIn("id must be a 3-12 digit string", joined)
         self.assertIn("'sample' must be a boolean", joined)
 
+    def test_structured_samples_follow_the_application_schema(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = self._root(directory)
+            for test_id in ("001", "002"):
+                (root / "tests/manual" / f"{test_id}.in").write_text(
+                    f"judge input {test_id}\n",
+                    encoding="utf-8",
+                )
+            (root / "tests/spec.json").write_text(
+                json.dumps(
+                    {
+                        "tests": [
+                            {
+                                "id": "001",
+                                "kind": "manual",
+                                "sample": True,
+                                "sample_json": {
+                                    "presentation": "pair",
+                                    "passes": [
+                                        {"input": "first\n", "output": "one\n"},
+                                        {
+                                            "number": 2,
+                                            "input": "second\n",
+                                            "output": "two\n",
+                                        },
+                                    ],
+                                },
+                            },
+                            {
+                                "id": "002",
+                                "kind": "manual",
+                                "sample": True,
+                                "sample_json": {
+                                    "presentation": "interaction",
+                                    "passes": [
+                                        {
+                                            "events": [
+                                                {
+                                                    "source": "interactor",
+                                                    "content": "问题\n",
+                                                },
+                                                {
+                                                    "source": "solution",
+                                                    "content": "answer\n",
+                                                },
+                                            ]
+                                        },
+                                        {"number": 2, "events": []},
+                                    ],
+                                },
+                            },
+                        ]
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            errors = review._errors_spec_json(root)
+
+        self.assertEqual(errors, [])
+
+    def test_structured_samples_reject_invalid_shapes_and_legacy_mix(self) -> None:
+        valid_pair = {
+            "presentation": "pair",
+            "passes": [{"number": 1, "input": "in\n", "output": "out\n"}],
+        }
+        cases = (
+            (
+                {"sample": False, "sample_json": valid_pair},
+                "requires sample=true",
+            ),
+            (
+                {
+                    "sample": True,
+                    "sample_input": "legacy\n",
+                    "sample_json": valid_pair,
+                },
+                "cannot be combined",
+            ),
+            (
+                {
+                    "sample": True,
+                    "sample_json": {"presentation": "pairs", "passes": [{}]},
+                },
+                "must be 'pair' or 'interaction'",
+            ),
+            (
+                {
+                    "sample": True,
+                    "sample_json": {"presentation": "pair", "passes": []},
+                },
+                "must be a non-empty array",
+            ),
+            (
+                {
+                    "sample": True,
+                    "sample_json": {
+                        "presentation": "pair",
+                        "passes": [{"number": True, "input": "", "output": ""}],
+                    },
+                },
+                ".number: must be 1",
+            ),
+            (
+                {
+                    "sample": True,
+                    "sample_json": {
+                        "presentation": "pair",
+                        "passes": [{"input": "in\n"}],
+                    },
+                },
+                "output is required",
+            ),
+            (
+                {
+                    "sample": True,
+                    "sample_json": {
+                        "presentation": "interaction",
+                        "passes": [
+                            {
+                                "events": [
+                                    {"source": "solution", "content": 3}
+                                ]
+                            }
+                        ],
+                    },
+                },
+                ".content: must be a string",
+            ),
+            (
+                {
+                    "sample": True,
+                    "sample_json": {
+                        "presentation": "interaction",
+                        "passes": [{"events": [], "input": "unexpected"}],
+                    },
+                },
+                "unsupported field 'input'",
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = self._root(directory)
+            (root / "tests/manual/001.in").write_text(
+                "judge input\n",
+                encoding="utf-8",
+            )
+            for sample_fields, expected in cases:
+                with self.subTest(expected=expected):
+                    entry = {"id": "001", "kind": "manual", **sample_fields}
+                    (root / "tests/spec.json").write_text(
+                        json.dumps({"tests": [entry]}),
+                        encoding="utf-8",
+                    )
+
+                    errors = review._errors_spec_json(root)
+
+                    self.assertIn(expected, "\n".join(errors))
+
 
 if __name__ == "__main__":
     unittest.main()
