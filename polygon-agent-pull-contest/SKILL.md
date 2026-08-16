@@ -3,7 +3,7 @@ name: polygon-agent-pull-contest
 description: "Pull every problem in a remote Polygon Contest into label-named independent local Git repositories through the Polygon Agent CLI. Use when the user asks to pull, clone, download, or synchronize a whole Contest rather than one problem."
 ---
 
-# Polygon Agent -- Pull Contest
+# Polygon Agent Pull Contest
 
 Run from the workspace containing `.polygon-agent/state.json`, or pass an
 explicit `--state-file`:
