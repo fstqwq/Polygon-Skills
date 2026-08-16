@@ -98,7 +98,7 @@ Do not collapse the owner name away into `./a-plus-b/`. The owner-qualified path
 - both commands preserve `.git/`, `temp/`, and `draft/`.
 - agent-managed UTF-8 text files are LF-canonical; binary files are byte-preserving.
 
-## Polygon Agent Pull Contest Rules
+## Contest Pull Rules
 
 - `pull-contest --contest <slug>` requires general `readonly` permission.
 - It creates one independent Git repository per server label under `A/`, `B/`,

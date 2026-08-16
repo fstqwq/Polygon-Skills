@@ -119,7 +119,7 @@ trigger silent re-registration.
 
 Before applying remote changes, `pull` commits local dirty state. After applying remote changes, it commits the synchronized mirror if anything changed.
 
-### Polygon Agent Pull Contest
+### Pull Contest
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py pull-contest \
