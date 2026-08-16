@@ -30,7 +30,9 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py init \
   --agent-name "Codex"
 ```
 
-Initializes or refreshes the local agent session state.
+Initializes or refreshes the local agent session state. When the state file
+already names a session, a new registration URL reconnects that same session,
+rotates its bearer credential, and preserves its server-side grants.
 
 ### Status
 
@@ -306,7 +308,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
   always requires `--output`.
 - Save one-off downloads, verification details, and exported ZIPs under the problem repo's `temp/` unless the file is intentionally becoming tracked workspace content.
 - Stateful commands use `--state-file` if provided; otherwise they use `./.polygon-agent/state.json` under the current working directory.
-- State stores the connected session and identity hash. After a successful
+- State stores the connected session and its `polygon_agent_...` bearer
+  credential. Keep the state file private. After a successful
   status check, obsolete per-problem token maps from an old CLI are removed.
 - When saving a remote problem locally, use `./<owner>/<problem>/` as the default repo path.
 - Keep downloaded or mirrored files under that repo root instead of flattening them into `./<problem>/`.

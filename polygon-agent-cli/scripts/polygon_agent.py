@@ -6,6 +6,7 @@ import base64
 import io
 import json
 import os
+import re
 import shutil
 import socket
 import ssl
@@ -68,8 +69,10 @@ class UsageError(CliError):
 
 
 class AgentCredentials(NamedTuple):
-    session_id: str
-    identity_hash: str
+    credential: str
+
+
+AGENT_CREDENTIAL_PATTERN = re.compile(r"polygon_agent_[A-Za-z0-9_-]{43}\Z")
 
 
 def _write_success(result: JsonObject) -> None:
@@ -225,15 +228,21 @@ def _state_pending_access(state: JsonObject) -> JsonObject:
 
 
 def _state_credentials(state: JsonObject) -> AgentCredentials:
-    return AgentCredentials(
-        session_id=_state_string(state, "agent_session_id"),
-        identity_hash=_state_string(state, "identity_hash"),
-    )
+    raw = state.get("credential")
+    if not isinstance(raw, str) or not AGENT_CREDENTIAL_PATTERN.fullmatch(raw):
+        raise CliError(
+            code="agent_reconnect_required",
+            message=(
+                "agent state has no valid credential; run init with a new "
+                "registration URL to reconnect this session"
+            ),
+        )
+    return AgentCredentials(credential=raw)
 
 
 def _http_code_name(status: int) -> str:
     if status == 401:
-        return "agent_identity_invalid"
+        return "agent_credential_invalid"
     if status == 403:
         return "agent_permission_required"
     if status == 404:
@@ -384,8 +393,7 @@ def _auth_headers(
     extra: dict[str, str] | None = None,
 ) -> dict[str, str]:
     headers = {
-        "X-Polygon-Agent-Session-ID": credentials.session_id,
-        "X-Polygon-Agent-Identity-Hash": credentials.identity_hash,
+        "Authorization": f"Bearer {credentials.credential}",
     }
     if extra:
         headers.update(extra)
@@ -444,30 +452,37 @@ def _command_init(args: argparse.Namespace) -> JsonObject:
     init_ts = str(args.init_ts or identity_defaults.get("init_ts") or _utc_now_iso()).strip()
     register_url = str(args.register_url or "").strip()
     base_url = _base_url_from_register_url(register_url)
+    request: JsonObject = {
+        "agent_name": agent_name,
+        "desktop_id": desktop_id,
+        "init_ts": init_ts,
+    }
+    existing_session_id = existing_state.get("agent_session_id")
+    if isinstance(existing_session_id, str) and existing_session_id.strip():
+        request["existing_session_id"] = existing_session_id
     response = _http_json(
         url=register_url,
         method="POST",
         headers={"Content-Type": "application/json"},
-        body=_json_body(
-            {
-                "agent_name": agent_name,
-                "desktop_id": desktop_id,
-                "init_ts": init_ts,
-            }
-        ),
+        body=_json_body(request),
         verify_tls=bool(args.secure),
         warn_insecure=(not bool(args.secure)),
     )
     agent_session_id = str(response.get("agent_session_id") or "")
-    identity_hash = str(response.get("identity_hash") or "")
+    credential = str(response.get("credential") or "")
     user = str(response.get("user") or "")
     server_name = str(response.get("server_name") or "")
-    if not agent_session_id or not identity_hash or not user or not server_name:
+    if (
+        not agent_session_id
+        or not AGENT_CREDENTIAL_PATTERN.fullmatch(credential)
+        or not user
+        or not server_name
+    ):
         raise CliError(code="bad_response", message="registration response is missing required fields")
     state: JsonObject = {
         "base_url": base_url,
         "agent_session_id": agent_session_id,
-        "identity_hash": identity_hash,
+        "credential": credential,
         "identity": {
             "agent_name": agent_name,
             "desktop_id": desktop_id,
@@ -483,7 +498,6 @@ def _command_init(args: argparse.Namespace) -> JsonObject:
     return {
         "base_url": base_url,
         "agent_session_id": agent_session_id,
-        "identity_hash": identity_hash,
         "user": user,
         "server_name": server_name,
         "state_file": _state_file_result(state_path),

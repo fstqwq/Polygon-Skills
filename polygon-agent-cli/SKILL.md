@@ -58,7 +58,7 @@ Success:
 Failure:
 
 ```json
-{"ok":false,"error":{"code":"agent_identity_invalid","message":"agent identity is invalid","http_status":401}}
+{"ok":false,"error":{"code":"agent_credential_invalid","message":"agent credential is invalid","http_status":401}}
 ```
 
 ## State File
@@ -67,6 +67,10 @@ Every stateful command accepts `--state-file`.
 
 If omitted, the CLI uses this default path:
 `./.polygon-agent/state.json` under the current working directory.
+
+The state file contains a `polygon_agent_...` bearer credential and must be
+kept private. Running `init` again with a new registration URL rotates that
+credential while preserving grants attached to the existing session.
 
 ## Local Repo Naming
 

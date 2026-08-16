@@ -66,8 +66,9 @@ identity and never receives or saves a problem secret.
 - The session may have a non-expiring general permission selected by the user
   in Connected Agents.
 - Per-problem approvals retain independent scopes and expiries.
-- A 401 means the connected identity is invalid; do not silently create a new
-  identity or discard diagnostic state.
+- A 401 means the connected credential is invalid; do not silently create a
+  new session or discard diagnostic state. Ask the user for a new registration
+  URL and run `init` to reconnect and rotate the credential.
 - For `agent_permission_required`, request the indicated problem scope. For
   `agent_general_permission_required`, direct the user to Connected Agents;
   a problem grant cannot replace required general permission.

@@ -23,7 +23,7 @@ class TestPolygonAgentCLI(unittest.TestCase):
         self.state = {
             "base_url": "https://polygon.example",
             "agent_session_id": "as-session",
-            "identity_hash": "identity-hash",
+            "credential": "polygon_agent_" + "a" * 43,
             "identity": {"agent_name": "Codex"},
             "pending_access": {},
         }
@@ -35,7 +35,8 @@ class TestPolygonAgentCLI(unittest.TestCase):
     def test_cli_has_no_problem_secret_or_contest_manifest_protocol(self) -> None:
         source = _SCRIPT.read_text(encoding="utf-8")
         self.assertNotIn("poly_", source)
-        self.assertNotIn("Authorization", source)
+        self.assertNotIn("X-Polygon-Agent-Identity-Hash", source)
+        self.assertNotIn("X-Polygon-Agent-Session-ID", source)
         self.assertNotIn("checkout.json", source)
         self.assertNotIn("state_version", source)
         self.assertNotIn("schema_version", source)
@@ -73,7 +74,7 @@ class TestPolygonAgentCLI(unittest.TestCase):
             cli,
             "_http_json",
             side_effect=cli.CliError(
-                code="agent_identity_invalid",
+                code="agent_credential_invalid",
                 message="invalid",
                 http_status=401,
             ),
@@ -82,6 +83,80 @@ class TestPolygonAgentCLI(unittest.TestCase):
                 cli._command_status(self._args())
         preserved = json.loads(self.state_file.read_text(encoding="utf-8"))
         self.assertIn("tokens", preserved)
+
+    def test_auth_uses_only_bearer_credential(self) -> None:
+        headers = cli._auth_headers(cli._state_credentials(self.state))
+        self.assertEqual(
+            headers,
+            {"Authorization": "Bearer polygon_agent_" + "a" * 43},
+        )
+
+    def test_old_identity_state_requires_explicit_reconnect(self) -> None:
+        old_state = dict(self.state)
+        old_state.pop("credential")
+        old_state["identity_hash"] = "predictable-metadata-hash"
+
+        with self.assertRaises(cli.CliError) as raised:
+            cli._state_credentials(old_state)
+
+        self.assertEqual(raised.exception.code, "agent_reconnect_required")
+
+    def test_init_reconnects_existing_session_and_never_prints_credential(self) -> None:
+        response_credential = "polygon_agent_" + "b" * 43
+        request_body = None
+
+        def register(**kwargs):
+            nonlocal request_body
+            request_body = json.loads(kwargs["body"].decode("utf-8"))
+            return {
+                "agent_session_id": "as-session",
+                "credential": response_credential,
+                "user": "alice",
+                "server_name": "Polygon Replica",
+            }
+
+        with patch.object(cli, "_http_json", side_effect=register):
+            result = cli._command_init(
+                self._args(
+                    register_url="https://polygon.example/agent/v1/register/reg-code",
+                    agent_name=None,
+                    desktop_id="desktop",
+                    init_ts="2026-08-17T00:00:00Z",
+                )
+            )
+
+        self.assertEqual(request_body["existing_session_id"], "as-session")
+        self.assertNotIn("credential", result)
+        self.assertNotIn("identity_hash", result)
+        saved = json.loads(self.state_file.read_text(encoding="utf-8"))
+        self.assertEqual(saved["credential"], response_credential)
+        self.assertNotIn("identity_hash", saved)
+
+    def test_init_new_session_does_not_send_existing_session_id(self) -> None:
+        self.state_file.unlink()
+        request_body = None
+
+        def register(**kwargs):
+            nonlocal request_body
+            request_body = json.loads(kwargs["body"].decode("utf-8"))
+            return {
+                "agent_session_id": "as-new",
+                "credential": "polygon_agent_" + "c" * 43,
+                "user": "alice",
+                "server_name": "Polygon Replica",
+            }
+
+        with patch.object(cli, "_http_json", side_effect=register):
+            cli._command_init(
+                self._args(
+                    register_url="https://polygon.example/agent/v1/register/reg-code",
+                    agent_name="Codex",
+                    desktop_id="desktop",
+                    init_ts="2026-08-17T00:00:00Z",
+                )
+            )
+
+        self.assertNotIn("existing_session_id", request_body)
 
     def test_contest_layout_detects_relabel_before_download(self) -> None:
         target = self.root / "contest"
