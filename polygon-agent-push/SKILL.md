@@ -9,7 +9,9 @@ description: "Push a local Polygon problem mirror to the remote workspace throug
 
 Use this skill when a local mirror created by `polygon-agent-pull` should replace the remote workspace working tree.
 
-Requires `workspace` scope or higher. If the cached token is `readonly`, use `polygon-agent-auth` to request a higher-scope token.
+Requires effective `workspace` scope or higher. If the identity has only
+readonly access, use `polygon-agent-auth` to request a workspace grant or ask
+the user to adjust general permission.
 
 ## Push Full Local Mirror
 

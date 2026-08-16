@@ -9,7 +9,9 @@ description: "Commit and publish Polygon workspace changes through the agent CLI
 
 Use this skill only when the user explicitly asks to commit/publish remote workspace changes.
 
-Requires `commit` scope. If the cached token has lower scope, use `polygon-agent-auth` to request a commit token.
+Requires effective `commit` scope. If the identity has lower scope, use
+`polygon-agent-auth` to request a commit grant or ask the user to adjust general
+permission.
 
 ## Mandatory Approval
 

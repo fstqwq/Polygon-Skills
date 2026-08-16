@@ -48,14 +48,16 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py create \
 ```
 
 Creates a canonical empty remote problem owned by the registered Agent user.
-The owner prefix must match that user. Creating the problem does not grant an
-Agent token; run `connect`, have the user approve access, then run `poll`.
+The owner prefix must match that user. Creation requires general `commit`
+permission selected by the user in Connected Agents. A problem-specific grant
+cannot authorize creation.
 
 ### Connect
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py connect \
-  --problem "alice/aplusb"
+  --problem "alice/aplusb" \
+  --scope "workspace"
 ```
 
 Requests problem access and returns `approve_url`.
@@ -68,7 +70,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py poll \
   --wait
 ```
 
-Polls approval status and saves the token on the first approved response.
+Polls approval status. Approval creates a server-side grant and returns its ID,
+scope, and expiry; it does not deliver a secret or change identity credentials.
 
 ### Clone
 
@@ -81,7 +84,9 @@ Mirrors the full remote workspace into `./alice/aplusb/`, initializes Git, and c
 
 Run from the workspace root that contains `./.polygon-agent/state.json`, or pass `--state-file` and `--target-dir` explicitly.
 
-If no usable token exists, `clone` automatically requests access and returns `approval_status`, `approve_url`, and `required_scope:"workspace"`. Show the URL to the user, ask them to approve workspace access, then rerun `clone`.
+If identity scope is insufficient, `clone` requests access and returns
+`approval_status`, `approve_url`, and `required_scope:"workspace"`. Show the URL
+to the user, ask them to approve workspace access, then rerun `clone`.
 
 Optional flags:
 
@@ -104,9 +109,32 @@ Updates an existing clone at `./alice/aplusb/`.
 
 Run from the same workspace root used for `clone`, or pass `--state-file` and `--target-dir` explicitly.
 
-`pull` does not auto-connect. If the token is missing, invalid, or insufficient, run `clone` again or use explicit `connect` / `poll`.
+If effective scope is insufficient, `pull` returns an approval request just as
+other problem commands do. A 401 is an invalid connected identity and does not
+trigger silent re-registration.
 
 Before applying remote changes, `pull` commits local dirty state. After applying remote changes, it commits the synchronized mirror if anything changed.
+
+### Pull Contest
+
+```bash
+python skills/polygon-agent-cli/scripts/polygon_agent.py pull-contest \
+  --contest "summer-2026" \
+  --target-dir "./summer-2026"
+```
+
+Requires general `readonly` permission and current Contest read access. The CLI
+creates independent label directories (`A/`, `B/`, `C/`, ...) that are each Git
+repositories. It uses the labels supplied by the roster and writes the Problem,
+remote head, Contest slug, Contest problem ID, and label to each repository's
+local Git config. It creates no Contest root manifest.
+
+Before any target change, the CLI validates the complete current layout and
+downloads every roster snapshot to temporary staging with the same source
+generation. Removal, relabelling, occupied paths, mismatched config, duplicate
+identities, and case-only collisions return `contest_layout_conflict` with a
+`conflicts` array. Resolve these only after explicit user confirmation, then
+rerun the command with a fresh roster.
 
 ### Push
 
@@ -269,8 +297,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
 
 - The CLI never approves browser requests on its own.
 - The CLI never requires inline JSON bodies.
-- `clone` auto-requests access when needed, but the user must still approve the browser request.
-- `pull` never auto-requests access.
+- Problem commands request access when needed, but the user must still approve
+  the browser request.
 - `clone` and `pull` manage local Git commits as recovery boundaries.
 - `push` sends one full ZIP and uses server-side atomic apply.
 - Agent-managed UTF-8 text files are LF-canonical; binary files are preserved byte-for-byte.
@@ -278,6 +306,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py commit-status \
   always requires `--output`.
 - Save one-off downloads, verification details, and exported ZIPs under the problem repo's `temp/` unless the file is intentionally becoming tracked workspace content.
 - Stateful commands use `--state-file` if provided; otherwise they use `./.polygon-agent/state.json` under the current working directory.
+- State stores the connected session and identity hash. After a successful
+  status check, obsolete per-problem token maps from an old CLI are removed.
 - When saving a remote problem locally, use `./<owner>/<problem>/` as the default repo path.
 - Keep downloaded or mirrored files under that repo root instead of flattening them into `./<problem>/`.
 - For internal HTTPS servers with self-signed certificates, no extra flag is needed; pass `--secure` only when you want certificate verification enabled.

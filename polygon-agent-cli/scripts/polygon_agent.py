@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
-from typing import Any, Sequence
+from typing import Any, NamedTuple, Sequence
 from urllib.parse import quote, urlencode, urlparse
 from uuid import uuid4
 
@@ -52,17 +52,24 @@ class CliError(Exception):
         message: str,
         exit_code: int = 1,
         http_status: int | None = None,
+        details: JsonObject | None = None,
     ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
         self.exit_code = exit_code
         self.http_status = http_status
+        self.details = details or {}
 
 
 class UsageError(CliError):
     def __init__(self, message: str) -> None:
         super().__init__(code="usage_error", message=message, exit_code=2)
+
+
+class AgentCredentials(NamedTuple):
+    session_id: str
+    identity_hash: str
 
 
 def _write_success(result: JsonObject) -> None:
@@ -79,6 +86,7 @@ def _write_error(error: CliError) -> None:
     }
     if error.http_status is not None:
         payload["error"]["http_status"] = error.http_status
+    payload["error"].update(error.details)
     sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
@@ -184,12 +192,12 @@ def _utc_now_iso() -> str:
 
 def _default_desktop_id() -> str:
     if os.name == "nt":
-        token = str(os.environ.get("COMPUTERNAME") or "").strip()
-        if token:
-            return token
-    token = socket.gethostname().strip()
-    if token:
-        return token
+        candidate = str(os.environ.get("COMPUTERNAME") or "").strip()
+        if candidate:
+            return candidate
+    candidate = socket.gethostname().strip()
+    if candidate:
+        return candidate
     return f"host-{uuid4()}"
 
 
@@ -207,15 +215,6 @@ def _state_identity_defaults(state: JsonObject) -> JsonObject:
     return {}
 
 
-def _state_tokens(state: JsonObject) -> JsonObject:
-    tokens = state.get("tokens")
-    if isinstance(tokens, dict):
-        return tokens
-    tokens = {}
-    state["tokens"] = tokens
-    return tokens
-
-
 def _state_pending_access(state: JsonObject) -> JsonObject:
     pending_access = state.get("pending_access")
     if isinstance(pending_access, dict):
@@ -225,44 +224,18 @@ def _state_pending_access(state: JsonObject) -> JsonObject:
     return pending_access
 
 
-def _token_entry(state: JsonObject, problem: str) -> JsonObject:
-    entry = _state_tokens(state).get(problem)
-    if isinstance(entry, dict):
-        return entry
-    raise CliError(code="missing_token", message=f"no cached token for problem {problem}")
-
-
-def _token_for_problem(state: JsonObject, problem: str) -> str:
-    entry = _token_entry(state, problem)
-    token = entry.get("token")
-    if isinstance(token, str) and token:
-        return token
-    raise CliError(code="missing_token", message=f"no cached token for problem {problem}")
-
-
-def _scope_rank(scope: str) -> int:
-    return {"readonly": 1, "workspace": 2, "commit": 3}.get(scope, 0)
-
-
-def _token_scope_satisfies(entry: JsonObject, required_scope: str) -> bool:
-    scope = entry.get("scope")
-    if not isinstance(scope, str) or not scope:
-        return True
-    return _scope_rank(scope) >= _scope_rank(required_scope)
-
-
-def _invalidate_problem_token(path: Path, state: JsonObject, problem: str) -> None:
-    tokens = _state_tokens(state)
-    if problem in tokens:
-        del tokens[problem]
-        _save_state(path, state)
+def _state_credentials(state: JsonObject) -> AgentCredentials:
+    return AgentCredentials(
+        session_id=_state_string(state, "agent_session_id"),
+        identity_hash=_state_string(state, "identity_hash"),
+    )
 
 
 def _http_code_name(status: int) -> str:
     if status == 401:
-        return "token_invalid"
+        return "agent_identity_invalid"
     if status == 403:
-        return "scope_insufficient"
+        return "agent_permission_required"
     if status == 404:
         return "not_found"
     if status == 409:
@@ -274,16 +247,29 @@ def _http_code_name(status: int) -> str:
 
 def _api_error_from_response(status: int, body: bytes) -> CliError:
     message = f"http {status}"
+    code = _http_code_name(status)
+    details: JsonObject = {}
     if body:
         try:
             payload = json.loads(body.decode("utf-8"))
         except Exception:
             payload = None
         if isinstance(payload, dict):
-            error_text = payload.get("error")
+            detail = payload.get("detail")
+            error_payload = detail if isinstance(detail, dict) else payload
+            error_text = error_payload.get("error")
             if isinstance(error_text, str) and error_text.strip():
-                message = error_text.strip()
-    return CliError(code=_http_code_name(status), message=message, http_status=status)
+                code = error_text.strip()
+                message = code
+            message_text = error_payload.get("message")
+            if isinstance(message_text, str) and message_text.strip():
+                message = message_text.strip()
+            details = {
+                key: value
+                for key, value in error_payload.items()
+                if key not in {"error", "message"}
+            }
+    return CliError(code=code, message=message, http_status=status, details=details)
 
 
 def _tls_context(*, url: str, verify_tls: bool, warn_insecure: bool = False) -> ssl.SSLContext | None:
@@ -393,8 +379,14 @@ def _json_body(payload: JsonObject) -> bytes:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
 
-def _auth_headers(token: str, extra: dict[str, str] | None = None) -> dict[str, str]:
-    headers = {"Authorization": f"Bearer {token}"}
+def _auth_headers(
+    credentials: AgentCredentials,
+    extra: dict[str, str] | None = None,
+) -> dict[str, str]:
+    headers = {
+        "X-Polygon-Agent-Session-ID": credentials.session_id,
+        "X-Polygon-Agent-Identity-Hash": credentials.identity_hash,
+    }
     if extra:
         headers.update(extra)
     return headers
@@ -429,8 +421,16 @@ def _state_file_result(path: Path) -> str:
     return str(path)
 
 
-def _problem_url(base_url: str, path: str) -> str:
-    return f"{base_url}{path}"
+def _problem_url(
+    base_url: str,
+    path: str,
+    problem: str,
+    query: dict[str, str] | None = None,
+) -> str:
+    parameters = {"problem": problem}
+    if query:
+        parameters.update(query)
+    return f"{base_url}{path}?{urlencode(parameters)}"
 
 
 def _command_init(args: argparse.Namespace) -> JsonObject:
@@ -464,7 +464,6 @@ def _command_init(args: argparse.Namespace) -> JsonObject:
     server_name = str(response.get("server_name") or "")
     if not agent_session_id or not identity_hash or not user or not server_name:
         raise CliError(code="bad_response", message="registration response is missing required fields")
-    tokens = _state_tokens(existing_state)
     state: JsonObject = {
         "base_url": base_url,
         "agent_session_id": agent_session_id,
@@ -476,8 +475,10 @@ def _command_init(args: argparse.Namespace) -> JsonObject:
         },
         "user": user,
         "server_name": server_name,
-        "tokens": tokens,
+        "pending_access": _state_pending_access(existing_state),
     }
+    if isinstance(existing_state.get("tokens"), dict):
+        state["tokens"] = existing_state["tokens"]
     _save_state(state_path, state)
     return {
         "base_url": base_url,
@@ -493,15 +494,22 @@ def _command_status(args: argparse.Namespace) -> JsonObject:
     state_path = _resolve_state_file(args.state_file)
     state = _load_json_file(state_path)
     base_url = _state_string(state, "base_url")
-    session_id = _state_string(state, "agent_session_id")
-    identity_hash = _state_string(state, "identity_hash")
-    query = urlencode({"agent_session_id": session_id, "identity_hash": identity_hash})
-    response = _http_json(url=f"{base_url}/agent/v1/auth/status?{query}", method="GET", verify_tls=bool(args.secure))
+    credentials = _state_credentials(state)
+    response = _http_json(
+        url=f"{base_url}/agent/v1/auth/status",
+        method="GET",
+        headers=_auth_headers(credentials),
+        verify_tls=bool(args.secure),
+    )
+    if "tokens" in state:
+        del state["tokens"]
+        _save_state(state_path, state)
     return {
         "user": response.get("user"),
         "server_name": response.get("server_name"),
         "last_seen_at": response.get("last_seen_at"),
-        "authorized_problems": response.get("authorized_problems", []),
+        "general_scope": response.get("general_scope"),
+        "problem_grants": response.get("problem_grants", []),
     }
 
 
@@ -509,20 +517,16 @@ def _command_create(args: argparse.Namespace) -> JsonObject:
     state_path = _resolve_state_file(args.state_file)
     state = _load_json_file(state_path)
     base_url = _state_string(state, "base_url")
-    session_id = _state_string(state, "agent_session_id")
-    identity_hash = _state_string(state, "identity_hash")
+    credentials = _state_credentials(state)
     problem = str(args.problem or "").strip()
     response = _http_json(
         url=f"{base_url}/agent/v1/problems",
         method="POST",
-        headers={"Content-Type": "application/json"},
-        body=_json_body(
-            {
-                "agent_session_id": session_id,
-                "identity_hash": identity_hash,
-                "problem": problem,
-            }
+        headers=_auth_headers(
+            credentials,
+            {"Content-Type": "application/json"},
         ),
+        body=_json_body({"problem": problem}),
         verify_tls=bool(args.secure),
     )
     return {"problem": response.get("problem")}
@@ -537,17 +541,19 @@ def _request_access(
     verify_tls: bool,
     required_scope: str | None = None,
 ) -> JsonObject:
-    session_id = _state_string(state, "agent_session_id")
-    identity_hash = _state_string(state, "identity_hash")
+    credentials = _state_credentials(state)
+    scope = required_scope or "readonly"
     response = _http_json(
         url=f"{base_url}/agent/v1/auth/request-access",
         method="POST",
-        headers={"Content-Type": "application/json"},
+        headers=_auth_headers(
+            credentials,
+            {"Content-Type": "application/json"},
+        ),
         body=_json_body(
             {
-                "agent_session_id": session_id,
-                "identity_hash": identity_hash,
                 "problem": problem,
+                "scope": scope,
             }
         ),
         verify_tls=verify_tls,
@@ -562,6 +568,7 @@ def _request_access(
         "approve_url": f"{base_url}{approve_path}",
         "expires_in": expires_in,
         "problem": problem,
+        "requested_scope": str(response.get("requested_scope") or scope),
     }
     if required_scope:
         result["required_scope"] = required_scope
@@ -583,44 +590,32 @@ def _poll_access_request(
     timeout_sec: float | None,
     expected_problem: str | None = None,
 ) -> JsonObject:
-    session_id = _state_string(state, "agent_session_id")
-    identity_hash = _state_string(state, "identity_hash")
+    credentials = _state_credentials(state)
     deadline = None if timeout_sec is None else time.monotonic() + timeout_sec
     while True:
-        query = urlencode({"agent_session_id": session_id, "identity_hash": identity_hash})
         response = _http_json(
-            url=f"{base_url}/agent/v1/auth/poll/{request_id}?{query}",
+            url=f"{base_url}/agent/v1/auth/poll/{request_id}",
             method="GET",
+            headers=_auth_headers(credentials),
             verify_tls=verify_tls,
         )
         status = str(response.get("status") or "")
         if status == "approved":
             problem = str(response.get("problem") or expected_problem or "")
-            token = response.get("token")
             expires_at = response.get("expires_at")
-            token_saved = False
-            if isinstance(token, str) and token:
-                entry = _state_tokens(state).setdefault(problem, {})
-                entry["token"] = token
-                if isinstance(expires_at, str) and expires_at:
-                    entry["expires_at"] = expires_at
-                _state_pending_access(state).pop(problem, None)
-                _save_state(state_path, state)
-                token_saved = True
-            else:
-                if not problem:
-                    raise CliError(code="approval_token_missing", message="approval succeeded but response did not include the problem slug")
-                existing_entry = _state_tokens(state).get(problem)
-                if not isinstance(existing_entry, dict) or not isinstance(existing_entry.get("token"), str) or not existing_entry.get("token"):
-                    raise CliError(
-                        code="approval_token_missing",
-                        message="approval succeeded but the one-time token was not available; request access again",
-                    )
+            if not problem:
+                raise CliError(
+                    code="bad_response",
+                    message="approval response did not include the problem slug",
+                )
+            _state_pending_access(state).pop(problem, None)
+            _save_state(state_path, state)
             return {
                 "status": status,
                 "problem": problem,
+                "grant_id": response.get("grant_id"),
+                "granted_scope": response.get("granted_scope"),
                 "expires_at": expires_at,
-                "token_saved": token_saved,
             }
         if status in {"denied", "expired"}:
             if expected_problem:
@@ -630,7 +625,6 @@ def _poll_access_request(
                 "status": status,
                 "problem": response.get("problem") or expected_problem,
                 "expires_at": response.get("expires_at"),
-                "token_saved": False,
             }
         if not wait:
             return {"status": status, "problem": expected_problem}
@@ -650,6 +644,7 @@ def _command_connect(args: argparse.Namespace) -> JsonObject:
         base_url=base_url,
         problem=problem,
         verify_tls=bool(args.secure),
+        required_scope=str(args.scope or "readonly"),
     )
 
 
@@ -676,32 +671,55 @@ def _command_poll(args: argparse.Namespace) -> JsonObject:
     )
 
 
-def _state_and_token(args: argparse.Namespace) -> tuple[Path, JsonObject, str, str]:
+def _state_and_credentials(
+    args: argparse.Namespace,
+) -> tuple[Path, JsonObject, str, AgentCredentials]:
     state_path = _resolve_state_file(args.state_file)
     state = _load_json_file(state_path)
     base_url = _state_string(state, "base_url")
-    problem = str(args.problem or "").strip()
-    token = _token_for_problem(state, problem)
-    return (state_path, state, base_url, token)
+    return (state_path, state, base_url, _state_credentials(state))
 
 
-def _run_token_command(args: argparse.Namespace, callback: Any) -> JsonObject:
-    state_path, state, base_url, token = _state_and_token(args)
+def _run_problem_command(
+    args: argparse.Namespace,
+    *,
+    required_scope: str,
+    callback: Any,
+) -> JsonObject:
+    state_path, state, base_url, credentials = _state_and_credentials(args)
     problem = str(args.problem or "").strip()
     try:
-        return callback(state_path, state, base_url, problem, token)
+        return callback(state_path, state, base_url, problem, credentials)
     except CliError as exc:
-        if exc.http_status == 401:
-            _invalidate_problem_token(state_path, state, problem)
+        if exc.http_status == 403 and exc.code == "agent_permission_required":
+            request_info = _request_access(
+                state_path=state_path,
+                state=state,
+                base_url=base_url,
+                problem=problem,
+                verify_tls=bool(args.secure),
+                required_scope=required_scope,
+            )
+            return {
+                **request_info,
+                "approval_status": "pending",
+                "required_scope": required_scope,
+            }
         raise
 
 
 def _command_workspace_status(args: argparse.Namespace) -> JsonObject:
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         response = _http_json(
-            url=f"{base_url}/agent/v1/workspace/status",
+            url=_problem_url(base_url, "/agent/v1/workspace/status", problem),
             method="GET",
-            headers=_auth_headers(token),
+            headers=_auth_headers(credentials),
             verify_tls=bool(args.secure),
         )
         return {
@@ -712,18 +730,31 @@ def _command_workspace_status(args: argparse.Namespace) -> JsonObject:
             "git": response.get("git"),
         }
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _command_list_files(args: argparse.Namespace) -> JsonObject:
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
-        query = ""
-        if args.path:
-            query = "?" + urlencode({"path": str(args.path)})
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
+        query = {"path": str(args.path)} if args.path else None
         response = _http_json(
-            url=f"{base_url}/agent/v1/workspace/files{query}",
+            url=_problem_url(
+                base_url,
+                "/agent/v1/workspace/files",
+                problem,
+                query,
+            ),
             method="GET",
-            headers=_auth_headers(token),
+            headers=_auth_headers(credentials),
             verify_tls=bool(args.secure),
         )
         return {
@@ -732,17 +763,32 @@ def _command_list_files(args: argparse.Namespace) -> JsonObject:
             "truncated": bool(response.get("truncated")),
         }
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _command_read_file(args: argparse.Namespace) -> JsonObject:
     save_to = Path(str(args.save_to)).expanduser().resolve() if args.save_to else None
 
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         response = _http_json(
-            url=f"{base_url}/agent/v1/workspace/file?{urlencode({'path': str(args.path)})}",
+            url=_problem_url(
+                base_url,
+                "/agent/v1/workspace/file",
+                problem,
+                {"path": str(args.path)},
+            ),
             method="GET",
-            headers=_auth_headers(token),
+            headers=_auth_headers(credentials),
             verify_tls=bool(args.secure),
         )
         if bool(response.get("is_dir")):
@@ -776,7 +822,11 @@ def _command_read_file(args: argparse.Namespace) -> JsonObject:
         result["saved_to"] = str(save_to)
         return result
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _command_upload(args: argparse.Namespace) -> JsonObject:
@@ -785,7 +835,13 @@ def _command_upload(args: argparse.Namespace) -> JsonObject:
         raise UsageError(f"--local-file is not a file: {local_file}")
     file_bytes = local_file.read_bytes()
 
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         body, content_type = _multipart_upload_body(
             fields={"path": str(args.workspace_path)},
             file_field_name="file",
@@ -793,9 +849,12 @@ def _command_upload(args: argparse.Namespace) -> JsonObject:
             file_bytes=file_bytes,
         )
         response = _http_json(
-            url=f"{base_url}/agent/v1/workspace/upload",
+            url=_problem_url(base_url, "/agent/v1/workspace/upload", problem),
             method="POST",
-            headers=_auth_headers(token, {"Content-Type": content_type}),
+            headers=_auth_headers(
+                credentials,
+                {"Content-Type": content_type},
+            ),
             body=body,
             verify_tls=bool(args.secure),
         )
@@ -804,29 +863,56 @@ def _command_upload(args: argparse.Namespace) -> JsonObject:
             "bytes": response.get("bytes"),
         }
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="workspace",
+        callback=callback,
+    )
 
 
 def _command_delete(args: argparse.Namespace) -> JsonObject:
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         quoted = quote(str(args.workspace_path), safe="/")
         response = _http_json(
-            url=f"{base_url}/agent/v1/workspace/files/{quoted}",
+            url=_problem_url(
+                base_url,
+                f"/agent/v1/workspace/files/{quoted}",
+                problem,
+            ),
             method="DELETE",
-            headers=_auth_headers(token),
+            headers=_auth_headers(credentials),
             verify_tls=bool(args.secure),
         )
         return {"path": response.get("path")}
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="workspace",
+        callback=callback,
+    )
 
 
 def _command_verify_start(args: argparse.Namespace) -> JsonObject:
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         response = _http_json(
-            url=f"{base_url}/agent/v1/verification/start",
+            url=_problem_url(base_url, "/agent/v1/verification/start", problem),
             method="POST",
-            headers=_auth_headers(token, {"Content-Type": "application/json"}),
+            headers=_auth_headers(
+                credentials,
+                {"Content-Type": "application/json"},
+            ),
             body=_json_body({}),
             verify_tls=bool(args.secure),
         )
@@ -835,7 +921,11 @@ def _command_verify_start(args: argparse.Namespace) -> JsonObject:
             "status": response.get("status"),
         }
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _wait_for_status(
@@ -869,14 +959,24 @@ def _wait_for_status(
 
 
 def _command_verify_wait(args: argparse.Namespace) -> JsonObject:
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         verification_id = str(args.verification_id or "").strip()
 
         def fetcher() -> JsonObject:
             return _http_json(
-                url=f"{base_url}/agent/v1/verification/{verification_id}/status",
+                url=_problem_url(
+                    base_url,
+                    f"/agent/v1/verification/{verification_id}/status",
+                    problem,
+                ),
                 method="GET",
-                headers=_auth_headers(token),
+                headers=_auth_headers(credentials),
                 verify_tls=bool(args.secure),
             )
 
@@ -891,24 +991,38 @@ def _command_verify_wait(args: argparse.Namespace) -> JsonObject:
             "status": response.get("status"),
         }
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _command_verify_detail(args: argparse.Namespace) -> JsonObject:
     save_to = Path(str(args.save_to)).expanduser().resolve() if args.save_to else None
 
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
-        query_pairs: list[tuple[str, str]] = []
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
+        query: dict[str, str] = {}
         if args.test_name:
-            query_pairs.append(("test_name", str(args.test_name)))
+            query["test_name"] = str(args.test_name)
         if args.source:
-            query_pairs.append(("source", str(args.source)))
-        query = ("?" + urlencode(query_pairs)) if query_pairs else ""
+            query["source"] = str(args.source)
         verification_id = str(args.verification_id or "").strip()
         detail_text = _http_text(
-            url=f"{base_url}/agent/v1/verification/{verification_id}/detail{query}",
+            url=_problem_url(
+                base_url,
+                f"/agent/v1/verification/{verification_id}/detail",
+                problem,
+                query,
+            ),
             method="GET",
-            headers=_auth_headers(token),
+            headers=_auth_headers(credentials),
             verify_tls=bool(args.secure),
         )
         result: JsonObject = {"verification_id": verification_id}
@@ -919,16 +1033,29 @@ def _command_verify_detail(args: argparse.Namespace) -> JsonObject:
         result["saved_to"] = str(save_to)
         return result
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _command_export_start(args: argparse.Namespace) -> JsonObject:
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         payload: JsonObject = {"format": str(args.format)}
         response = _http_json(
-            url=f"{base_url}/agent/v1/export/start",
+            url=_problem_url(base_url, "/agent/v1/export/start", problem),
             method="POST",
-            headers=_auth_headers(token, {"Content-Type": "application/json"}),
+            headers=_auth_headers(
+                credentials,
+                {"Content-Type": "application/json"},
+            ),
             body=_json_body(payload),
             verify_tls=bool(args.secure),
         )
@@ -944,18 +1071,32 @@ def _command_export_start(args: argparse.Namespace) -> JsonObject:
             "verified_revision_id": response.get("verified_revision_id"),
         })
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="workspace",
+        callback=callback,
+    )
 
 
 def _command_export_wait(args: argparse.Namespace) -> JsonObject:
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         job_id = str(args.job_id or "").strip()
 
         def fetcher() -> JsonObject:
             return _http_json(
-                url=f"{base_url}/agent/v1/export/{job_id}/status",
+                url=_problem_url(
+                    base_url,
+                    f"/agent/v1/export/{job_id}/status",
+                    problem,
+                ),
                 method="GET",
-                headers=_auth_headers(token),
+                headers=_auth_headers(credentials),
                 verify_tls=bool(args.secure),
             )
 
@@ -985,18 +1126,32 @@ def _command_export_wait(args: argparse.Namespace) -> JsonObject:
             result["filename"] = filename
         return result
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _command_export_download(args: argparse.Namespace) -> JsonObject:
     output = Path(str(args.output or "")).expanduser().resolve()
 
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         job_id = str(args.job_id or "").strip()
         payload = _http_binary(
-            url=f"{base_url}/agent/v1/export/{job_id}/download",
+            url=_problem_url(
+                base_url,
+                f"/agent/v1/export/{job_id}/download",
+                problem,
+            ),
             method="GET",
-            headers=_auth_headers(token),
+            headers=_auth_headers(credentials),
             verify_tls=bool(args.secure),
         )
         _atomic_write_bytes(output, payload)
@@ -1006,7 +1161,11 @@ def _command_export_download(args: argparse.Namespace) -> JsonObject:
             "bytes_written": len(payload),
         }
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _message_from_args(args: argparse.Namespace) -> str:
@@ -1027,11 +1186,20 @@ def _message_from_args(args: argparse.Namespace) -> str:
 def _command_commit(args: argparse.Namespace) -> JsonObject:
     message = _message_from_args(args)
 
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         response = _http_json(
-            url=f"{base_url}/agent/v1/commit",
+            url=_problem_url(base_url, "/agent/v1/commit", problem),
             method="POST",
-            headers=_auth_headers(token, {"Content-Type": "application/json"}),
+            headers=_auth_headers(
+                credentials,
+                {"Content-Type": "application/json"},
+            ),
             body=_json_body({"message": message}),
             verify_tls=bool(args.secure),
         )
@@ -1040,16 +1208,30 @@ def _command_commit(args: argparse.Namespace) -> JsonObject:
             "head": response.get("head"),
         }
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="commit",
+        callback=callback,
+    )
 
 
 def _command_commit_status(args: argparse.Namespace) -> JsonObject:
-    def callback(_state_path: Path, _state: JsonObject, base_url: str, _problem: str, token: str) -> JsonObject:
+    def callback(
+        _state_path: Path,
+        _state: JsonObject,
+        base_url: str,
+        problem: str,
+        credentials: AgentCredentials,
+    ) -> JsonObject:
         ref = str(args.ref or "").strip()
         response = _http_json(
-            url=f"{base_url}/agent/v1/commit/{quote(ref, safe='')}/status",
+            url=_problem_url(
+                base_url,
+                f"/agent/v1/commit/{quote(ref, safe='')}/status",
+                problem,
+            ),
             method="GET",
-            headers=_auth_headers(token),
+            headers=_auth_headers(credentials),
             verify_tls=bool(args.secure),
         )
         return {
@@ -1059,7 +1241,11 @@ def _command_commit_status(args: argparse.Namespace) -> JsonObject:
             "remote_head": response.get("remote_head"),
         }
 
-    return _run_token_command(args, callback)
+    return _run_problem_command(
+        args,
+        required_scope="readonly",
+        callback=callback,
+    )
 
 
 def _problem_path_parts(problem: str) -> list[str]:
@@ -1268,20 +1454,17 @@ def _apply_remote_mirror(source_root: Path, target_dir: Path) -> None:
         _copy_repo_child(child, target_dir / child.name)
 
 
-def _fetch_workspace_status(base_url: str, token: str, verify_tls: bool) -> JsonObject:
-    return _http_json(
-        url=f"{base_url}/agent/v1/workspace/status",
-        method="GET",
-        headers=_auth_headers(token),
-        verify_tls=verify_tls,
-    )
-
-
-def _fetch_snapshot_mirror(*, base_url: str, token: str, staging_parent: Path, verify_tls: bool) -> tuple[Path, JsonObject]:
+def _fetch_snapshot_url(
+    *,
+    url: str,
+    credentials: AgentCredentials,
+    staging_parent: Path,
+    verify_tls: bool,
+) -> tuple[Path, JsonObject]:
     _status, payload, headers = _http_request(
-        url=f"{base_url}/agent/v1/workspace/snapshot",
+        url=url,
         method="GET",
-        headers=_auth_headers(token),
+        headers=_auth_headers(credentials),
         verify_tls=verify_tls,
     )
     stage_root = staging_parent / "snapshot"
@@ -1293,6 +1476,22 @@ def _fetch_snapshot_mirror(*, base_url: str, token: str, staging_parent: Path, v
             "remote_head_commit": headers.get("X-Head-Commit", ""),
             "remote_dirty": str(headers.get("X-Workspace-Dirty", "")).lower() == "true",
         },
+    )
+
+
+def _fetch_snapshot_mirror(
+    *,
+    base_url: str,
+    credentials: AgentCredentials,
+    problem: str,
+    staging_parent: Path,
+    verify_tls: bool,
+) -> tuple[Path, JsonObject]:
+    return _fetch_snapshot_url(
+        url=_problem_url(base_url, "/agent/v1/workspace/snapshot", problem),
+        credentials=credentials,
+        staging_parent=staging_parent,
+        verify_tls=verify_tls,
     )
 
 
@@ -1330,7 +1529,13 @@ def _local_workspace_zip(repo_dir: Path) -> bytes:
     return buffer.getvalue()
 
 
-def _workspace_compare_zip(base_url: str, token: str, zip_bytes: bytes, verify_tls: bool) -> JsonObject:
+def _workspace_compare_zip(
+    base_url: str,
+    credentials: AgentCredentials,
+    problem: str,
+    zip_bytes: bytes,
+    verify_tls: bool,
+) -> JsonObject:
     body, content_type = _multipart_upload_body(
         fields={},
         file_field_name="archive",
@@ -1338,15 +1543,22 @@ def _workspace_compare_zip(base_url: str, token: str, zip_bytes: bytes, verify_t
         file_bytes=zip_bytes,
     )
     return _http_json(
-        url=f"{base_url}/agent/v1/workspace/compare",
+        url=_problem_url(base_url, "/agent/v1/workspace/compare", problem),
         method="POST",
-        headers=_auth_headers(token, {"Content-Type": content_type}),
+        headers=_auth_headers(credentials, {"Content-Type": content_type}),
         body=body,
         verify_tls=verify_tls,
     )
 
 
-def _workspace_apply_zip(base_url: str, token: str, zip_bytes: bytes, base_head_commit: str, verify_tls: bool) -> JsonObject:
+def _workspace_apply_zip(
+    base_url: str,
+    credentials: AgentCredentials,
+    problem: str,
+    zip_bytes: bytes,
+    base_head_commit: str,
+    verify_tls: bool,
+) -> JsonObject:
     body, content_type = _multipart_upload_body(
         fields={"base_head_commit": base_head_commit},
         file_field_name="archive",
@@ -1354,9 +1566,9 @@ def _workspace_apply_zip(base_url: str, token: str, zip_bytes: bytes, base_head_
         file_bytes=zip_bytes,
     )
     return _http_json(
-        url=f"{base_url}/agent/v1/workspace/apply",
+        url=_problem_url(base_url, "/agent/v1/workspace/apply", problem),
         method="POST",
-        headers=_auth_headers(token, {"Content-Type": content_type}),
+        headers=_auth_headers(credentials, {"Content-Type": content_type}),
         body=body,
         verify_tls=verify_tls,
     )
@@ -1368,7 +1580,6 @@ def _clone_auth_result(problem: str, target_dir: Path, request_info: JsonObject,
         "target_dir": str(target_dir),
         "changed": False,
         "created_repo": False,
-        "auto_connected": True,
         "approval_status": status,
         "required_scope": DEFAULT_CLONE_SCOPE,
     }
@@ -1379,76 +1590,46 @@ def _clone_auth_result(problem: str, target_dir: Path, request_info: JsonObject,
     return result
 
 
-def _clone_token_or_auth_result(
+def _problem_approval_result(
     *,
     state_path: Path,
     state: JsonObject,
     base_url: str,
     problem: str,
-    target_dir: Path,
     verify_tls: bool,
-    force_new_request: bool = False,
-) -> tuple[str | None, JsonObject | None]:
-    if not force_new_request:
-        try:
-            entry = _token_entry(state, problem)
-            if _token_scope_satisfies(entry, DEFAULT_CLONE_SCOPE):
-                token = entry.get("token")
-                if isinstance(token, str) and token:
-                    return (token, None)
-        except CliError as exc:
-            if exc.code != "missing_token":
-                raise
-    pending_entry = _state_pending_access(state).get(problem)
-    if force_new_request and problem in _state_pending_access(state):
-        del _state_pending_access(state)[problem]
-        _save_state(state_path, state)
-        pending_entry = None
-    if isinstance(pending_entry, dict):
-        request_id = str(pending_entry.get("request_id") or "")
-        if request_id:
-            poll_result = _poll_access_request(
-                state_path=state_path,
-                state=state,
-                base_url=base_url,
-                request_id=request_id,
-                verify_tls=verify_tls,
-                wait=False,
-                interval_sec=DEFAULT_WAIT_INTERVAL_SEC,
-                timeout_sec=None,
-                expected_problem=problem,
-            )
-            status = str(poll_result.get("status") or "")
-            if status == "approved":
-                return (_token_for_problem(state, problem), {"auto_connected": True, "approval_status": "approved"})
-            return (None, _clone_auth_result(problem, target_dir, pending_entry, status))
+    required_scope: str,
+) -> JsonObject:
     request_info = _request_access(
         state_path=state_path,
         state=state,
         base_url=base_url,
         problem=problem,
         verify_tls=verify_tls,
-        required_scope=DEFAULT_CLONE_SCOPE,
+        required_scope=required_scope,
     )
-    return (None, _clone_auth_result(problem, target_dir, request_info, "pending"))
+    return {
+        **request_info,
+        "approval_status": "pending",
+        "required_scope": required_scope,
+    }
 
 
 def _sync_remote_to_repo(
     *,
     state: JsonObject,
     base_url: str,
-    token: str,
+    credentials: AgentCredentials,
     problem: str,
     target_dir: Path,
     verify_tls: bool,
     mode: str,
-    auth_result: JsonObject | None = None,
 ) -> JsonObject:
     with tempfile.TemporaryDirectory(prefix="polygon-agent-mirror-") as temp_name:
         staging_parent = Path(temp_name)
         stage_root, transport_metadata = _fetch_snapshot_mirror(
             base_url=base_url,
-            token=token,
+            credentials=credentials,
+            problem=problem,
             verify_tls=verify_tls,
             staging_parent=staging_parent,
         )
@@ -1470,8 +1651,6 @@ def _sync_remote_to_repo(
                 "target_dir": str(target_dir),
                 "changed": True,
                 "created_repo": True,
-                "auto_connected": bool(auth_result and auth_result.get("auto_connected")),
-                "approval_status": auth_result.get("approval_status") if auth_result else None,
                 "post_sync_commit": post_sync_commit,
                 **transport_metadata,
             })
@@ -1508,58 +1687,29 @@ def _command_clone(args: argparse.Namespace) -> JsonObject:
     state_path = _resolve_state_file(args.state_file)
     state = _load_json_file(state_path)
     base_url = _state_string(state, "base_url")
-    verify_tls = bool(args.secure)
-    token, auth_result = _clone_token_or_auth_result(
-        state_path=state_path,
-        state=state,
-        base_url=base_url,
-        problem=problem,
-        target_dir=target_dir,
-        verify_tls=verify_tls,
-    )
-    if token is None:
-        if auth_result is None:
-            raise CliError(code="missing_token", message=f"no cached token for problem {problem}")
-        return auth_result
+    credentials = _state_credentials(state)
     try:
         return _sync_remote_to_repo(
             state=state,
             base_url=base_url,
-            token=token,
+            credentials=credentials,
             problem=problem,
             target_dir=target_dir,
-            verify_tls=verify_tls,
+            verify_tls=bool(args.secure),
             mode="clone",
-            auth_result=auth_result,
         )
     except CliError as exc:
-        if exc.http_status not in {401, 403}:
+        if exc.http_status != 403 or exc.code != "agent_permission_required":
             raise
-        if exc.http_status == 401:
-            _invalidate_problem_token(state_path, state, problem)
-        token, auth_result = _clone_token_or_auth_result(
+        result = _problem_approval_result(
             state_path=state_path,
             state=state,
             base_url=base_url,
             problem=problem,
-            target_dir=target_dir,
-            verify_tls=verify_tls,
-            force_new_request=True,
+            verify_tls=bool(args.secure),
+            required_scope=DEFAULT_CLONE_SCOPE,
         )
-        if token is None:
-            if auth_result is None:
-                raise
-            return auth_result
-        return _sync_remote_to_repo(
-            state=state,
-            base_url=base_url,
-            token=token,
-            problem=problem,
-            target_dir=target_dir,
-            verify_tls=verify_tls,
-            mode="clone",
-            auth_result=auth_result,
-        )
+        return _clone_auth_result(problem, target_dir, result, "pending")
 
 
 def _command_pull(args: argparse.Namespace) -> JsonObject:
@@ -1569,28 +1719,27 @@ def _command_pull(args: argparse.Namespace) -> JsonObject:
     state_path = _resolve_state_file(args.state_file)
     state = _load_json_file(state_path)
     base_url = _state_string(state, "base_url")
-    try:
-        token = _token_for_problem(state, problem)
-    except CliError as exc:
-        if exc.code == "missing_token":
-            raise CliError(code="missing_token", message=f"no cached token for {problem}; run clone or connect first") from exc
-        raise
+    credentials = _state_credentials(state)
     try:
         return _sync_remote_to_repo(
             state=state,
             base_url=base_url,
-            token=token,
+            credentials=credentials,
             problem=problem,
             target_dir=target_dir,
             verify_tls=bool(args.secure),
             mode="pull",
         )
     except CliError as exc:
-        if exc.http_status == 401:
-            _invalidate_problem_token(state_path, state, problem)
-            raise CliError(code="token_invalid", message=f"token invalid for {problem}; run clone or connect first", http_status=401) from exc
-        if exc.http_status == 403:
-            raise CliError(code="scope_insufficient", message=f"token scope insufficient for {problem}; run clone or connect first", http_status=403) from exc
+        if exc.http_status == 403 and exc.code == "agent_permission_required":
+            return _problem_approval_result(
+                state_path=state_path,
+                state=state,
+                base_url=base_url,
+                problem=problem,
+                verify_tls=bool(args.secure),
+                required_scope=DEFAULT_CLONE_SCOPE,
+            )
         raise
 
 
@@ -1601,17 +1750,25 @@ def _command_push(args: argparse.Namespace) -> JsonObject:
     state_path = _resolve_state_file(args.state_file)
     state = _load_json_file(state_path)
     base_url = _state_string(state, "base_url")
-    try:
-        token = _token_for_problem(state, problem)
-    except CliError as exc:
-        if exc.code == "missing_token":
-            raise CliError(code="missing_token", message=f"no cached token for {problem}; run clone or connect first") from exc
-        raise
+    credentials = _state_credentials(state)
     zip_bytes = _local_workspace_zip(target_dir)
     base_head_commit = _git_config_get(target_dir, "polygon-agent.remote-head")
     try:
-        compare = _workspace_compare_zip(base_url, token, zip_bytes, bool(args.secure))
-        apply = _workspace_apply_zip(base_url, token, zip_bytes, base_head_commit, bool(args.secure))
+        compare = _workspace_compare_zip(
+            base_url,
+            credentials,
+            problem,
+            zip_bytes,
+            bool(args.secure),
+        )
+        apply = _workspace_apply_zip(
+            base_url,
+            credentials,
+            problem,
+            zip_bytes,
+            base_head_commit,
+            bool(args.secure),
+        )
         remote_head_commit = str(apply.get("head_commit") or "")
         if remote_head_commit:
             _git_config_set(target_dir, "polygon-agent.remote-head", remote_head_commit)
@@ -1628,12 +1785,417 @@ def _command_push(args: argparse.Namespace) -> JsonObject:
             "preflight_changed": bool(compare.get("changed")),
         }
     except CliError as exc:
-        if exc.http_status == 401:
-            _invalidate_problem_token(state_path, state, problem)
-            raise CliError(code="token_invalid", message=f"token invalid for {problem}; run clone or connect first", http_status=401) from exc
-        if exc.http_status == 403:
-            raise CliError(code="scope_insufficient", message=f"token scope insufficient for {problem}; run clone or connect first", http_status=403) from exc
+        if exc.http_status == 403 and exc.code == "agent_permission_required":
+            return _problem_approval_result(
+                state_path=state_path,
+                state=state,
+                base_url=base_url,
+                problem=problem,
+                verify_tls=bool(args.secure),
+                required_scope="workspace",
+            )
         raise
+
+
+def _safe_contest_component(raw: str, *, field: str) -> str:
+    value = str(raw or "")
+    invalid_characters = set('<>:"/\\|?*')
+    if (
+        not value
+        or value in {".", ".."}
+        or value[-1] in {" ", "."}
+        or any(character in invalid_characters or ord(character) < 32 for character in value)
+    ):
+        raise CliError(code="bad_response", message=f"unsafe Contest {field}: {value!r}")
+    reserved = {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{number}" for number in range(1, 10)),
+        *(f"LPT{number}" for number in range(1, 10)),
+    }
+    if value.split(".", 1)[0].upper() in reserved:
+        raise CliError(code="bad_response", message=f"reserved Contest {field}: {value!r}")
+    return value
+
+
+def _contest_target_dir(contest_slug: str, raw_target_dir: str | None) -> Path:
+    safe_slug = _safe_contest_component(contest_slug, field="slug")
+    if raw_target_dir:
+        return Path(raw_target_dir).expanduser().resolve()
+    return (Path.cwd() / safe_slug).resolve()
+
+
+def _fetch_contest_roster(
+    *,
+    base_url: str,
+    credentials: AgentCredentials,
+    contest_slug: str,
+    verify_tls: bool,
+) -> JsonObject:
+    response = _http_json(
+        url=f"{base_url}/agent/v1/contests/{quote(contest_slug, safe='')}/problems",
+        method="GET",
+        headers=_auth_headers(credentials),
+        verify_tls=verify_tls,
+    )
+    generation = response.get("source_generation")
+    raw_problems = response.get("problems")
+    if isinstance(generation, bool) or not isinstance(generation, int):
+        raise CliError(
+            code="bad_response",
+            message="Contest roster has an invalid source_generation",
+        )
+    if not isinstance(raw_problems, list):
+        raise CliError(code="bad_response", message="Contest roster has an invalid problems list")
+    problems: list[JsonObject] = []
+    seen_ids: set[int] = set()
+    seen_problems: set[str] = set()
+    seen_labels: set[str] = set()
+    for raw_problem in raw_problems:
+        if not isinstance(raw_problem, dict):
+            raise CliError(
+                code="bad_response",
+                message="Contest roster contains a non-object problem",
+            )
+        contest_problem_id = raw_problem.get("contest_problem_id")
+        position = raw_problem.get("position")
+        if (
+            isinstance(contest_problem_id, bool)
+            or not isinstance(contest_problem_id, int)
+            or contest_problem_id <= 0
+            or isinstance(position, bool)
+            or not isinstance(position, int)
+            or position < 0
+        ):
+            raise CliError(
+                code="bad_response",
+                message="Contest roster contains an invalid problem identity",
+            )
+        label = _safe_contest_component(str(raw_problem.get("idx") or ""), field="label")
+        problem = str(raw_problem.get("problem") or "")
+        try:
+            _problem_path_parts(problem)
+        except UsageError as exc:
+            raise CliError(
+                code="bad_response",
+                message=f"Contest roster has an invalid problem: {problem!r}",
+            ) from exc
+        label_key = label.casefold()
+        if (
+            contest_problem_id in seen_ids
+            or problem in seen_problems
+            or label_key in seen_labels
+        ):
+            raise CliError(
+                code="bad_response",
+                message="Contest roster contains duplicate identities",
+            )
+        seen_ids.add(contest_problem_id)
+        seen_problems.add(problem)
+        seen_labels.add(label_key)
+        problems.append(
+            {
+                "contest_problem_id": contest_problem_id,
+                "position": position,
+                "idx": label,
+                "problem": problem,
+            }
+        )
+    if response.get("problem_count") != len(problems):
+        raise CliError(
+            code="bad_response",
+            message="Contest roster problem_count does not match problems",
+        )
+    returned_slug = str(response.get("contest_slug") or "")
+    if returned_slug != contest_slug:
+        raise CliError(code="bad_response", message="Contest roster slug does not match request")
+    return {
+        "contest_id": response.get("contest_id"),
+        "contest_slug": returned_slug,
+        "contest_title": str(response.get("contest_title") or ""),
+        "source_generation": generation,
+        "problem_count": len(problems),
+        "problems": problems,
+    }
+
+
+def _contest_repo_config(repo_dir: Path) -> JsonObject:
+    return {
+        "problem": _git_config_get(repo_dir, "polygon-agent.problem"),
+        "contest": _git_config_get(repo_dir, "polygon-agent.contest"),
+        "contest_problem_id": _git_config_get(repo_dir, "polygon-agent.contest-problem-id"),
+        "contest_label": _git_config_get(repo_dir, "polygon-agent.contest-label"),
+    }
+
+
+def _contest_layout_conflicts(
+    *,
+    target_dir: Path,
+    contest_slug: str,
+    roster_problems: list[JsonObject],
+) -> list[JsonObject]:
+    conflicts: list[JsonObject] = []
+    if target_dir.exists() and not target_dir.is_dir():
+        return [{"kind": "target_occupied", "current_path": str(target_dir)}]
+    children = list(target_dir.iterdir()) if target_dir.is_dir() else []
+    children_by_case: dict[str, list[Path]] = {}
+    contest_repos: list[tuple[Path, JsonObject]] = []
+    for child in children:
+        children_by_case.setdefault(child.name.casefold(), []).append(child)
+        if child.is_dir() and _git_is_repo(child):
+            config = _contest_repo_config(child)
+            if config["contest"] == contest_slug:
+                contest_repos.append((child, config))
+    for paths in children_by_case.values():
+        if len(paths) > 1:
+            conflicts.append(
+                {
+                    "kind": "label_case_conflict",
+                    "paths": sorted(path.name for path in paths),
+                }
+            )
+
+    by_id = {str(item["contest_problem_id"]): item for item in roster_problems}
+    local_ids: dict[str, list[Path]] = {}
+    local_problems: dict[str, list[Path]] = {}
+    for path, config in contest_repos:
+        local_id = str(config["contest_problem_id"] or "")
+        local_problem = str(config["problem"] or "")
+        if local_id:
+            local_ids.setdefault(local_id, []).append(path)
+        if local_problem:
+            local_problems.setdefault(local_problem, []).append(path)
+        expected = by_id.get(local_id)
+        if expected is None:
+            conflicts.append(
+                {
+                    "kind": "problem_removed",
+                    "problem": local_problem,
+                    "current_path": path.name,
+                    "contest_problem_id": local_id,
+                }
+            )
+            continue
+        expected_label = str(expected["idx"])
+        if path.name != expected_label:
+            conflicts.append(
+                {
+                    "kind": "problem_relabelled",
+                    "problem": expected["problem"],
+                    "current_path": path.name,
+                    "expected_path": expected_label,
+                }
+            )
+        if local_problem != expected["problem"] or config["contest_label"] != expected_label:
+            conflicts.append(
+                {
+                    "kind": "repo_config_mismatch",
+                    "problem": expected["problem"],
+                    "current_path": path.name,
+                }
+            )
+    for local_id, paths in local_ids.items():
+        if len(paths) > 1:
+            conflicts.append(
+                {
+                    "kind": "duplicate_contest_problem_id",
+                    "contest_problem_id": local_id,
+                    "paths": sorted(path.name for path in paths),
+                }
+            )
+    for problem, paths in local_problems.items():
+        if len(paths) > 1:
+            conflicts.append(
+                {
+                    "kind": "duplicate_problem",
+                    "problem": problem,
+                    "paths": sorted(path.name for path in paths),
+                }
+            )
+
+    for item in roster_problems:
+        label = str(item["idx"])
+        matching_paths = children_by_case.get(label.casefold(), [])
+        if not matching_paths:
+            continue
+        exact_path = next((path for path in matching_paths if path.name == label), None)
+        if exact_path is None:
+            conflicts.append(
+                {
+                    "kind": "label_case_conflict",
+                    "expected_path": label,
+                    "current_path": matching_paths[0].name,
+                }
+            )
+            continue
+        if not exact_path.is_dir() or not _git_is_repo(exact_path):
+            conflicts.append(
+                {
+                    "kind": "label_path_occupied",
+                    "problem": item["problem"],
+                    "expected_path": label,
+                }
+            )
+            continue
+        config = _contest_repo_config(exact_path)
+        expected_id = str(item["contest_problem_id"])
+        if (
+            config["contest"] != contest_slug
+            or config["contest_problem_id"] != expected_id
+            or config["problem"] != item["problem"]
+            or config["contest_label"] != label
+        ):
+            conflicts.append(
+                {
+                    "kind": "repo_config_mismatch",
+                    "problem": item["problem"],
+                    "current_path": label,
+                }
+            )
+    return conflicts
+
+
+def _set_contest_repo_config(
+    repo_dir: Path,
+    *,
+    contest_slug: str,
+    item: JsonObject,
+    remote_head_commit: str,
+) -> None:
+    _git_config_set(repo_dir, "polygon-agent.problem", str(item["problem"]))
+    _git_config_set(repo_dir, "polygon-agent.remote-head", remote_head_commit)
+    _git_config_set(repo_dir, "polygon-agent.contest", contest_slug)
+    _git_config_set(
+        repo_dir,
+        "polygon-agent.contest-problem-id",
+        str(item["contest_problem_id"]),
+    )
+    _git_config_set(repo_dir, "polygon-agent.contest-label", str(item["idx"]))
+
+
+def _apply_contest_snapshot(
+    *,
+    state: JsonObject,
+    contest_slug: str,
+    item: JsonObject,
+    stage_root: Path,
+    transport_metadata: JsonObject,
+    target_dir: Path,
+) -> JsonObject:
+    created_repo = not target_dir.exists()
+    pre_sync_commit = None
+    if created_repo:
+        target_dir.mkdir(parents=True)
+        _apply_remote_mirror(stage_root, target_dir)
+        _git_run(target_dir, ["init"])
+    else:
+        if _git_is_dirty(target_dir):
+            pre_sync_commit = _git_commit_snapshot(
+                target_dir,
+                state,
+                f"sync: save local state before pulling {item['problem']}",
+            )
+        _apply_remote_mirror(stage_root, target_dir)
+    remote_head_commit = str(transport_metadata.get("remote_head_commit") or "")
+    _set_contest_repo_config(
+        target_dir,
+        contest_slug=contest_slug,
+        item=item,
+        remote_head_commit=remote_head_commit,
+    )
+    post_sync_commit = _git_commit_snapshot(
+        target_dir,
+        state,
+        f"sync: pull Contest {contest_slug} problem {item['idx']}",
+        allow_empty=created_repo,
+    )
+    return _without_none(
+        {
+            "contest_problem_id": item["contest_problem_id"],
+            "idx": item["idx"],
+            "problem": item["problem"],
+            "target_dir": str(target_dir),
+            "created_repo": created_repo,
+            "changed": bool(post_sync_commit),
+            "pre_sync_commit": pre_sync_commit,
+            "post_sync_commit": post_sync_commit,
+            **transport_metadata,
+        }
+    )
+
+
+def _command_pull_contest(args: argparse.Namespace) -> JsonObject:
+    contest_slug = str(args.contest or "").strip()
+    target_dir = _contest_target_dir(contest_slug, args.target_dir)
+    _ensure_not_filesystem_root(target_dir)
+    state_path, state, base_url, credentials = _state_and_credentials(args)
+    del state_path
+    roster = _fetch_contest_roster(
+        base_url=base_url,
+        credentials=credentials,
+        contest_slug=contest_slug,
+        verify_tls=bool(args.secure),
+    )
+    roster_problems = roster["problems"]
+    if not isinstance(roster_problems, list):
+        raise CliError(code="bad_response", message="Contest roster problems are invalid")
+    conflicts = _contest_layout_conflicts(
+        target_dir=target_dir,
+        contest_slug=contest_slug,
+        roster_problems=roster_problems,
+    )
+    if conflicts:
+        raise CliError(
+            code="contest_layout_conflict",
+            message="local Contest layout conflicts with the current roster",
+            details={"contest": contest_slug, "conflicts": conflicts},
+        )
+    writable_parent = (
+        target_dir
+        if target_dir.is_dir()
+        else _nearest_existing_parent(target_dir.parent)
+    )
+    _assert_writable_directory(writable_parent)
+    generation = int(roster["source_generation"])
+    staged: list[tuple[JsonObject, Path, JsonObject]] = []
+    with tempfile.TemporaryDirectory(prefix="polygon-agent-contest-") as temp_name:
+        staging_root = Path(temp_name)
+        for offset, item in enumerate(roster_problems):
+            item_staging = staging_root / str(offset)
+            item_staging.mkdir()
+            snapshot_path = (
+                f"/agent/v1/contests/{quote(contest_slug, safe='')}/problems/"
+                f"{item['contest_problem_id']}/workspace/snapshot"
+            )
+            stage_root, metadata = _fetch_snapshot_url(
+                url=f"{base_url}{snapshot_path}?{urlencode({'source_generation': generation})}",
+                credentials=credentials,
+                staging_parent=item_staging,
+                verify_tls=bool(args.secure),
+            )
+            staged.append((item, stage_root, metadata))
+        target_dir.mkdir(parents=True, exist_ok=True)
+        results = [
+            _apply_contest_snapshot(
+                state=state,
+                contest_slug=contest_slug,
+                item=item,
+                stage_root=stage_root,
+                transport_metadata=metadata,
+                target_dir=target_dir / str(item["idx"]),
+            )
+            for item, stage_root, metadata in staged
+        ]
+    return {
+        "contest": contest_slug,
+        "contest_title": roster["contest_title"],
+        "source_generation": generation,
+        "problem_count": len(results),
+        "target_dir": str(target_dir),
+        "problems": results,
+    }
 
 
 class _ArgumentParser(argparse.ArgumentParser):
@@ -1694,6 +2256,11 @@ def _build_parser() -> argparse.ArgumentParser:
     connect_parser = subparsers.add_parser("connect")
     _add_state_file(connect_parser)
     _add_problem(connect_parser)
+    connect_parser.add_argument(
+        "--scope",
+        choices=["readonly", "workspace", "commit"],
+        default="readonly",
+    )
     _add_tls_flags(connect_parser)
     connect_parser.set_defaults(func=_command_connect)
 
@@ -1716,6 +2283,13 @@ def _build_parser() -> argparse.ArgumentParser:
     push_parser = subparsers.add_parser("push")
     _add_sync_flags(push_parser)
     push_parser.set_defaults(func=_command_push)
+
+    pull_contest_parser = subparsers.add_parser("pull-contest")
+    _add_state_file(pull_contest_parser)
+    pull_contest_parser.add_argument("--contest", required=True)
+    pull_contest_parser.add_argument("--target-dir")
+    _add_tls_flags(pull_contest_parser)
+    pull_contest_parser.set_defaults(func=_command_pull_contest)
 
     workspace_status_parser = subparsers.add_parser("workspace-status")
     _add_state_file(workspace_status_parser)

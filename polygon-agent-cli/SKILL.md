@@ -34,7 +34,7 @@ The CLI is:
 - cross-platform for Windows and Linux
 - JSON-only on `stdout`
 - flag-based for input
-- state-file based for session and token persistence
+- state-file based for connected identity persistence
 - insecure by default for HTTPS, with warnings on `stderr` during `init`
 
 ## Input Rules
@@ -58,7 +58,7 @@ Success:
 Failure:
 
 ```json
-{"ok":false,"error":{"code":"token_invalid","message":"token invalid","http_status":401}}
+{"ok":false,"error":{"code":"agent_identity_invalid","message":"agent identity is invalid","http_status":401}}
 ```
 
 ## State File
@@ -83,12 +83,27 @@ Do not collapse the owner name away into `./a-plus-b/`. The owner-qualified path
 ## Clone / Pull Rules
 
 - `clone --problem owner/problem` mirrors into `./owner/problem/` by default.
-- `clone` auto-requests access when no usable token exists. It returns `approve_url` and `required_scope:"workspace"`; show that URL to the user and rerun `clone` after approval.
-- `pull` updates an existing clone and never auto-requests access.
+- Problem commands use the connected identity directly. When a per-problem
+  grant is needed, they return `approve_url` and `required_scope`; show the URL
+  to the user and rerun the command after approval.
+- `pull` updates an existing clone through the same identity and grant rules.
 - `push` uploads the full local mirror ZIP and applies it atomically on the server.
 - both commands use local Git commits as recovery points.
 - both commands preserve `.git/`, `temp/`, and `draft/`.
 - agent-managed UTF-8 text files are LF-canonical; binary files are byte-preserving.
+
+## Contest Pull Rules
+
+- `pull-contest --contest <slug>` requires general `readonly` permission.
+- It creates one independent Git repository per server label under `A/`, `B/`,
+  `C/`, and so on; the CLI does not renumber labels.
+- It downloads every snapshot to temporary staging before changing the target.
+- A removed or relabelled problem, occupied path, mismatched Git config,
+  duplicate mapping, or case collision returns `contest_layout_conflict`.
+- Never move, rename, or delete conflicting directories without showing the
+  structured conflicts and receiving explicit user confirmation.
+- No Contest root manifest is created. Each child repository remains usable by
+  ordinary `pull` and `push` through its `polygon-agent.problem` Git config.
 
 ## TLS Rules
 

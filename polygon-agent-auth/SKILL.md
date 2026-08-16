@@ -1,6 +1,6 @@
 ---
 name: polygon-agent-auth
-description: "Initialize Polygon agent authentication and request problem access tokens. Use for registration URLs, session status, connect/poll approval flow, or token scope upgrades."
+description: "Initialize Polygon agent identity authentication and request scoped problem grants. Use for registration URLs, session status, connect/poll approval flow, or grant scope upgrades."
 ---
 
 # Polygon Agent -- Auth
@@ -10,8 +10,8 @@ description: "Initialize Polygon agent authentication and request problem access
 Use this skill when:
 - the user provides an `/agent/v1/register/` URL
 - no local agent session exists yet
-- a problem token is missing, expired, or has insufficient scope
-- you need to upgrade from `readonly` to `workspace` or `commit`
+- a problem grant is missing, expired, or has insufficient scope
+- you need an independent `readonly`, `workspace`, or `commit` grant
 
 ## Registration URL
 
@@ -56,15 +56,21 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py poll \
   --wait
 ```
 
-The CLI saves the approved token into the state file.
+Approval creates a server-side grant. The CLI keeps using its connected
+identity and never receives or saves a problem secret.
 
 ## Rules
 
 - Agent identity name should be the product name: `Codex`, `Claude Code`, or similar.
 - Do not store registration codes, passwords, browser cookies, or approval URLs after approval.
-- Each problem has its own token and scope.
-- If an operation returns 401, request access again.
-- If an operation returns 403, request a higher-scope token.
+- The session may have a non-expiring general permission selected by the user
+  in Connected Agents.
+- Per-problem approvals retain independent scopes and expiries.
+- A 401 means the connected identity is invalid; do not silently create a new
+  identity or discard diagnostic state.
+- For `agent_permission_required`, request the indicated problem scope. For
+  `agent_general_permission_required`, direct the user to Connected Agents;
+  a problem grant cannot replace required general permission.
 - The CLI never approves access by itself; human browser approval is mandatory.
 - For internal HTTPS servers with self-signed certificates, the CLI already disables TLS verification by default and warns only during `init`.
 
