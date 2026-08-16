@@ -7,9 +7,8 @@ description: "Clone or pull a full remote Polygon problem workspace into a local
 
 ## When to Use
 
-Use this skill when you need a full local mirror of one remote problem, need to
-sync an existing clone, or need to pull an entire Contest into label-named
-independent repositories. Prefer this over one-file `read-file` operations.
+Use this skill when you need a full local mirror of one remote problem or need
+to sync an existing clone. Prefer this over one-file `read-file` operations.
 
 ## Clone
 
@@ -33,28 +32,6 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py pull \
 to the user and rerun the command after approval.
 
 Before applying remote changes, `pull` commits local dirty state. After applying remote changes, it commits the synchronized mirror if anything changed.
-
-## Pull Contest
-
-```bash
-python skills/polygon-agent-cli/scripts/polygon_agent.py pull-contest \
-  --contest "summer-2026" \
-  --target-dir "./summer-2026"
-```
-
-This requires general `readonly` permission in Connected Agents. It creates
-independent repositories such as `A/`, `B/`, and `C/` using the labels returned
-by the server. Each repository stores its canonical Problem and Contest mapping
-in local Git config and continues to work with ordinary single-problem pull and
-push.
-
-The command performs a complete local layout preflight and downloads every
-remote snapshot to staging before changing the target directory. If it returns
-`contest_layout_conflict`, explain every structured conflict and the expected
-directory layout to the user. Do not move, rename, or delete a local directory
-until the user explicitly confirms the desired resolution. After resolving the
-layout, rerun `pull-contest` so it obtains a fresh roster. The CLI never creates
-a Contest root manifest.
 
 ## Rules
 

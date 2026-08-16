@@ -64,6 +64,7 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-agent-cli` | internal shared CLI | Cross-platform script entrypoint for all Polygon agent API workflows |
 | `polygon-agent-auth` | "initialize/connect Polygon agent" | Register an agent identity and request problem grants |
 | `polygon-agent-pull` | "clone/pull remote problem" | Mirror a full remote workspace into a local Git repo |
+| `polygon-agent-pull-contest` | "pull/clone a Contest" | Mirror every Contest problem into a label-named Git repo |
 | `polygon-agent-push` | "push workspace via agent" | Atomically apply a local workspace mirror |
 | `polygon-agent-verification` | "run verification via agent" | Start, wait for, and inspect verification |
 | `polygon-agent-export` | "export via agent" | Start, wait for, and download exports |

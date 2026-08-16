@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pull Polygon Contest"
+  short_description: "Pull every Contest problem into label-named repos"
+  default_prompt: "Use $polygon-agent-pull-contest to pull a Polygon Contest into independent local problem repositories."
