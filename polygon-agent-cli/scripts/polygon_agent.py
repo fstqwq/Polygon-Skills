@@ -1880,14 +1880,10 @@ def _fetch_contest_roster(
                 message="Contest roster contains a non-object problem",
             )
         contest_problem_id = raw_problem.get("contest_problem_id")
-        position = raw_problem.get("position")
         if (
             isinstance(contest_problem_id, bool)
             or not isinstance(contest_problem_id, int)
             or contest_problem_id <= 0
-            or isinstance(position, bool)
-            or not isinstance(position, int)
-            or position < 0
         ):
             raise CliError(
                 code="bad_response",
@@ -1918,7 +1914,6 @@ def _fetch_contest_roster(
         problems.append(
             {
                 "contest_problem_id": contest_problem_id,
-                "position": position,
                 "idx": label,
                 "problem": problem,
             }

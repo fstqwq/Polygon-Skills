@@ -203,7 +203,6 @@ class TestPolygonAgentCLI(unittest.TestCase):
             roster_problems=[
                 {
                     "contest_problem_id": 101,
-                    "position": 0,
                     "idx": "B",
                     "problem": "alice/a",
                 }
@@ -213,6 +212,40 @@ class TestPolygonAgentCLI(unittest.TestCase):
         self.assertIn("problem_relabelled", {item["kind"] for item in conflicts})
         self.assertTrue(old_path.is_dir())
         self.assertFalse((target / "B").exists())
+
+    def test_contest_roster_uses_idx_without_position(self) -> None:
+        response = {
+            "contest_id": 1,
+            "contest_slug": "summer",
+            "contest_title": "Summer",
+            "source_generation": 7,
+            "problem_count": 2,
+            "problems": [
+                {
+                    "contest_problem_id": 101,
+                    "idx": "A",
+                    "problem": "alice/a",
+                },
+                {
+                    "contest_problem_id": 102,
+                    "idx": "B",
+                    "problem": "alice/b",
+                },
+            ],
+        }
+
+        with patch.object(cli, "_http_json", return_value=response):
+            roster = cli._fetch_contest_roster(
+                base_url="https://polygon.example",
+                credentials=cli.AgentCredentials(
+                    credential="polygon_agent_" + "a" * 43,
+                ),
+                contest_slug="summer",
+                verify_tls=True,
+            )
+
+        self.assertEqual(roster["problems"], response["problems"])
+        self.assertNotIn("position", roster["problems"][0])
 
     def test_pull_contest_downloads_every_snapshot_before_local_changes(self) -> None:
         target = self.root / "summer"
@@ -225,13 +258,11 @@ class TestPolygonAgentCLI(unittest.TestCase):
             "problems": [
                 {
                     "contest_problem_id": 101,
-                    "position": 0,
                     "idx": "A",
                     "problem": "alice/a",
                 },
                 {
                     "contest_problem_id": 102,
-                    "position": 1,
                     "idx": "B",
                     "problem": "alice/b",
                 },
@@ -271,7 +302,6 @@ class TestPolygonAgentCLI(unittest.TestCase):
         target = self.root / "contest" / "A"
         item = {
             "contest_problem_id": 101,
-            "position": 0,
             "idx": "A",
             "problem": "alice/a",
         }
