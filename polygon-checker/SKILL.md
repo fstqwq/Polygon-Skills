@@ -106,7 +106,7 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
 6. **Compile** (best-effort, see `polygon-spec/compile.md`):
    ```
    mkdir -p temp
-   g++ -std=c++20 -O2 -o temp/checker checkers/checker.cpp -I <skills>/polygon-spec
+   g++ -std=c++14 -O2 -o temp/checker checkers/checker.cpp -I <skills>/polygon-spec
    ```
    If no compiler is available locally (and no WSL on Windows), report to the user and skip.
 
@@ -128,6 +128,8 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 1. **Write the checker** with `start_next_pass()` lambda (see `/polygon-interactor` Section B):
 
    ```cpp
+   #include <ios>
+   #include <ostream>
    #include "testlib.h"
    using namespace std;
 

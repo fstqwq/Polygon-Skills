@@ -5,6 +5,10 @@ description: "Design and create test cases -- samples, edge cases, stress tests,
 
 # Generate Tests
 
+Before writing generator code, read
+`../polygon-spec/references/codeforces-testlib-style.md` and apply its shared
+component rules.
+
 ## Phase 1: Understand what needs testing
 
 Before writing any test, read:
@@ -227,6 +231,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
 
 1. **Write the generator** using testlib.h:
    ```cpp
+   #include <cstdlib>
    #include "testlib.h"
    using namespace std;
 
@@ -261,7 +266,7 @@ After the user approves the plan, implement each part sequentially. IDs are cont
 3. **Compile (best-effort**, see `polygon-spec/compile.md`):
    ```
    mkdir -p temp
-   g++ -std=c++20 -O2 -o temp/gen generators/{name}.cpp -I <skills>/polygon-spec
+   g++ -std=c++14 -O2 -o temp/gen generators/{name}.cpp -I <skills>/polygon-spec
    ```
 
 ### Commit

@@ -35,7 +35,7 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
 6. **Compile** (best-effort, see `polygon-spec/compile.md`):
    ```
    mkdir -p temp
-   g++ -std=c++20 -O2 -o temp/interactor interactors/interactor.cpp -I <skills>/polygon-spec
+   g++ -std=c++14 -O2 -o temp/interactor interactors/interactor.cpp -I <skills>/polygon-spec
    ```
    If no compiler is available locally (and no WSL on Windows), report to the user and skip.
 
@@ -60,6 +60,8 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
 ## Section A: Single-pass interactive
 
 ```cpp
+#include <iostream>
+#include <string>
 #include "testlib.h"
 using namespace std;
 

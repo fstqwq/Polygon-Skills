@@ -148,10 +148,20 @@ Check relationships between components:
 
 ### Step 8: Compilation check (best-effort)
 
-Attempt to compile all C++ sources (see `polygon-spec/compile.md` for flags):
+Attempt to compile every testlib component as C++14 (see
+`polygon-spec/compile.md` for flags):
 
 ```
-g++ -std=c++20 -O2 -fsyntax-only <file>.cpp -I <skills>/polygon-spec
+g++ -std=c++14 -O2 -fsyntax-only <component>.cpp -I <skills>/polygon-spec
+```
+
+Inspect each component's includes as well: it must include every
+standard-library dependency itself instead of relying on `testlib.h` or another
+header to provide it transitively. Compile ordinary C++ solutions using their
+normal C++20 runtime target:
+
+```
+g++ -std=c++20 -O2 -fsyntax-only <solution>.cpp
 ```
 
 Check each component:

@@ -45,6 +45,7 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
 
    Template:
    ```cpp
+   #include <bits/stdc++.h>
    #include "testlib.h"
    using namespace std;
 
@@ -177,7 +178,7 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
 7. **Compile** (best-effort, see `polygon-spec/compile.md`):
    ```
    mkdir -p temp
-   g++ -std=c++20 -O2 -o temp/validator validators/validator.cpp -I <skills>/polygon-spec
+   g++ -std=c++14 -O2 -o temp/validator validators/validator.cpp -I <skills>/polygon-spec
    ```
    If no compiler is available locally (and no WSL on Windows), report to the user and skip.
 

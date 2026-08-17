@@ -171,5 +171,5 @@ For detailed schemas and reference data, read the following files in this skill 
 - `config.md`  -- default values and full field tables for `problem.json` and `build.json`
 - `tests.md`  -- full `spec.json` schema, `solutions/*.desc` format, and `draft/` conventions
 - `checkers.md`  -- standard testlib checker catalog
-- `references/codeforces-testlib-style.md`  -- shared source-code rules for validators, checkers, and interactors
+- `references/codeforces-testlib-style.md`  -- shared source-code rules for validators, checkers, interactors, and generators
 - `review.py`  -- standalone validator; run from repo root to check all config files
