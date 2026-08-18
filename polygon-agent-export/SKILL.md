@@ -1,15 +1,14 @@
 ---
 name: polygon-agent-export
-description: "Build and download DOMjudge or ICPC 2025-09 problem packages through the agent CLI."
+description: "Start, monitor, and download Polygon-Replica external package exports through the agent CLI. Use when the user requests a DOMjudge, ICPC 2025-09, QOJ, or Nowcoder problem package."
 ---
 
 # Polygon Agent -- Export
 
-## When to Use
-
-Use this skill to start an export job, wait for completion, and download the ZIP artifact. Requires `readonly` scope or higher.
-
 ## Export
+
+Starting an export requires `workspace` scope. Waiting for or downloading an
+existing export requires `readonly` scope.
 
 ```bash
 python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
@@ -17,7 +16,15 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
   --format "domjudge"
 ```
 
-Use `--format "icpc-2025-09"` for a strict ICPC Problem Package 2025-09.
+Current external formats are:
+
+- `domjudge`
+- `icpc-2025-09`
+- `qoj`
+- `nowcoder`
+
+The server's adapter registry is authoritative; the CLI forwards `--format`
+without maintaining a separate allowlist.
 Read `job_id` from the JSON result.
 
 ```bash
@@ -37,9 +44,10 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-download \
 
 ## Rules
 
-- Both formats target the latest published revision captured when the export starts.
+- Every external format targets the latest published revision captured when the export starts.
 - If that revision has not been fully verified, the export job runs Verification before
-  projecting the requested package.
+  preparing the Native Package and running the requested adapter.
+- The Agent Package Export API does not expose direct Native Package creation or download.
 - A Workspace snapshot is a separate working-copy operation; package export never reads
   the local or remote working tree.
 - Store downloaded ZIPs under `temp/` unless the file is intentionally becoming tracked content.

@@ -243,9 +243,11 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-start \
   --format "domjudge"
 ```
 
-The only accepted formats are `domjudge` and `icpc-2025-09`. The command
-always targets the latest published revision captured by the server when the
-job starts. Read `job_id` from the JSON result.
+Current external formats are `domjudge`, `icpc-2025-09`, `qoj`, and
+`nowcoder`. The server's adapter registry validates the format; the CLI does
+not maintain a separate allowlist. The command always targets the latest
+published revision captured by the server when the job starts. Starting an
+export requires `workspace` scope. Read `job_id` from the JSON result.
 
 ### Export Wait
 
@@ -257,6 +259,8 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py export-wait \
 
 A succeeded export can include a `warning` in the JSON result. The command
 still exits successfully. Failed exports expose the server message as `error`.
+Successful status output includes `native_package_id` when the server has
+prepared the source Native Package.
 
 ### Export Download
 

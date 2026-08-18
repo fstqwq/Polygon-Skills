@@ -1088,7 +1088,7 @@ def _command_export_start(args: argparse.Namespace) -> JsonObject:
             "phase": response.get("phase"),
             "format": response.get("format"),
             "source_commit": response.get("source_commit"),
-            "verified_revision_id": response.get("verified_revision_id"),
+            "native_package_id": response.get("native_package_id"),
         })
 
     return _run_problem_command(
@@ -1136,7 +1136,7 @@ def _command_export_wait(args: argparse.Namespace) -> JsonObject:
             "phase": response.get("phase"),
             "format": response.get("format"),
             "source_commit": response.get("source_commit"),
-            "verified_revision_id": response.get("verified_revision_id"),
+            "native_package_id": response.get("native_package_id"),
         })
         message = response.get("error")
         if isinstance(message, str) and message:
@@ -2369,7 +2369,7 @@ def _build_parser() -> argparse.ArgumentParser:
     export_start_parser = subparsers.add_parser("export-start")
     _add_state_file(export_start_parser)
     _add_problem(export_start_parser)
-    export_start_parser.add_argument("--format", required=True, choices=["domjudge", "icpc-2025-09"])
+    export_start_parser.add_argument("--format", required=True)
     _add_tls_flags(export_start_parser)
     export_start_parser.set_defaults(func=_command_export_start)
 

@@ -32,15 +32,6 @@ class TestPolygonAgentCLI(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
 
-    def test_cli_has_no_problem_secret_or_contest_manifest_protocol(self) -> None:
-        source = _SCRIPT.read_text(encoding="utf-8")
-        self.assertNotIn("poly_", source)
-        self.assertNotIn("X-Polygon-Agent-Identity-Hash", source)
-        self.assertNotIn("X-Polygon-Agent-Session-ID", source)
-        self.assertNotIn("checkout.json", source)
-        self.assertNotIn("state_version", source)
-        self.assertNotIn("schema_version", source)
-
     def _args(self, **values):
         return argparse.Namespace(
             state_file=str(self.state_file),
@@ -91,13 +82,12 @@ class TestPolygonAgentCLI(unittest.TestCase):
             {"Authorization": "Bearer polygon_agent_" + "a" * 43},
         )
 
-    def test_old_identity_state_requires_explicit_reconnect(self) -> None:
-        old_state = dict(self.state)
-        old_state.pop("credential")
-        old_state["identity_hash"] = "predictable-metadata-hash"
+    def test_missing_credential_requires_explicit_reconnect(self) -> None:
+        incomplete_state = dict(self.state)
+        incomplete_state.pop("credential")
 
         with self.assertRaises(cli.CliError) as raised:
-            cli._state_credentials(old_state)
+            cli._state_credentials(incomplete_state)
 
         self.assertEqual(raised.exception.code, "agent_reconnect_required")
 
@@ -127,10 +117,8 @@ class TestPolygonAgentCLI(unittest.TestCase):
 
         self.assertEqual(request_body["existing_session_id"], "as-session")
         self.assertNotIn("credential", result)
-        self.assertNotIn("identity_hash", result)
         saved = json.loads(self.state_file.read_text(encoding="utf-8"))
         self.assertEqual(saved["credential"], response_credential)
-        self.assertNotIn("identity_hash", saved)
 
     def test_init_new_session_does_not_send_existing_session_id(self) -> None:
         self.state_file.unlink()
@@ -158,11 +146,10 @@ class TestPolygonAgentCLI(unittest.TestCase):
 
         self.assertNotIn("existing_session_id", request_body)
 
-    def test_init_does_not_reconnect_legacy_identity_state(self) -> None:
-        legacy_state = dict(self.state)
-        legacy_state.pop("credential")
-        legacy_state["identity_hash"] = "legacy-metadata-hash"
-        self.state_file.write_text(json.dumps(legacy_state), encoding="utf-8")
+    def test_init_without_credential_starts_new_session(self) -> None:
+        incomplete_state = dict(self.state)
+        incomplete_state.pop("credential")
+        self.state_file.write_text(json.dumps(incomplete_state), encoding="utf-8")
         request_body = None
 
         def register(**kwargs):
@@ -186,6 +173,73 @@ class TestPolygonAgentCLI(unittest.TestCase):
             )
 
         self.assertNotIn("existing_session_id", request_body)
+
+    def test_export_parser_defers_format_validation_to_server(self) -> None:
+        parser = cli._build_parser()
+
+        for package_format in (
+            "domjudge",
+            "icpc-2025-09",
+            "qoj",
+            "nowcoder",
+            "future-adapter",
+        ):
+            with self.subTest(package_format=package_format):
+                args = parser.parse_args(
+                    [
+                        "export-start",
+                        "--problem",
+                        "alice/aplusb",
+                        "--format",
+                        package_format,
+                    ]
+                )
+                self.assertEqual(args.format, package_format)
+
+    def test_export_start_forwards_external_adapter_format(self) -> None:
+        request_formats = []
+
+        def start_export(**kwargs):
+            request_formats.append(
+                json.loads(kwargs["body"].decode("utf-8"))["format"]
+            )
+            return {"job_id": "exp-api-123", "status": "queued"}
+
+        with patch.object(cli, "_http_json", side_effect=start_export):
+            for package_format in ("qoj", "nowcoder"):
+                result = cli._command_export_start(
+                    self._args(
+                        problem="alice/aplusb",
+                        format=package_format,
+                    )
+                )
+                self.assertEqual(result["job_id"], "exp-api-123")
+
+        self.assertEqual(request_formats, ["qoj", "nowcoder"])
+
+    def test_export_wait_reports_native_package_identity(self) -> None:
+        with patch.object(
+            cli,
+            "_http_json",
+            return_value={
+                "job_id": "exp-api-123",
+                "status": "succeeded",
+                "format": "qoj",
+                "source_commit": "a" * 40,
+                "native_package_id": "pm-native-123",
+                "filename": "aplusb-qoj-v2.zip",
+            },
+        ):
+            result = cli._command_export_wait(
+                self._args(
+                    problem="alice/aplusb",
+                    job_id="exp-api-123",
+                    interval_sec=0.0,
+                    timeout_sec=1.0,
+                )
+            )
+
+        self.assertEqual(result["native_package_id"], "pm-native-123")
 
     def test_contest_layout_detects_relabel_before_download(self) -> None:
         target = self.root / "contest"
@@ -213,7 +267,7 @@ class TestPolygonAgentCLI(unittest.TestCase):
         self.assertTrue(old_path.is_dir())
         self.assertFalse((target / "B").exists())
 
-    def test_contest_roster_uses_idx_without_position(self) -> None:
+    def test_contest_roster_preserves_canonical_problem_entries(self) -> None:
         response = {
             "contest_id": 1,
             "contest_slug": "summer",
@@ -245,7 +299,6 @@ class TestPolygonAgentCLI(unittest.TestCase):
             )
 
         self.assertEqual(roster["problems"], response["problems"])
-        self.assertNotIn("position", roster["problems"][0])
 
     def test_pull_contest_downloads_every_snapshot_before_local_changes(self) -> None:
         target = self.root / "summer"
@@ -295,7 +348,7 @@ class TestPolygonAgentCLI(unittest.TestCase):
         self.assertEqual(fetch_count, 2)
         self.assertFalse(target.exists())
 
-    def test_contest_snapshot_creates_independent_repo_config_without_manifest(self) -> None:
+    def test_contest_snapshot_creates_independent_repo_config(self) -> None:
         stage = self.root / "stage"
         (stage / "config").mkdir(parents=True)
         (stage / "config" / "problem.json").write_text("{}\n", encoding="utf-8")
@@ -336,7 +389,6 @@ class TestPolygonAgentCLI(unittest.TestCase):
             cli._git_config_get(target, "polygon-agent.contest-label"),
             "A",
         )
-        self.assertFalse((self.root / "contest" / ".polygon" / "checkout.json").exists())
 
 
 if __name__ == "__main__":

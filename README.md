@@ -67,7 +67,7 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-agent-pull-contest` | "pull/clone a Contest" | Mirror every Contest problem into a label-named Git repo |
 | `polygon-agent-push` | "push workspace via agent" | Atomically apply a local workspace mirror |
 | `polygon-agent-verification` | "run verification via agent" | Start, wait for, and inspect verification |
-| `polygon-agent-export` | "export via agent" | Start, wait for, and download exports |
+| `polygon-agent-export` | "export via agent" | Start, wait for, and download external package exports |
 | `polygon-agent-commit` | "commit via agent" | Commit and publish through the agent API |
 
 ## Typical workflow
