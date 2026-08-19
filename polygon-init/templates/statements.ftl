@@ -6,10 +6,16 @@
 \usepackage {fontspec}
 \usepackage {xeCJK}
 
-% CJK fonts: serif body + sans headings (standard CJK typographic convention).
-% ItalicFont=<self> prevents "font shape undefined" warnings (CJK has no italic).
-\setCJKmainfont{Noto Serif CJK SC}[ItalicFont=Noto Serif CJK SC]
-\setCJKsansfont{Noto Sans CJK SC}[ItalicFont=Noto Sans CJK SC]
+% CJK fonts: serif body + sans headings; use Kai for Chinese italic emphasis.
+% Bracketed filenames are resolved through TeX Live, without Fontconfig setup.
+\setCJKmainfont{Noto Serif CJK SC}[
+  ItalicFont={[FandolKai-Regular.otf]},
+  BoldItalicFont={[FandolKai-Regular.otf]}
+]
+\setCJKsansfont{Noto Sans CJK SC}[
+  ItalicFont={[FandolKai-Regular.otf]},
+  BoldItalicFont={[FandolKai-Regular.otf]}
+]
 \setCJKmonofont{Noto Sans CJK SC}
 
 \usepackage {amsmath}
@@ -28,14 +34,21 @@
 \usepackage {wrapfig}
 \usepackage {comment}
 
-%\intentionallyblankpagestrue
+<#if insertBlankPage?? && insertBlankPage>
+\intentionallyblankpagestrue
+</#if>
+<#if banner?? && banner>
+\renewcommand{\StatementBanner}{%
+${banner}
+}
+</#if>
 
 \begin {document}
 
 \contest
-{${contest.name!}}%
-{${contest.location!}}%
-{${contest.date!}}%
+{${title!}}%
+{${location!}}%
+{${date!}}%
 
 \binoppenalty=10000
 \relpenalty=10000
