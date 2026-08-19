@@ -298,6 +298,11 @@ Before committing, confirm that the PDF exists, the source exists, and every `\i
 - The canonical statement examples template renders both structured forms. A
   custom `statement/examples.tex` is needed only for a deliberately different
   presentation, not merely because the sample is interactive or multi-pass.
+  Leave it absent for the normal path: the remote Polygon Replica renderer
+  supplies the canonical fallback and generates the rendered companion that
+  `problem.tex` inputs. If the user explicitly requests a custom layout, start
+  from `<skills>/polygon-init/templates/examples.tex` rather than rebuilding
+  the canonical template from memory.
 
 ---
 

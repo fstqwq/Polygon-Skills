@@ -78,12 +78,20 @@ description: "Initialize a new problem repository from scratch."
    are authored; a missing field means an empty allowlist. Do not copy any
    standard checker during init.
 
-7. **Write statement template files** (these are fixed boilerplate -- do not customize):
+7. **Write authored statement template files** (these are fixed boilerplate -- do not customize):
    - `statement/statements.ftl` -- copy from `<skills>/polygon-init/templates/statements.ftl`
    - `statement/problem.tex` -- copy from `<skills>/polygon-init/templates/problem.tex`
    - `statement/olymp.sty` -- copy from `<skills>/polygon-init/templates/olymp.sty`
 
    These files must match exactly. Do not modify them.
+
+   Do **not** create `statement/examples.tex` during initialization. When that
+   authored override is absent, the remote Polygon Replica renderer uses its
+   canonical examples template and generates the rendered `examples.tex` that
+   `problem.tex` inputs. The bundled
+   `<skills>/polygon-init/templates/examples.tex` is the matching canonical
+   reference and a starting point only when the user explicitly requests a
+   custom examples layout.
 
 8. **Write statement section stubs** (for each chosen language, create `statement-sections/<language>/`):
    - `name.tex`  -- the problem title
