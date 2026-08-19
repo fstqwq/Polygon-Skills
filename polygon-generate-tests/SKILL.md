@@ -147,7 +147,8 @@ Check which of these apply to the problem and incorporate into the plan:
 **Multiple test cases (only when present in the input)**:
 - **Increasing n**: $T$ test cases where $n$ grows each time (1, 2, 4, 8, ..., max). Catches solutions that leave stale state.
 - **Maximum T, minimum n**: $T$ at maximum, each test case has $n=1$ or the minimum. Catches solutions that clear a maximum-size buffer every time.
-- Do not introduce multiple test cases merely to use these patterns. When multiple test cases are present, include both patterns unless the problem structure makes one irrelevant.
+- **Special case before ordinary cases**: place a case with a special result, such as no solution and output `-1`, before at least one ordinary case in the same input file. This catches submissions that print the special result and terminate the whole process with `exit(0)` or by returning from `main`, skipping the remaining cases. Vary the special case's position when ordering may also expose leaked state.
+- Do not introduce multiple test cases merely to use these patterns. When multiple test cases are present, include all applicable patterns unless the problem structure makes one irrelevant.
 
 **Integer overflow / width bugs**:
 - If input values can be large, include values around common type boundaries: `2^31-1`, `2^31`, `10^9`, `10^18`, and the stated maximum.
