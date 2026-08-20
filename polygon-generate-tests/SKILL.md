@@ -174,17 +174,15 @@ Check which of these apply to the problem and incorporate into the plan:
 - When reviewing the final tests, check that every intended output branch is represented.
 
 **Trees**:
-- Random parent tree (`rnd.next(0, i-1)`) has expected height O(log n) -- this is too shallow if tree depth matters.
-- For problems where depth matters (e.g., heavy-light decomposition, centroid decomposition, Euler tour): use Prufer sequence or rejection sampling to generate trees with expected depth O(sqrt(n)).
-- Include both deep (chain-like) and shallow (star-like) trees in the plan.
+- `parent = rnd.next(0, i - 1)` generates a random recursive tree: each new vertex attaches uniformly to an earlier vertex, older vertices tend to have larger degree, and the tree has logarithmic height. Permuting vertex labels hides creation order but leaves the distribution unchanged.
+- A uniformly sampled Prüfer sequence generates a uniform labeled tree, also called a uniform Cayley tree. Its typical height is on the square-root scale, so it covers a different random shape from a random recursive tree.
+- Add explicit shapes for properties that the random models may miss: degree (star), diameter (chain), depth (caterpillar with a long spine), and decomposition behavior (balanced binary or ternary tree).
+- Use [the test construction catalog](references/test-construction-catalog.md) for concrete generators and additional structural families.
 
 **Graphs / shortest paths**:
-- If SPFA or Bellman-Ford might be used as wrong solutions, add anti-SPFA tests:
-  - Grid graphs (n x m grid, edges to adjacent cells)
-  - Constructed graphs that force exponential relaxations under SLF optimization
-  - Large cycles with perturbation
-  - Binary tree shaped graphs
-- Add random noise/edge shuffling to all constructed graphs to prevent special-case detection.
+- When SPFA or Bellman-Ford are plausible wrong approaches, inspect the candidate's relaxation condition, queue policy, tolerance, adjacency representation, adjacency iteration order, and randomization before selecting a construction.
+- Use [the test construction catalog](references/test-construction-catalog.md) for concrete Bellman-Ford, FIFO SPFA, SLF, Tolerance-SLF, LLL, MCFX, and Swap-SLF constructions.
+- For a construction whose behavior depends on edge order, emit separate forward, reverse, and lightly perturbed variants. Append-based adjacency lists usually preserve input order; head-inserted linked lists and forward-star representations usually reverse it. Give every perturbed variant an explicit deterministic seed.
 
 **Geometry**:
 - Convex hull point count matters -- ensure generated point sets have large convex hulls (many points on the hull), not just random points in a square (which gives O(log n) hull points).
@@ -309,7 +307,7 @@ If the user asks to see current tests:
 auto p = rnd.perm(n, 1);
 ```
 
-**Random tree** (random parent + shuffle labels):
+**Random recursive tree** (uniform earlier parent + permuted labels):
 ```cpp
 auto label = rnd.perm(n, 1);
 vector<pair<int,int>> edges;
@@ -317,7 +315,7 @@ for (int i = 1; i < n; i++)
     edges.push_back({label[rnd.next(0, i - 1)], label[i]});
 shuffle(edges.begin(), edges.end());
 ```
-Always shuffle node labels -- otherwise node 1 is always the root and low-numbered nodes are always near the top.
+This is a random recursive tree. It has logarithmic height and favors older vertices in the degree distribution. Label permutation removes the visible creation order but does not turn it into a uniform labeled tree. Use the catalog when the test plan also needs a uniform Cayley tree or an explicit structural shape.
 
 **Random connected graph** (spanning tree + extra edges):
 ```cpp
