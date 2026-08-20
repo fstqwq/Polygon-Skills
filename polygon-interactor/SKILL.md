@@ -104,6 +104,8 @@ The judge runs the next pass only if ALL of:
 2. `nextpass.in` was written to the feedback directory
 3. Pass count < `pass_limit` (from `config/problem.json`)
 
+Finish judging the current pass before creating `nextpass.in`. If the current pass is wrong, immediately `quitf(_wa, ...)` without creating it. If the current pass is correct and another pass is needed, create `nextpass.in` and then `quitf(_ok, ...)`; DOMjudge receives the accepted exit code `42` and starts the next pass.
+
 Each pass is a fresh solution process  --  no memory between passes. `inf` is the original test on pass 1, `nextpass.in` on subsequent passes.
 
 The interactor can be **stateful** (encode a pass number in `nextpass.in`, dispatch on it) or **stateless** (same logic every pass, e.g. round-robin multi-party: Alice -> Bob -> Carl).
@@ -130,7 +132,9 @@ int main(int argc, char* argv[]) {
     if (op == 1) {
         int T = inf.readInt();
         cout << T << endl;
-        // Interact with contestant...
+        int got = ouf.readInt();
+        if (got != T)
+            quitf(_wa, "expected %d, got %d", T, got);
 
         start_next_pass();
         tout << 2 << " " << T << "\n";
@@ -161,6 +165,7 @@ int main(int argc, char* argv[]) {
 - Use only testlib random facilities when the interactor needs randomness.
 - Do not reveal hidden data, answers, or solution ideas in verdict messages.
 - Keep the local testing tool protocol identical to the official interactor protocol.
+- In multi-pass mode, decide the current pass verdict before creating `nextpass.in`. A wrong pass quits with `_wa`; only a correct pass that needs to continue creates the file and then quits with `_ok`.
 
 ## Examples
 

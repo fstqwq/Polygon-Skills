@@ -124,6 +124,7 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 - The judge uses `checker <test.in> <contestant_output> <feedback_dir>` instead of an interactor
 - There is no stdin/stdout interaction  -- the checker reads `ouf` (contestant output) after the solution finishes
 - The checker writes `nextpass.in` via `tout` for the next pass
+- Finish checking the current pass before creating `nextpass.in`. If the current pass is wrong, immediately `quitf(_wa, ...)` without creating it. If the current pass is correct and another pass is needed, create `nextpass.in` and then `quitf(_ok, ...)`; DOMjudge receives the accepted exit code `42` and starts the next pass.
 
 1. **Write the checker** with `start_next_pass()` lambda (see `/polygon-interactor` Section B):
 
@@ -146,10 +147,11 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
        int op = inf.readInt();  // e.g., pass number
 
        if (op == 1) {
-           // Check pass 1 output
-           // ...
+           int expected = inf.readInt();
+           int got = ouf.readInt();
+           if (got != expected)
+               quitf(_wa, "expected %d, got %d", expected, got);
 
-           // Prepare next pass
            start_next_pass();
            tout << 2 << "\n";
            // ... write whatever pass 2 needs ...
@@ -194,7 +196,7 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 - Verdicts: use only `_ok` (accepted), `_wa` (wrong answer), `_fail` (judge error). Do not use `_pe`.
 - **`quitf(_ok, ...)` message must start with `"ok"`** (e.g. `quitf(_ok, "ok, correct")`, `quitf(_ok, "ok, n=%d", n)`). This makes logs immediately scannable.
 - Treat checker messages as contestant-visible: keep them clear and do not reveal hidden answers or solution ideas.
-- **Multi-pass checkers**: always use the `start_next_pass()` lambda. Set `pass_limit` in `config/problem.json`.
+- **Multi-pass checkers**: always use the `start_next_pass()` lambda. Set `pass_limit` in `config/problem.json`. A wrong current pass must quit with `_wa` before `nextpass.in` is created; only a correct pass that needs to continue may create it and quit with `_ok`.
 
 ## Examples
 
