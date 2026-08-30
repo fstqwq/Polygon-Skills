@@ -1,20 +1,71 @@
 ---
 name: polygon-hack
-description: "Generate adversarial wrong solutions and tests that hack them. Use when Codex needs to test whether a problem can be passed by non-general solutions, public-artifact exploits, or common incorrect variants of the intended solution."
+description: "Audit a competitive-programming problem for weak data and plausible wrong solutions, or perform a targeted hack or repair: given code, find and verify a legal counterexample; given a failing test, fix the specified implementation to handle it generally."
 ---
 
 # Hack the Problem
 
 ## Purpose
 
-Use this skill after the statement, checker, validator, and at least one intended solution direction exist. The goal is to find solutions that should not pass and produce legal counterexamples that demonstrate the failure. Add counterexamples to the formal test suite only when the user explicitly asks.
+Use this skill in one of two modes:
 
-This skill combines two tracks:
+- **Audit mode**: inspect the current problem data and solution set, discover weak coverage or plausible wrong solutions, and recommend targeted additions. Use this after the statement, checker, validator, and at least one intended solution direction exist.
+- **Targeted mode**: attack one supplied solution by finding a legal counterexample, or repair one specified implementation against a supplied failing test. This mode starts from a concrete artifact and should not expand into a general audit.
+
+If the user supplies code to hack or a failing input to fix, choose targeted mode unless they explicitly request a broader audit. Add counterexamples to the formal test suite only when the user explicitly asks.
+
+Audit mode combines three tracks:
 - **Public-artifact attacks**: assume a contestant sees the statement, checker, and generator source, but not tests, `std.cpp`, accepted solutions, or private reasoning.
 - **Bugged-intended attacks**: start from the intended algorithm and introduce plausible contestant mistakes.
 - **Independent subagent search**: split hack discovery across fresh subagents with no inherited context, so each worker explores a different failure mode instead of converging on the coordinator's assumptions.
 
-## Procedure
+## Targeted Workflow
+
+Targeted work is hypothesis-driven: trace the supplied code or failing input, identify one concrete failure mechanism, and verify the result. Do not run the audit mode's broad candidate-discovery workflow.
+
+1. **Fix the target and success condition.**
+   - Use the exact code or input named by the user.
+   - For a code-to-hack request, success means a validator-legal input on which the target demonstrably gets WA, RE, TLE, or another intended failing verdict.
+   - For a data-to-repair request, success means the specified implementation handles that input for the general reason revealed by the failure and continues to pass relevant regressions.
+   - If a failing input is supplied but several implementations could be "current," identify the configured or actively edited implementation only when unambiguous; otherwise ask which file to change.
+
+2. **Read only the necessary context.**
+   - Always read the target code or failing input in full.
+   - Read the relevant statement semantics, limits, validator, and checker behavior needed to decide legality and correctness.
+   - Use the configured accepted solution, a small brute-force oracle, or a directly proved expected answer as appropriate. Do not inventory unrelated rejected solutions or generator strategies unless they bear on the concrete target.
+
+3. **Reproduce before changing anything.**
+   - Compile the target using `/polygon-spec/compile.md` where applicable.
+   - For a supplied test, validate it and reproduce the target's actual output, exit status, time behavior, and checker verdict.
+   - If the input is invalid or the claimed failure cannot be reproduced, report that evidence instead of editing code speculatively.
+
+4. **Assess difficulty before delegating.**
+   - Make a short direct attempt first to understand the target and estimate the structural difficulty. Do not invoke the audit mode's mandatory five discovery passes.
+   - If the problem structure or failure mechanism appears complex, try the targeted task from scratch with a fresh independent subagent that inherits no conversation context. If it appears straightforward, continue directly.
+   - When two genuinely different fresh attempts would help, use at most **two subagents total**, which may run in parallel. Each must start without inherited context.
+   - Pass the raw target and only the authoritative problem context needed to solve it. Do not prime the subagents with the coordinator's hypotheses, suspected bug, partial conclusions, or failed search path.
+   - Ask each subagent to solve the same concrete target independently, not to enumerate unrelated attack classes, audit the whole repository, or modify files. The coordinator remains responsible for reproducing and verifying any result.
+
+5. **When given code, hack that code.**
+   - Trace its assumptions, branches, numeric ranges, state transitions, and complexity against the specification.
+   - Form a specific failure hypothesis before searching broadly. Prefer a minimal hand-derived witness; use exhaustive or differential search over small legal instances when it is more reliable.
+   - Minimize the witness without removing the failure mechanism.
+   - For randomized or heuristic targets, require a counterexample that remains effective across seed changes and reasonable parameter changes. Prefer a structural failure with guaranteed or consistently high failure probability; test multiple seeds and nearby parameter settings when they are controllable. Do not accept a witness that succeeds only for one unlucky seed or one narrowly tuned configuration.
+   - Validate the input, establish the expected result with a trustworthy oracle, run the target, and confirm the predicted failure. A merely suspicious code path is not a successful hack.
+   - Keep exploratory programs and inputs under `temp/`. Do not add the witness to the formal suite unless requested.
+
+6. **When given data, repair the implementation.**
+   - Trace the exact failing execution and state the root cause before patching.
+   - Make the smallest general correction that restores the intended invariant. Do not hardcode the supplied input, add a one-case exception, or weaken the checker, validator, constraints, or tests.
+   - Re-run the supplied input, samples, relevant existing tests, and nearby boundary cases aimed at the same bug class. Use a brute-force or differential check when the state space permits.
+   - If the input instead exposes a statement, validator, checker, or oracle defect, report the actual faulty component rather than forcing the target implementation to accommodate it.
+
+7. **Report evidence, not a candidate list.**
+   - For a successful hack, provide the counterexample, expected versus actual behavior, and exact failure mechanism.
+   - For a successful repair, provide the root cause, the general fix, and the regression evidence.
+   - Do not require `draft/hacks.md` or a separate plan-approval checkpoint for the targeted action already requested. Use them only if the user expands the task into audit mode or asks to preserve a broader plan.
+
+## Audit Workflow
 
 1. **Read the problem surface.**
    - Read `statement-sections/english/input.tex`, `output.tex`, and relevant statement text.
@@ -103,7 +154,7 @@ This skill combines two tracks:
    - Run local checks only as advisory diagnostics.
    - Use online Polygon-Replica Verification for final verdicts.
 
-## Subagent Prompt Templates
+## Audit-Mode Subagent Prompt Templates
 
 General requirements for every subagent:
 
@@ -239,6 +290,8 @@ Do not use or assume hidden tests, std solution, accepted solutions, or private 
 - If `std.cpp` fails a proposed hack test, investigate `std.cpp`, the validator, and the statement before weakening the test.
 - Prefer a few high-value hacks with clear counterexamples over many vague wrong solutions.
 - A hack request needs to defeat the selected target, not every rejected solution in repository history.
+- In targeted mode, do not turn one supplied code or test artifact into an unsolicited full-problem audit.
+- Do not claim a targeted hack or repair from reasoning alone; reproduce and verify the observed behavior whenever the local artifacts permit it.
 - Do not add exploratory counterexamples to the formal test suite without explicit user direction.
 - Keep all temporary files under `temp/`.
 - Add approved wrong solutions only after showing the user the code/test plan. Add counterexamples to the formal test suite only when the user explicitly requests it.
