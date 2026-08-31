@@ -228,7 +228,11 @@ STANDARD_SENTENCE_RULES = [
         "candidate": re.compile(
             r"(?:对于)?每组测试数据[，,]?[^。！？]*?(?:输出|打印)[^。！？]*[。！？]"
         ),
-        "accepted": re.compile(r"对于每组测试数据，输出.+。$"),
+        "accepted": re.compile(
+            r"(?:对于每组测试数据，输出.+。|"
+            r"对于每组测试数据，如果答案存在，输出 \\texttt\{YES\}；"
+            r"否则输出 \\texttt\{NO\}。)$"
+        ),
         "expected": "对于每组测试数据，输出……。",
     },
     {

@@ -52,6 +52,15 @@ class StandardSentenceTests(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
         self.assertIn("如果有多个解，输出任意一个即可。", warnings[0])
 
+    def test_accepts_standard_chinese_yes_no_sentence(self) -> None:
+        warnings = self._warnings(
+            "chinese",
+            "output.tex",
+            "对于每组测试数据，如果答案存在，输出 \\texttt{YES}；"
+            "否则输出 \\texttt{NO}。\n",
+        )
+        self.assertEqual(warnings, [])
+
     def test_ignores_unrelated_prose_and_comments(self) -> None:
         warnings = self._warnings(
             "english",
