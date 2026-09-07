@@ -91,7 +91,7 @@ Check:
 - [ ] A small-random stress mode is suitable for comparison with the brute-force solution
 - [ ] Every random/stress payload has an explicit deterministic seed; categories use distinct modes or parameter shapes, while same-shape seed repetition is optional
 - [ ] Generator modes collectively cover the full legal input space without accidental assumptions such as fixed sizes, distinct values, narrower ranges, connected graphs, or non-degenerate geometry
-- [ ] Targeted anti-hack tests, when present, are mapped to the specific rejected solutions they are intended to break
+- [ ] Targeted counterexample tests, when present, are mapped to the specific rejected solutions they are intended to reject
 - [ ] If multi-test: includes "increasing n" and "max T min n" patterns
 - [ ] Total test count is reasonable (typically 20-70 for most problems; fewer than 20 requires an explicit reason)
 - [ ] No tests appear weakened, deleted, or avoided only because a current solution failed them

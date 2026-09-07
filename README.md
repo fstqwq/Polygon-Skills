@@ -51,11 +51,16 @@ Reference files in `skills/polygon-spec/` as needed.
 | `polygon-checker` | "write/pick the checker" | Select built-in or write custom checker |
 | `polygon-interactor` | "write the interactor" | Interactive problem interactor + testing tool |
 | `polygon-solution` | "write solutions" | Brute force -> WA traps -> std -> translations |
-| `polygon-hack` | "hack the problem" | Generate targeted wrong solutions and tests that reject them |
+| `polygon-stress-test` | "stress-test this problem" / "hack this solution" | Assess test coverage, verify valid counterexamples, and repair solutions using failing tests |
 | `polygon-generate-tests` | "create tests" | Design test plan -> implement test suite |
 | `polygon-review` | "review the problem" | End-to-end audit before sharing a Workspace snapshot |
 | `polygon-workspace-snapshot-export` | "create a Workspace snapshot" | Zip authored working-tree source for transfer |
 | `polygon-workspace-snapshot-import` | "restore a Workspace snapshot" | Restore authored source into a local repo |
+
+For competitive-programming solutions, `polygon-stress-test` also handles requests
+such as "找一组能 hack 这份解法的合法数据". Here, "hack" means finding a valid
+input that makes a solution produce a wrong answer, fail at runtime, or exceed
+the time limit.
 
 ## Agent Skills
 
@@ -78,7 +83,7 @@ polygon-statement      -> write the problem statement
 polygon-validator      -> write the validator
 polygon-checker        -> pick or write the checker
 polygon-solution       -> write solutions (brute, WA, std)
-polygon-hack           -> generate targeted wrong solutions and hack tests
+polygon-stress-test    -> assess coverage, verify counterexamples, or repair a failing solution
 polygon-generate-tests -> design and create tests
 polygon-review                   -> audit everything
 polygon-workspace-snapshot-export -> create a Workspace snapshot for transfer

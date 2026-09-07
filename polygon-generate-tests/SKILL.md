@@ -1,6 +1,6 @@
 ---
 name: polygon-generate-tests
-description: "Design and create test cases -- samples, edge cases, stress tests, anti-hack tests."
+description: "Design and create test cases -- samples, edge cases, stress tests, targeted counterexample tests."
 ---
 
 # Generate Tests
@@ -67,7 +67,7 @@ Example plan:
 - gen_random, near-max (n=N-1), one deterministic payload
 - gen_random, max (n=N), one deterministic payload
 
-## Part 5: Anti-hack (typically 4-10)
+## Part 5: Targeted counterexamples (typically 4-10)
 - gen_worstcase -- breaks greedy, x3 variants
 - manual -- always-YES case, breaks dummy
 
@@ -124,9 +124,9 @@ Pick the ones relevant to the problem.
 - Include at least one large-random stress mode suitable for comparing independently implemented correct solutions.
 - Include at least one small-random stress mode suitable for comparison with the brute-force solution.
 
-**Part 5 -- Anti-hack**: tests designed to break selected high-value wrong solutions. Analyze the concrete assumption of each targeted `rej_*` solution, but do not impose a blanket requirement to target every rejected file.
+**Part 5 -- Targeted counterexamples**: tests designed to reject selected high-value wrong solutions. Analyze the concrete assumption of each targeted `rej_*` solution, but do not impose a blanket requirement to target every rejected file.
 
-| Wrong approach | Anti-hack strategy |
+| Wrong approach | Counterexample strategy |
 |---------------|-------------------|
 | Greedy by value | Construct where greedy ordering fails |
 | Always output NO/-1 | Ensure positive cases exist |
@@ -285,7 +285,7 @@ If the user asks to see current tests:
 2. For manual tests, show `tests/manual/{id}.in` and describe any legacy
    `sample_input`/`sample_output` or structured `sample_json` statement override.
 3. For gen tests, show the gen command.
-4. Report coverage: how many samples, edge cases, stress, anti-hack, max-stress.
+4. Report coverage: how many samples, edge cases, stress, targeted counterexamples, max-stress.
 
 ---
 
