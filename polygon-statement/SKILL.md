@@ -111,7 +111,7 @@ Write for contestants. Assume they know how to program, understand standard inpu
    - `## Output` -> maps to `output.tex`
    - `## Sample N` -> for review only; not converted to `.tex` (samples are managed by `/polygon-generate-tests`)
    - `## Interaction` -> maps to `interaction.tex` (omit if not interactive)
-   - `## Notes` -> maps to `notes.tex`. By default, give useful explanations for at least two samples and for every sample likely to raise a question. Do not restate the problem or reveal the solution. A problem-specific user instruction may request fewer or no notes
+   - `## Notes` -> maps to `notes.tex`. When the statement is clear, `notes.tex` may be left empty. If a sample is illustrated by a figure (for example in `legend.tex`), leave `notes.tex` empty and put a brief explanation in the figure caption, e.g. "One possible arrangement for the first sample." or "In the first test case, two coastlines on the second island match the first treasure map." Otherwise, write a note for any sample likely to raise a question. Do not restate the problem or reveal the solution. A problem-specific user instruction overrides these defaults
    - `## Constraints` -> folded into `## Input` during LaTeX conversion (not a separate file)
    - Use LaTeX math (`$...$`) inline in the Markdown  --  it carries over directly to `.tex`
 
@@ -208,7 +208,7 @@ Problem statements follow a **terse, precise** style. Every sentence must carry 
 
 - **Legend**: No hard limit. When the problem can be defined accurately in natural language, especially when it has a meaningful setting rather than a bare "given an array" formulation, minimize formulas in the Legend. Move formal definitions, coordinate conventions, limits, and input guarantees to Input whenever this preserves clarity and correctness.
 - **Input/Output**: Mechanical descriptions only. Keep tight.
-- **Notes**: Explain at least two samples by default and every non-obvious sample. Do not restate the problem or reveal the solution. Honor explicit problem-specific user instructions.
+- **Notes**: May be left empty when the statement is clear. When a sample has a figure (for example in the Legend), leave Notes empty and give a brief explanation in the figure caption, e.g. "One possible arrangement for the first sample." or "In the first test case, two coastlines on the second island match the first treasure map." Otherwise, explain any sample that is non-obvious. Do not restate the problem or reveal the solution. Honor explicit problem-specific user instructions.
 
 
 ## LaTeX Formatting Rules

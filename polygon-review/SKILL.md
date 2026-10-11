@@ -39,7 +39,7 @@ Check:
 - [ ] **Variables and TeX**: symbols are not reused for different objects, ordinary variables are lowercase except the conventional uppercase `$T$` for the number of test cases, multi-letter names are upright, and formulas are punctuated as sentence parts
 - [ ] **Standard wording**: applicable Input, Output, guarantee, and definition text uses the `/polygon-statement` templates verbatim apart from problem-specific symbols, values, types, counts, object names, or tolerances
 - [ ] **Samples**: at least two distinct samples exist by default and cover every output form
-- [ ] **Sample explanations**: at least two samples have useful notes by default, and every potentially confusing sample is explained; honor explicit problem-specific user decisions
+- [ ] **Sample explanations**: empty notes are acceptable when the statement is clear; when a sample is illustrated by a figure, notes may be empty provided the figure caption briefly explains the sample (e.g. "One possible arrangement for the first sample."); any other potentially confusing sample is explained; honor explicit problem-specific user decisions. Do not flag empty notes as a failure when these conditions hold
 - [ ] **Language consistency**: if multiple languages, content matches across all
 - [ ] **Statement assets**: every `\includegraphics` reference resolves to a file under `statement-assets/`; each TikZ/LaTeX-generated PDF has a same-basename `.tex` source there; no statement-only figure is stored in contestant `attachments/`
 

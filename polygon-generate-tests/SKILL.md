@@ -85,9 +85,9 @@ IDs are assigned sequentially when implementing (001, 002, ...), no gaps.
 **Part 1 -- Samples**: extracted from the problem statement. `"sample": true`.
 - Prepare at least two distinct samples by default.
 - Cover every possible output form across the samples, such as positive/negative branches, a construction/impossible branch, or different output shapes.
-- By default, at least two samples should have useful notes. Add a note for every sample whose result or interpretation is likely to raise a question.
+- Notes may be left empty when the statement is clear. When a sample is illustrated by a figure, leave notes empty and explain it briefly in the figure caption. Add a note for any other sample whose result or interpretation is likely to raise a question.
 - Coordinate the note text with `/polygon-statement`; do not duplicate the problem statement or reveal the solution.
-- A problem-specific user instruction may override the default number of notes.
+- A problem-specific user instruction overrides these defaults.
 
 **Part 2 -- Edge cases**: walk the constraint boundaries systematically.
 
