@@ -31,7 +31,27 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py push \
   --target-dir "."
 ```
 
-`push` uploads one full ZIP, asks the server to compare it, then applies it atomically.
+`push` sends the same full ZIP to compare and then apply; apply changes the workspace atomically.
+
+## Interrupted Push
+
+The CLI exits on failure without retries, backoff, or automatic file uploads.
+Use its `stage`, `remote_outcome`, and `recovery` fields to decide the next step.
+An interrupted apply may already have succeeded: inspect the remote state first.
+`preflight_diff`, when present, describes the state before apply, not remaining work.
+
+For transport failures, you may use existing `upload` and `delete` commands to
+finish confirmed changes from the local track. Compare with current remote files;
+local track does not prove the remote workspace is unchanged. Do not delete
+unrelated remote files or bypass permission, version, or validation rejections.
+
+Execute each selected operation once. If it fails, report remaining work instead
+of entering a retry loop. File-by-file recovery can leave a partially updated
+workspace and is not atomic. Verify contents with `list-files` and `read-file`
+when needed, using LF normalization for text and exact bytes for binary files.
+Matching `workspace-status` paths alone does not establish equal contents.
+Report partial completion or an unconfirmed result until verified. Do not
+manually update `polygon-agent.remote-head`, commit, or publish as recovery.
 
 ## Rules
 

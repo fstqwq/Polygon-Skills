@@ -1,10 +1,14 @@
 import argparse
 import importlib.util
 import json
+import io
+import contextlib
+import urllib.error
+import http.client
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 
 _SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "polygon_agent.py"
@@ -38,6 +42,110 @@ class TestPolygonAgentCLI(unittest.TestCase):
             secure=False,
             **values,
         )
+
+    def _push_repo(self):
+        target = self.root / "mirror"
+        target.mkdir()
+        cli._git_run(target, ["init"])
+        cli._git_config_set(target, "polygon-agent.problem", "alice/a")
+        cli._git_config_set(target, "polygon-agent.remote-head", "original-head")
+        (target / "solutions").mkdir()
+        (target / "solutions/main.cpp").write_text("private source body", encoding="utf-8")
+        return target
+
+    def _push_main(self, target):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            status = cli.main([
+                "push", "--problem", "alice/a", "--target-dir", str(target),
+                "--state-file", str(self.state_file),
+            ])
+        return status, json.loads(output.getvalue())
+
+    def test_push_transport_failure_preserves_baseline_and_stops(self):
+        target = self._push_repo()
+        compare = {"uploads": ["solutions/main.cpp"], "deletes": ["solutions/old.cpp"]}
+        failures = [
+            TimeoutError("private source body"),
+            ConnectionResetError("private source body"),
+            http.client.RemoteDisconnected("private source body"),
+            http.client.IncompleteRead(b"private source body", 100),
+            urllib.error.URLError("private source body"),
+        ]
+        for stage in ("compare", "apply"):
+            for during_read in (False, True):
+                for failure in failures:
+                    with self.subTest(stage=stage, during_read=during_read, failure=type(failure)):
+                        good = MagicMock()
+                        good.__enter__.return_value = good
+                        good.getcode.return_value = 200
+                        good.headers = {}
+                        good.read.return_value = json.dumps(compare).encode()
+                        broken = MagicMock()
+                        broken.__enter__.return_value = broken
+                        broken.getcode.return_value = 200
+                        broken.read.side_effect = failure
+                        replies = [good] if stage == "apply" else []
+                        replies.append(broken if during_read else failure)
+                        with patch.object(cli.urllib.request, "urlopen", side_effect=replies) as request:
+                            status, payload = self._push_main(target)
+                        self.assertEqual(status, 1)
+                        error = payload["error"]
+                        self.assertEqual(error["code"], "network_error")
+                        self.assertEqual(error["stage"], stage)
+                        self.assertEqual(error["problem"], "alice/a")
+                        self.assertEqual(error["target_dir"], str(target.resolve()))
+                        self.assertEqual(error["remote_outcome"], "unknown" if stage == "apply" else "not_applied")
+                        self.assertEqual(request.call_count, 2 if stage == "apply" else 1)
+                        self.assertTrue(request.call_args.args[0].full_url.endswith("/" + stage + "?problem=alice%2Fa"))
+                        self.assertEqual(cli._git_config_get(target, "polygon-agent.remote-head"), "original-head")
+                        if stage == "apply":
+                            self.assertEqual(error["preflight_diff"], {"basis": "before_apply", **compare})
+                        rendered = json.dumps(payload)
+                        self.assertNotIn("private source body", rendered)
+                        self.assertNotIn(self.state["credential"], rendered)
+                        self.assertNotIn("Authorization", rendered)
+
+    def test_push_http_errors_keep_status_and_rejection(self):
+        target = self._push_repo()
+        for status, code in [(400, "invalid_archive"), (401, "agent_credential_invalid"), (409, "workspace_conflict"), (408, "http_error")]:
+            with self.subTest(status=status):
+                body = io.BytesIO(json.dumps({"error": code, "message": "rejected"}).encode())
+                failure = urllib.error.HTTPError("https://polygon.example", status, "rejected", {}, body)
+                with patch.object(cli.urllib.request, "urlopen", side_effect=failure) as request:
+                    exit_code, payload = self._push_main(target)
+                self.assertEqual(exit_code, 1)
+                self.assertEqual(payload["error"]["http_status"], status)
+                self.assertEqual(payload["error"]["code"], code)
+                self.assertEqual(request.call_count, 1)
+                self.assertEqual(cli._git_config_get(target, "polygon-agent.remote-head"), "original-head")
+
+    def test_truncated_http_error_preserves_status(self):
+        body = MagicMock()
+        body.read.side_effect = http.client.IncompleteRead(b"private source body", 100)
+        failure = urllib.error.HTTPError("https://polygon.example", 504, "timeout", {}, body)
+        with patch.object(cli.urllib.request, "urlopen", side_effect=failure):
+            with self.assertRaises(cli.CliError) as raised:
+                cli._http_request(url="https://polygon.example", method="POST")
+        self.assertEqual(raised.exception.http_status, 504)
+        self.assertEqual(raised.exception.message, "http 504")
+        body.close.assert_called_once()
+
+    def test_push_success_and_existing_permission_flow(self):
+        target = self._push_repo()
+        args = self._args(problem="alice/a", target_dir=str(target))
+        with patch.object(cli, "_http_json", side_effect=[{"changed": True}, {"head_commit": "new-head", "applied": True}]) as request:
+            result = cli._command_push(args)
+        self.assertTrue(result["applied"])
+        self.assertEqual(request.call_count, 2)
+        self.assertEqual(cli._git_config_get(target, "polygon-agent.remote-head"), "new-head")
+        denied = cli.CliError(code="agent_permission_required", message="scope required", http_status=403)
+        with patch.object(cli, "_http_json", side_effect=denied) as request, patch.object(cli, "_problem_approval_result", return_value={"approve_url": "approval"}) as approval:
+            result = cli._command_push(args)
+        self.assertEqual(result, {"approve_url": "approval"})
+        self.assertEqual(request.call_count, 1)
+        approval.assert_called_once()
+        self.assertEqual(cli._git_config_get(target, "polygon-agent.remote-head"), "new-head")
 
     def test_status_removes_legacy_token_map_only_after_authentication(self) -> None:
         state = dict(self.state)

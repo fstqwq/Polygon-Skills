@@ -147,9 +147,21 @@ python skills/polygon-agent-cli/scripts/polygon_agent.py push \
   --problem "alice/aplusb"
 ```
 
-Uploads the full local mirror as one ZIP, asks the server to compare it, then atomically applies it to the remote working tree.
+Uploads the same full local mirror ZIP to compare and then apply atomically.
 
 `push` requires `workspace` scope or higher. It does not commit the remote workspace; run `commit` only after the user asks for it.
+
+Push failures include `stage` (`compare` or `apply`), `problem`, `target_dir`,
+`remote_outcome`, and `recovery` in the existing error object. An apply transport
+failure has an unknown outcome; inspect the remote files before further writes.
+`preflight_diff` contains uploads/deletes from the successful compare, when
+available, labeled `before_apply`; it is not a fresh list of remaining changes.
+The CLI does not retry or perform automatic recovery and leaves `remote-head`
+unchanged on failure. Permission approval retains its existing response flow.
+
+For confirmed local changes, an agent can use single-file upload/delete after
+checking current remote contents. Follow [Interrupted Push](../../polygon-agent-push/SKILL.md#interrupted-push)
+for partial completion, verification, and stopping rules.
 
 ### Workspace Status
 

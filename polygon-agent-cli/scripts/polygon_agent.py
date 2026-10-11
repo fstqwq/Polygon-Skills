@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import http.client
 import io
 import json
 import os
@@ -311,12 +312,23 @@ def _http_request(
     request = urllib.request.Request(url=url, method=method, headers=headers or {}, data=body)
     try:
         context = _tls_context(url=url, verify_tls=verify_tls, warn_insecure=warn_insecure)
-        with urllib.request.urlopen(request, timeout=timeout_sec, context=context) as response:
-            return (int(response.getcode()), response.read(), dict(response.headers.items()))
-    except urllib.error.HTTPError as exc:
-        raise _api_error_from_response(exc.code, exc.read()) from exc
-    except urllib.error.URLError as exc:
-        raise CliError(code="network_error", message=f"network error: {exc.reason}") from exc
+        try:
+            with urllib.request.urlopen(request, timeout=timeout_sec, context=context) as response:
+                return (int(response.getcode()), response.read(), dict(response.headers.items()))
+        except urllib.error.HTTPError as exc:
+            try:
+                payload = exc.read()
+            except (OSError, http.client.HTTPException):
+                payload = b""
+            finally:
+                exc.close()
+            raise _api_error_from_response(exc.code, payload) from exc
+    except (OSError, http.client.HTTPException) as exc:
+        # Exception text can contain response bytes or request details.
+        raise CliError(
+            code="network_error",
+            message=f"network request failed ({type(exc).__name__})",
+        ) from exc
 
 
 def _http_json(
@@ -1773,6 +1785,8 @@ def _command_push(args: argparse.Namespace) -> JsonObject:
     credentials = _state_credentials(state)
     zip_bytes = _local_workspace_zip(target_dir)
     base_head_commit = _git_config_get(target_dir, "polygon-agent.remote-head")
+    stage = "compare"
+    compare = None
     try:
         compare = _workspace_compare_zip(
             base_url,
@@ -1781,6 +1795,7 @@ def _command_push(args: argparse.Namespace) -> JsonObject:
             zip_bytes,
             bool(args.secure),
         )
+        stage = "apply"
         apply = _workspace_apply_zip(
             base_url,
             credentials,
@@ -1814,6 +1829,33 @@ def _command_push(args: argparse.Namespace) -> JsonObject:
                 verify_tls=bool(args.secure),
                 required_scope="workspace",
             )
+        interrupted = exc.code == "network_error" or exc.http_status in {408, 502, 503, 504}
+        exc.details.update(
+            stage=stage,
+            problem=problem,
+            target_dir=str(target_dir),
+            remote_outcome=("not_applied" if stage == "compare" else "unknown"),
+            recovery=(
+                "Check current remote files first; apply may already have succeeded. "
+                if stage == "apply" and interrupted else
+                "This push has not called apply. " if stage == "compare" else
+                "Check the server rejection and current remote state. "
+            ) + (
+                "Using local track and current remote contents, consider upload/delete for "
+                "confirmed remaining changes. Verify contents afterward; matching workspace-status "
+                "paths alone is insufficient. Report partial or unconfirmed results. "
+                "Do not retry in a loop or manually change remote-head."
+                if interrupted else
+                "Resolve this error before continuing; do not bypass permission, version, "
+                "or validation failures with single-file uploads."
+            ),
+        )
+        if compare is not None:
+            exc.details["preflight_diff"] = {
+                "basis": "before_apply",
+                "uploads": compare.get("uploads", []),
+                "deletes": compare.get("deletes", []),
+            }
         raise
 
 
