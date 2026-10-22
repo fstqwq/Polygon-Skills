@@ -93,6 +93,9 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
    - `testlib.h` itself will take care of extra dirt in participant's output.
    - Verdicts: `_ok`, `_wa`, `_fail` only. Do not use `_pe`
    - **Multi-test**: call `setTestCase(t)` (1-indexed) at the top of each test case loop iteration  -- mandatory for proper per-testcase error messages
+     With the bundled header, this also marks checker `ouf` positions for optional
+     single-pass sample shading. Mark before reading each case's contestant output;
+     `ans` reads do not mark output. See [sample shading](../polygon-spec/sample-shading.md).
 
 3. **Save as** `checkers/checker.cpp`.
 

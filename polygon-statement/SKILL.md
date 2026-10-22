@@ -281,6 +281,38 @@ Before committing, confirm that the PDF exists, the source exists, and every `\i
 - Use "separated by a space" not "space-separated"
 - Use "Output" not "Print"
 
+### Sample shading (traditional single-pass problems)
+
+Shading defaults to enabled when valid testcase markup is available. The
+validator and checker use `setTestCase()` to identify input and output groups;
+see [sample-shading.md](../polygon-spec/sample-shading.md) for exact boundaries,
+compatibility, and upgrading an existing problem.
+
+- Contest property `shadeSamples=false` disables the inherited default; deleting
+  it restores `true`. It is not a language-specific property.
+- For a standalone problem or a per-problem override, copy the canonical
+  `examples.tex` to `statement/examples.tex` and add
+  `\StatementSampleShading{false}` before the sample environment. `true` enables
+  shading. The setting affects only this problem, including within a Contest.
+- Leave `examples.tex` absent when no override is needed. Disabling display does
+  not disable markup collection. Old or mismatched markup renders plain samples.
+
+### Side-wrapped figures
+
+PDF and HTML support `wrapfigure` for a side figure. Use `l` or `r` and an
+explicit width, for example:
+
+```tex
+\begin{wrapfigure}{r}{7cm}
+\centering
+\includegraphics[width=6.3cm]{sample-schedules.pdf}
+\par\small One execution of Sample 1.
+\end{wrapfigure}
+```
+
+Keep the figure inside the relevant statement section and verify both outputs;
+HTML text wrapping depends on the viewport width.
+
 ### Interactive / multi-pass problems
 - **Interactive**: Use the mandatory introduction and flush block from `references/standard-sentences.md`.
 - **Multi-pass**: Start legend with `\textit{This is a multi-pass problem.}`

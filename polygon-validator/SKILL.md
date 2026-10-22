@@ -211,3 +211,10 @@ Real validators from production problems:
 
 - `examples/taxi_val.cpp`  -- multi-field input with stable names and `~` boundary naming
 - `examples/multipass_val.cpp`  -- multi-pass problem validator (validates only pass 1 input; `"op~"`, `"~seed~"`)
+
+## Optional sample shading
+
+For traditional single-pass samples, the bundled testlib records `inf` positions
+at `setTestCase()` calls when the runner requests markup. Call it before reading
+each case. No extra validator arguments or output files are needed in normal use.
+See [sample shading](../polygon-spec/sample-shading.md) for line boundaries and compatibility.

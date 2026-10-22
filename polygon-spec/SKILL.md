@@ -83,6 +83,9 @@ temp/                   # throwaway test files (not committed, gitignored)
 - Write JSON and source files with LF line endings, not CRLF.
 - Do not store official answers in the source repository or package. There is no `tests/answers/` directory in the canonical layout; answers are produced by the verification/package pipeline from the accepted solution.
 
+For optional traditional sample shading, controls, and upgrading existing templates,
+see [sample-shading.md](sample-shading.md).
+
 ## Judging Posture
 
 - Treat local compilation and local runs as advisory sanity checks only.
