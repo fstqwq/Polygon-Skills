@@ -288,6 +288,15 @@ validator and checker use `setTestCase()` to identify input and output groups;
 see [sample-shading.md](../polygon-spec/sample-shading.md) for exact boundaries,
 compatibility, and upgrading an existing problem.
 
+- For traditional multi-test problems, check that the validator and checker use
+  matching testcase boundaries and numbering. Standard sequence comparators do
+  not supply output groups; follow the checker skill's problem-aware selection.
+  Display enabled does not mean valid marks exist. After checker/header changes,
+  rerun verification and rebuild packages. Cases sharing a line fall back to plain
+  samples; do not tighten output whitespace rules for shading.
+- On the Statement page, **Use unshaded examples** creates the default editable
+  template with the disabling command when no custom template exists. Existing
+  templates remain editable without replacement.
 - Contest property `shadeSamples=false` disables the inherited default; deleting
   it restores `true`. It is not a language-specific property.
 - For a standalone problem or a per-problem override, copy the canonical

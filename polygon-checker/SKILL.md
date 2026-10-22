@@ -11,7 +11,31 @@ Before writing code, read `../polygon-spec/references/codeforces-testlib-style.m
 
 ## Procedure
 
-### Option A: Standard Checker (preferred when applicable)
+### Choose the testcase boundary first
+
+For traditional single-pass problems with multiple testcases, default to a small
+problem-aware checker that supports sample shading when the output boundaries
+follow from the input and output specification. Read each case's complete output,
+calling `setTestCase(i)` before its first `ouf` read; use the same case numbering
+as the validator. A case can contain several tokens, several lines, or a variable
+number of values. Never infer cases from line breaks, token counts without a
+specification, or the layout of `ans`.
+
+Use a standard checker for single-case problems or when shading is explicitly
+unneeded. If the specification does not establish boundaries, explain what is
+missing and retain ordinary presentation rather than guessing. Do not replace
+an existing problem's checker solely because of this default. Interactive and
+multi-pass workflows retain their existing selection rules.
+
+For a comparison-only custom checker, preserve the selected standard comparator's
+semantics: use `doubleCompare` with the specified tolerance for floating-point
+values, exact token comparison for `wcmp`, and the existing case-folding rule for
+YES/NO. Read the problem-defined number or structure of values per case; reject
+missing, extra and incorrect output. Do not impose new whitespace or newline
+rules for coloring. Independent answer validation still uses `readAns` below.
+See [sample shading](../polygon-spec/sample-shading.md) for display limits.
+
+### Option A: Standard Checker
 
 1. **Determine which standard checker fits**. Refer to `polygon-spec/checkers.md` for the full catalog. When applicable, prefer `ncmp`, then `nyesno`, then `wcmp`; otherwise choose the standard checker that matches the output semantics:
    - `ncmp`  -- ordered sequence of integers
@@ -184,8 +208,8 @@ The evaluation model is the same as multi-pass interactive (see `/polygon-intera
 
 ## Rules
 
-- **Prefer standard checkers** unless the problem genuinely needs a custom one.
-- When applicable, prefer `ncmp`, then `nyesno`, then `wcmp`. Otherwise use the matching standard checker, such as an `rcmp` variant for floating-point output.
+- Follow the testcase-boundary selection above: traditional multi-test problems default to a problem-aware checker for shading; single-case problems or explicit opt-outs prefer standard checkers.
+- When selecting a standard comparator, prefer `ncmp`, then `nyesno`, then `wcmp` when applicable; otherwise select the comparator matching the output semantics, such as an `rcmp` variant.
 - Ask the user: "Does this problem have a unique answer, or can there be multiple valid answers?" This determines whether a standard checker suffices.
 - Custom checkers must handle malformed contestant output gracefully (use `ouf.readInt()` etc., which auto-quit with WA on parse failure).
 - Lexical restrictions for answer tokens are semantic validation. Keep regex/range/enum checks that define valid tokens, for example `readToken("[A-Za-z]{2,3}", "verdict")` followed by a `YES`/`NO` check.
