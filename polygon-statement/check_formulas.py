@@ -153,11 +153,13 @@ def _check_drafts(root: Path) -> list[str]:
     return warnings
 
 
+def check_formulas(root: Path) -> list[str]:
+    return _check_sections(root) + _check_drafts(root)
+
+
 def main() -> int:
     root = Path(os.environ.get("PROBLEM_ROOT", ".")).resolve()
-    warnings: list[str] = []
-    warnings.extend(_check_sections(root))
-    warnings.extend(_check_drafts(root))
+    warnings = check_formulas(root)
 
     if not warnings:
         print("OK — formulas are consistent across all languages")

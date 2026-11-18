@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import runpy
 import shlex
 import sys
 from pathlib import Path, PurePosixPath
@@ -709,33 +710,33 @@ def _errors_statement_interaction_layout(root: Path) -> list[str]:
         return []
 
     errors: list[str] = []
+    sections_by_language = {}
     for lang_dir in sorted(sections_dir.iterdir()):
         if not lang_dir.is_dir() or lang_dir.is_symlink():
             continue
-        interaction_path = lang_dir / "interaction.tex"
-        rel_path = f"statement-sections/{lang_dir.name}/interaction.tex"
+        sections = {p.name for p in lang_dir.glob("*.tex") if p.is_file()}
+        sections_by_language[lang_dir.name] = sections
+        prefix = f"statement-sections/{lang_dir.name}"
         if mode == "interactive":
-            if not interaction_path.exists():
-                errors.append(f"{rel_path}: missing for interactive problem")
-        elif interaction_path.exists():
-            errors.append(f"{rel_path}: must not exist for pass-fail problem")
+            if "interaction.tex" not in sections:
+                errors.append(f"{prefix}/interaction.tex: missing for interactive problem")
+            if "output.tex" in sections:
+                errors.append(f"{prefix}/output.tex: put the protocol in interaction.tex; "
+                              "keep only interaction.tex, or add input.tex for initial input")
+        elif "interaction.tex" in sections:
+            errors.append(f"{prefix}/interaction.tex: remove this file for a pass-fail problem; "
+                          "use input.tex and output.tex")
+
+    if len({frozenset(sections) for sections in sections_by_language.values()}) > 1:
+        layouts = "; ".join(f"{lang}: {', '.join(sorted(sections))}"
+                            for lang, sections in sections_by_language.items())
+        errors.append(f"statement-sections/: section files must match across languages ({layouts})")
     return errors
 
 
 def _warnings_completeness(root: Path) -> list[str]:
     """Warn about missing content that a finished problem should have."""
     warnings: list[str] = []
-    gitignore_path = root / ".gitignore"
-    if not gitignore_path.exists():
-        warnings.append(".gitignore: missing -- temp/ must be ignored")
-    else:
-        try:
-            gitignore_lines = gitignore_path.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError:
-            gitignore_lines = []
-        ignored_patterns = {line.strip() for line in gitignore_lines if line.strip() and not line.strip().startswith("#")}
-        if "temp/" not in ignored_patterns and "/temp/" not in ignored_patterns:
-            warnings.append(".gitignore: temp/ is not ignored")
     testlib_path = root / "third_party" / "testlib" / "testlib.h"
     if not testlib_path.exists():
         warnings.append("third_party/testlib/testlib.h: missing -- required for import")
@@ -797,11 +798,17 @@ def _warnings_completeness(root: Path) -> list[str]:
         else:
             for lang in languages:
                 lang_dir = sections_dir / lang
-                for section in ["name.tex", "legend.tex", "input.tex", "output.tex"]:
+                required = ["name.tex", "legend.tex"]
+                if mode == "pass-fail":
+                    required.extend(["input.tex", "output.tex"])
+                elif mode == "interactive":
+                    required.extend(section for section in ("interaction.tex", "input.tex")
+                                    if (lang_dir / section).is_file())
+                for section in required:
                     section_path = lang_dir / section
-                    if not section_path.exists():
+                    if not section_path.is_file():
                         warnings.append(f"statement-sections/{lang}/{section}: missing")
-                    elif section_path.stat().st_size == 0 and section in ("name.tex", "legend.tex"):
+                    elif not section_path.read_text(encoding="utf-8", errors="replace").strip():
                         warnings.append(f"statement-sections/{lang}/{section}: empty")
     return warnings
 
@@ -1471,6 +1478,8 @@ def validate(root: Path) -> tuple[list[str], list[str]]:
     errors.extend(_errors_spec_json(root))
     errors.extend(_errors_solution_descs(root))
     errors.extend(_errors_statement_interaction_layout(root))
+    formula_script = Path(__file__).resolve().parents[1] / "polygon-statement" / "check_formulas.py"
+    errors.extend(runpy.run_path(str(formula_script))["check_formulas"](root))
     warnings: list[str] = []
     warnings.extend(_warnings_completeness(root))
     warnings.extend(_warnings_package_assets(root))

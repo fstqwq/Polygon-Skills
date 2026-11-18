@@ -21,12 +21,12 @@ Confirm that its status lists `statement_assets` and `attachments` separately.
 
 ### Step 2: Statement review
 
-Run `python <skills>/polygon-statement/check_formulas.py` on all `.tex` files. Include any warnings in the report.
+Step 1 includes cross-language formula checks for statement sections and drafts. Include any mismatches in the report.
 
 Read `draft/statement.*.md` and all `statement-sections/<lang>/*.tex`.
 
 Check:
-- [ ] **Completeness**: legend, input, output sections all exist and are non-empty
+- [ ] **Completeness**: all languages use the same sections. Require name and legend. For interactive problems require interaction, allow initial input, and omit output. For pass-fail problems require input and output and omit interaction. Check required sections for empty content
 - [ ] **English style**: English uses American spelling and an appropriately title-cased problem name
 - [ ] **Legend prose**: when the problem has a meaningful natural-language setting, formulas in the Legend are limited to those that materially improve clarity; formal definitions, coordinates, limits, and input guarantees are deferred to Input where possible
 - [ ] **Constraints block**: every variable in the input format has an explicit bound ($1 \le n \le \ldots$)
